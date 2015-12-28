@@ -1,7 +1,7 @@
 Majabigwaduce
 =============
 
-Majabigwaduce\* (aka _MapReduce with Akka_) is a framework for implementing map-reduce using actors.
+Majabigwaduce\* (aka _Akka/MapReduce_) is a framework for implementing map-reduce using [Scala](http://www.scala-lang.org) and [Akka](http://akka.io) actors.
 I tried to use only the intrinsic notion of map and reduce. Thus is is not exactly like Hadoop's map-reduce (although it is similar).
 
 __Why__ would anyone want to do map-reduce using actors? It's a good question. For me, it arose initially because I needed an example of using actors for the class I was teaching on Scala and Big Data.
@@ -158,8 +158,8 @@ Dependencies
 
 The components that are used by this project are:
 
-* Scala
-* Akka
+* Scala (2.11.7)
+* Akka (2.4.1) although it was developed using 2.3.12 and assuredly, earlier versions would work too.
 * and dependencies thereof
 
 Examples
@@ -224,5 +224,5 @@ If the names of variables look a bit odd to you, then see my "ScalaProf" blog: h
 Future enhancements
 ===================
 
-* I plan eventually to allow the shuffle process to match keys with reducers according to an application-specific mapping (rather than the current, arbitrary, mapping).
+* Enable the shuffle process to match keys with reducers according to an application-specific mapping (rather than the current, arbitrary, mapping).
 * Enable reducers (and possibly mappers) to be replicated across a cluster.
