@@ -1,12 +1,14 @@
 Majabigwaduce
 =============
 
-Majabigwaduce (aka _MapReduce with Akka_) is a framework for implementing map-reduce using actors.
+Majabigwaduce\* (aka _MapReduce with Akka_) is a framework for implementing map-reduce using actors.
 I tried to use only the intrinsic notion of map and reduce. Thus is is not exactly like Hadoop's map-reduce (although it is similar).
 
 __Why__ would anyone want to do map-reduce using actors? It's a good question. For me, it arose initially because I needed an example of using actors for the class I was teaching on Scala and Big Data.
 I also wanted to ensure that the students understood the essence of map-reduce rather than some derived version of it.
 Of course, it turns out that it's a perfect application for actors and indeed demonstrates many of the proper techniques to be used when programming with (Akka) actors.
+
+\* Majabigwaduce was the Native American name for the site of the battle of Penobscot Bay, Maine in 1779, see [Penobscot Expedition](https://en.wikipedia.org/wiki/Penobscot_Expedition)
 
 Introduction
 ------------
@@ -160,8 +162,6 @@ The components that are used by this project are:
 * Akka
 * and dependencies thereof
 
-Code name Majabigwaduce.
-
 Examples
 ========
 
@@ -200,7 +200,7 @@ Here is the _CountWords_ app. It actually uses a "mock" URI rather than the real
 	  }
 	}
 	
-It is a two-stage map-reduce problem with a final reduce stage.
+It is a three-stage map-reduce problem, including a final reduce stage.
 
 Stage 1 takes a _Seq[String]_ (representing URIs) and produces a _Map[URI,Seq[String]]_.
 The mapper for the first stage returns a tuple of the _URI_ (corresponding to the server for the string) and the content of the resource defined by the string.
@@ -226,4 +226,3 @@ Future enhancements
 
 * I plan eventually to allow the shuffle process to match keys with reducers according to an application-specific mapping (rather than the current, arbitrary, mapping).
 * Enable reducers (and possibly mappers) to be replicated across a cluster.
-* Add a _ReduceLast_ function which can be used to calculate a grand total (where they keys of the final map-reduce stage are essentially ignored).
