@@ -36,7 +36,7 @@ class Mapper[K1,V1,K2,W](f: (K1,V1)=>(K2,W)) extends MapReduceActor { self =>
   override def receive = {
     case  i: Incoming[K1,V1] =>
       log.info(s"received $i")
-      log.debug(s"with map ${i.m}")
+//      maybeLog(s"with map {}", i.m)
       val wk2ts = for ((k1,v1) <- i.m) yield Try(f(k1,v1))
       sender ! prepareReply(wk2ts)
     case q =>

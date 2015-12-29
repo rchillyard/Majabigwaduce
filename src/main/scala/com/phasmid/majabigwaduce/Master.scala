@@ -51,7 +51,7 @@ abstract class MasterBaseFirst[V1, K2, W, V2](config: Config, f: (Unit,V1)=>(K2,
   override def receive = {
     case v1s: Seq[V1] =>
       log.info(s"received Seq[V1]: with ${v1s.length} elements")
-      maybeLog("received",v1s)
+      maybeLog("received {}",v1s)
       val caller = sender
       doMapReduce(Incoming.sequence[Unit,V1](v1s)).onComplete {
         case Success(wXeK2m) => caller ! Response(wXeK2m)
@@ -77,7 +77,7 @@ abstract class MasterBaseFirst[V1, K2, W, V2](config: Config, f: (Unit,V1)=>(K2,
  * @param n the stage number of this map-reduce stage.
  */
 abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1,V1)=>(K2,W), g: (V2,W)=>V2, z: ()=>V2) extends MapReduceActor {
-  implicit val timeout = Timeout(5 seconds)
+  implicit val timeout = Master.getTimeout(config.getString("timeout"))
   val mapper = context.actorOf(mapperProps(f,config), "mpr")
   val reducers = for (i <- 1 to config.getInt("reducers")) yield context.actorOf(reducerProps(f,g,z), s"rdcr-$i")
   import context.dispatcher
@@ -189,4 +189,11 @@ object Master {
   def partition[K, V, X](vXeKm: Map[K,Either[X,V]]): (Seq[(K,Either[X,V])],Seq[(K,Either[X,V])]) = vXeKm.toSeq.partition({case (k,v) => v.isLeft})
   def toMap[K, V, X](t: (Seq[(K,X)],Seq[(K,V)])): (Map[K,X],Map[K,V]) = (t._1.toMap,t._2.toMap)
   def sequenceLeftRight[K, V, X](vXeKm: Map[K,Either[X,V]]): (Seq[(K,X)],Seq[(K,V)]) = tupleMap[Seq[(K,Either[X,V])],Seq[(K,X)],Seq[(K,Either[X,V])],Seq[(K,V)]](sequenceLeft,sequenceRight)(partition(vXeKm))
+  def getTimeout(t: String) = {
+    val durationR = """(\d+)\s*(\w+)""".r
+    t match {
+      case durationR(n,s) => new Timeout(FiniteDuration(n.toLong,s))
+      case _ => Timeout(10 seconds)
+    }
+  }
 }

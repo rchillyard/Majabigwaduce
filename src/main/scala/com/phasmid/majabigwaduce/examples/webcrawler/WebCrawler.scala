@@ -1,13 +1,12 @@
-package com.phasmid.majabigwaduce.examples
+package com.phasmid.majabigwaduce.examples.webcrawler
 
 import scala.util._
 import scala.concurrent._
 import scala.concurrent.duration._
 import com.typesafe.config.ConfigFactory
-import akka.actor.{ActorSystem, Props}
+import akka.actor.ActorSystem
 import akka.util.Timeout
 import akka.util.Timeout._
-import akka.pattern.ask
 import java.net.URI
 import com.phasmid.majabigwaduce._
 import scala.io.Source
@@ -31,26 +30,46 @@ object WebCrawler extends App {
   implicit val system = ActorSystem(configApp.getString("name"))   
   implicit val timeout: Timeout = getTimeout(config.getString("timeout"))
   import ExecutionContext.Implicits.global
+  val ws = if (args.length>0) args.toSeq else Seq("http://www.htmldog.com/examples/")  
   
   def init = Seq[String]()
   val stage1: MapReduce[String,URI,Seq[String]] = MapReduceFirstFold(
-      {(q,w: String) => val u = new URI(w); println(s"${u.getScheme},${u.getHost}"); (new URL(u.getScheme+"://"+u.getHost).toURI, Source.fromURL(u.toURL).mkString)},
+      {(q, w: String) => val u = new URI(w); (getHostURI(u), Source.fromURL(u.toURL).mkString)},
       {(a: Seq[String],v: String)=>a:+v},
       init _
     )
-  val stage2 = MapReducePipe(
-      {(w: URI, gs: Seq[String])=>(w, (for(g <- gs) yield g.split("""\s+""").length) reduce(_+_))},
-      {(x: Int, y: Int)=>x+y},
+
+  val stage2 = MapReducePipeFold(
+      {(w: URI, gs: Seq[String])=>(w, (for(g <- gs) yield getLinks(w,g)) reduce(_++_))},
+      {(a: Seq[String],v: Seq[String])=>a++v},
+      init _,
       1
     )
-  val stage3 = Reduce[Int,Int]({_+_})
-  val countWords = stage1 compose stage2 compose stage3
+    
+  def getLinks(w: URI, g: String): Seq[String] = for (
+    nsA <- HTMLParser.parse(g) \\ "a";
+    nsH <- nsA \ "@href";
+    nH <- nsH.apply(0)
+    ) yield normalizeURL(w,nH.toString)
+
+  val stage3 = Reduce[Seq[String],Seq[String]]({_++_})
+  val crawler = stage1 compose stage2 compose stage3
   
-  val ws = if (args.length>0) args.toSeq else Seq("http://www.htmldog.com/examples/")  
-  countWords.apply(ws).onComplete {
-    case Success(n) => println(s"total words: $n"); system.shutdown
-    case Failure(x) => system.log.error(x, "Map/reduce error (typically in map function)"); system.shutdown
+  doCrawl(ws,Seq[String](),2).onComplete {
+    case Success(n) => println(s"total links: ${n.length}")
+    case Failure(x) => system.log.error(x, "Map/reduce error (typically in map function)")
   }
+  
+  private def doCrawl(us: Seq[String], all: Seq[String], depth: Int): Future[Seq[String]] = {
+    if (depth==0) Future(all)
+    Console.err.println(s"doCrawl: $us; $all; $depth")
+    val (in,out) = us.partition { x => all.contains(x) }
+    val wsf = crawler(out.distinct)
+    for (ws <- wsf; x <- doCrawl(ws, all++us, depth-1)) yield x
+  }
+  
+  private def getHostURI(u: java.net.URI) = new URL(u.getScheme+"://"+u.getHost).toURI
+  private def normalizeURL(w: URI, w2: String) = new URL(w.toURL,w2.toString).toString
   
   def getTimeout(t: String) = {
     val durationR = """(\d+)\s*(\w+)""".r

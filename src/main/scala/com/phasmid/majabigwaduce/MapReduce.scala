@@ -3,7 +3,7 @@ package com.phasmid.majabigwaduce
 import scala.util._
 import scala.concurrent._
 import scala.concurrent.duration._
-import akka.actor.{ActorSystem, Props}
+import akka.actor.{ActorSystem, Props, ActorRef}
 import akka.util.Timeout
 import akka.pattern.ask
 import java.net.URI
@@ -125,8 +125,9 @@ case class Reduce[V1, S>:V1](f: (S,V1)=>S) extends Function1[Map[_,V1],S] {
  */
 abstract class MapReduce_Base[T, K2, V2](system: ActorSystem)(implicit timeout: Timeout) extends MapReduce[T,K2,V2] { self =>
   implicit def ec = system.dispatcher
+	val master = system.actorOf(createProps, createName)
+//  val selection = system.actorSelection("akka://WebCrawler/user/mrpf-mstr-1")
   def apply(ts: Seq[T]) = {
-    val master = system.actorOf(createProps, createName)
     // Note: currently, we ignore the value of ok but we could pass back a tuple that includes ok and the resulting map
     for (v2K2r <- master.ask(ts).mapTo[Response[K2,V2]]; ok = report(v2K2r)) yield v2K2r.right
   }

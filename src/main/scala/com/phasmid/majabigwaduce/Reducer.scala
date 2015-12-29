@@ -47,7 +47,7 @@ abstract class ReducerBase[K2,W,V2] extends MapReduceActor {
   override def receive = {
     case i: Intermediate[K2,W] =>
       log.info(s"received $i")
-      log.debug(s"with elements ${i.ws}")
+//      maybeLog(s"with elements: {}",i.ws)
       sender ! (i.k2, Master.sequence(Try(getValue(i.ws))))
     case q =>
       super.receive(q)

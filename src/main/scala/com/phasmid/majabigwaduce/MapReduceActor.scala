@@ -18,7 +18,7 @@ abstract class MapReduceActor extends Actor with ActorLogging {
     case q =>
       log.warning(s"received unknown message type: $q")
   }
-  def maybeLog(w: String, z: Any): Unit = if (log.isDebugEnabled) log.debug(s"$w: $z")
+  def maybeLog(w: String, z: Any): Unit = if (log.isDebugEnabled) log.debug(w,z)
   def close = {
     // close down any non-actor resources (actors get closed anyway).
   }
