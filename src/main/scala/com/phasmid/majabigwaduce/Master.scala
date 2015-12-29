@@ -4,7 +4,7 @@ import scala.collection.mutable.{HashMap,MutableList}
 import scala.concurrent.{Future,Await}
 import scala.concurrent.duration._
 import scala.util._
-import akka.actor.{ Actor, ActorSystem, Props, ActorRef, ActorLogging }
+import akka.actor.{ ActorSystem, Props, ActorRef }
 import akka.pattern.ask
 import akka.util.Timeout
 import java.net.URL
@@ -58,7 +58,7 @@ abstract class MasterBaseFirst[V1, K2, W, V2](config: Config, f: (Unit,V1)=>(K2,
         case Failure(x) => caller ! akka.actor.Status.Failure(x)
       }
     case q =>
-      log.warning(s"received unknown message type: $q")
+      super.receive(q)
   }
 }
 
@@ -76,7 +76,7 @@ abstract class MasterBaseFirst[V1, K2, W, V2](config: Config, f: (Unit,V1)=>(K2,
  * @param z the zero (initializer) function which creates an "empty" V2.
  * @param n the stage number of this map-reduce stage.
  */
-abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1,V1)=>(K2,W), g: (V2,W)=>V2, z: ()=>V2) extends Actor with ActorLogging {
+abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1,V1)=>(K2,W), g: (V2,W)=>V2, z: ()=>V2) extends MapReduceActor {
   implicit val timeout = Timeout(5 seconds)
   val mapper = context.actorOf(mapperProps(f,config), "mpr")
   val reducers = for (i <- 1 to config.getInt("reducers")) yield context.actorOf(reducerProps(f,g,z), s"rdcr-$i")
@@ -85,10 +85,6 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1,V1)=>(K2,W),
   def mapperProps(f: (K1,V1)=>(K2,W), config: Config): Props
   def reducerProps(f: (K1,V1)=>(K2,W), g: (V2,W)=>V2, z: ()=>V2): Props
   
-  override def postStop = {
-    log.debug("has shut down")
-  }
-    
   // CONSIDER reworking this so that there is only one possible valid message: 
   // either in Map[] form of Seq[()] form. I don't really like having both
   override def receive = {
@@ -112,11 +108,8 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1,V1)=>(K2,W),
         case Success(v2XeK2m) => caller ! Response(v2XeK2m)
         case Failure(x) => caller ! akka.actor.Status.Failure(x)
       }
-    case Close =>
-      close;
-      context stop self
     case q =>
-      log.warning(s"received unknown message type: $q")
+      super.receive(q)
   }
   
   def doMapReduce(i: Incoming[K1,V1]) = for {
@@ -125,8 +118,6 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1,V1)=>(K2,W),
       v2XeK2m <- doDistributeReduceCollate(wsK2m)
     } yield v2XeK2m
     
-  def maybeLog(w: String, z: Any): Unit = if (log.isDebugEnabled) log.debug(s"$w: $z")
-  
   private def doMap(i: Incoming[K1,V1]): Future[Map[K2,Seq[W]]] = {
     val reply = (mapper ? i)
     if (config.getBoolean("forgiving"))
@@ -148,9 +139,6 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1,V1)=>(K2,W),
     for (wXeK2s <- Future.sequence(v2XeK2fs)) yield wXeK2s.toMap
   }
   
-  def close = {
-    // close down any non-actor resources (actors get closed anyway).
-  }
 }
 
 case class Response[K,V](left: Map[K,Throwable], right: Map[K,V]) {
@@ -202,5 +190,3 @@ object Master {
   def toMap[K, V, X](t: (Seq[(K,X)],Seq[(K,V)])): (Map[K,X],Map[K,V]) = (t._1.toMap,t._2.toMap)
   def sequenceLeftRight[K, V, X](vXeKm: Map[K,Either[X,V]]): (Seq[(K,X)],Seq[(K,V)]) = tupleMap[Seq[(K,Either[X,V])],Seq[(K,X)],Seq[(K,Either[X,V])],Seq[(K,V)]](sequenceLeft,sequenceRight)(partition(vXeKm))
 }
-
-object Close

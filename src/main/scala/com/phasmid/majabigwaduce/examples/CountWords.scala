@@ -22,7 +22,6 @@ import com.phasmid.majabigwaduce._
  * 
  * @author scalaprof
  */
-
 object CountWords extends App {
   implicit val config = ConfigFactory.load
   implicit val system = ActorSystem(config.getString("name")+"_CountWords")   
@@ -30,7 +29,7 @@ object CountWords extends App {
   import ExecutionContext.Implicits.global
   
   def init = Seq[String]()
-  val stage1= MapReduceFirstFold(
+  val stage1 = MapReduceFirstFold(
       {(q,w: String) => val u = MockURI(w); (u.getServer, u.content)},
       {(a: Seq[String],v: String)=>a:+v},
       init _
@@ -44,9 +43,11 @@ object CountWords extends App {
   val countWords = stage1 compose stage2 compose stage3
   
   val ws = if (args.length>0) args.toSeq else Seq("http://www.bbc.com/doc1", "http://www.cnn.com/doc2", "http://default/doc3", "http://www.bbc.com/doc2", "http://www.bbc.com/doc3")  
+  
+  // TODO take advantage of future returned by terminate
   countWords.apply(ws).onComplete {
-    case Success(n) => println(s"total words: $n"); system.shutdown
-    case Failure(x) => Console.err.println(s"Map/reduce error: ${x.getLocalizedMessage}"); system.shutdown
+    case Success(n) => println(s"total words: $n"); system.terminate
+    case Failure(x) => system.log.error(x, "Map/reduce error (typically in map function)"); system.terminate
   }
 
   // there are 556 words in total between the three extracts

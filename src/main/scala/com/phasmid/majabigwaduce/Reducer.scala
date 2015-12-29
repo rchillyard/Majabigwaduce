@@ -1,69 +1,62 @@
 package com.phasmid.majabigwaduce
 
-import akka.actor.{ Actor, ActorLogging, ActorRef }
-//import scala.collection.mutable.HashMap
+import akka.actor.ActorRef
 import scala.util._
 
 /**
- * This actor performs the reduce operation on the received sequence of V2 objects,
- * resulting in an V3 object.
- * The incoming "Intermediate" message combines both the current K2 key and the sequence vs of V2 objects.
- * The reply message is a tuple of (K2,Either[Throwable,V3])
+ * This actor performs the reduce operation on the received sequence of W objects,
+ * resulting in (ideally) a V2 object.
+ * The incoming "Intermediate" message combines both the current K2 key and the sequence ws of W objects.
+ * The reply message is a tuple of (K2,Either[Throwable,V2])
  * 
  * Intermediate is a convenience incoming message wrapper. It has the advantage of not suffering type erasure.
  * 
  * @author scalaprof
  *
  * @param <K2> key type
- * @param <V2> value type
- * @param <V3> the aggregation of V2 objects (in this form, must be super-type of V2)
- * 
- * @param g a function which takes a V3 (the accumulator) and a V2 (the value) and combines them into a V3
+ * @param <W> value type
+ * @param <V2> the aggregation of W objects (in this form, must be super-type of W)
+ * @param g a function which takes a V2 (the accumulator) and a W (the value) and combines them into a V2
  */
-class Reducer[K2,V2,V3>:V2](g: (V3,V2)=>V3) extends ReducerBase[K2,V2,V3] {  
-  def getValue(vs: Seq[V2]): V3 = vs.reduceLeft(g)
+class Reducer[K2,W,V2>:W](g: (V2,W)=>V2) extends ReducerBase[K2,W,V2] {  
+  def getValue(ws: Seq[W]): V2 = ws.reduceLeft(g)
 }
 
 /**
  * This actor performs the reduce operation on the received sequence of V2 objects,
- * resulting in an V3 object.
- * The incoming "Intermediate" message combines both the current K2 key and the sequence vs of V2 objects.
- * The reply message is a tuple of (K2,Either[Throwable,V3])
+ * resulting in an V2 object.
+ * The incoming "Intermediate" message combines both the current K2 key and the sequence ws of W objects.
+ * The reply message is a tuple of (K2,Either[Throwable,V2])
  * 
  * Intermediate is a convenience incoming message wrapper. It has the advantage of not suffering type erasure.
  * 
  * @author scalaprof
  *
  * @param <K2> key type
- * @param <V2> value type
- * @param <V3> the aggregation of V2 objects
- * 
- * @param g a function which takes a V3 (the accumulator) and a V2 (the value) and combines them into a V3
- * @param z a function which provides an initial value for V3 (this allows us to use Fold rather than Reduce methods)
+ * @param <W> value type
+ * @param <V2> the aggregation of W objects
+ * @param g a function which takes a V2 (the accumulator) and a W (the value) and combines them into a V2
+ * @param z a function which provides an initial value for V2 (this allows us to use Fold rather than Reduce methods)
  */
-class Reducer_Fold[K2,V2,V3](g: (V3,V2)=>V3, z: =>V3) extends ReducerBase[K2,V2,V3] {  
-  def getValue(vs: Seq[V2]): V3 = vs.foldLeft(z)(g)
+class Reducer_Fold[K2,W,V2](g: (V2,W)=>V2, z: =>V2) extends ReducerBase[K2,W,V2] {  
+  def getValue(ws: Seq[W]): V2 = ws.foldLeft(z)(g)
 }
 
-abstract class ReducerBase[K2,V2,V3] extends Actor with ActorLogging {
+abstract class ReducerBase[K2,W,V2] extends MapReduceActor {
   
   override def receive = {
-    case i: Intermediate[K2,V2] =>
+    case i: Intermediate[K2,W] =>
       log.info(s"received $i")
-      log.debug(s"with elements ${i.vs}")
-      sender ! (i.k, Master.sequence(Try(getValue(i.vs))))
+      log.debug(s"with elements ${i.ws}")
+      sender ! (i.k2, Master.sequence(Try(getValue(i.ws))))
     case q =>
-      log.warning(s"received unknown message type: $q")
+      super.receive(q)
   }
   
-  override def postStop = {
-    log.debug("has shut down")
-  }
-  
-  def getValue(vs: Seq[V2]): V3
+  def getValue(ws: Seq[W]): V2
 }
 
 
-case class Intermediate[K2, V2](k: K2, vs: Seq[V2]) {
-  override def toString = s"Intermediate: with k=$k and ${vs.size} elements"
+case class Intermediate[K2, W](k2: K2, ws: Seq[W]) {
+  override def toString = s"Intermediate: with k2=$k2 and ${ws.size} elements"
 }

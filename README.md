@@ -139,8 +139,7 @@ However, there is a more convenient, functional form based on the trait _MapRedu
 	    def ec: ExecutionContext
 	}
 
-This trait casts the map-reduce process as a simple function: one which takes a _Seq[T]_ and results in a _Map[K2,V2]_ where _T_ is either _V1_ in the case of the first stage of a map-reduce pipeline or _(Kn,Vn)_ in the case of the subsequent (nth) stage.
-There are four case classes which implement this trait (and which should be specified by the application programmer):
+This trait casts the map-reduce process as a simple function: one which takes a _Seq[T]_ and results in a (future of) _Map[K2,V2]_ where _T_ is either _V1_ in the case of the first stage of a map-reduce pipeline or _(Kn,Vn)_ in the case of the subsequent (nth) stage. There are four case classes which implement this trait (and which should be specified by the application programmer):
 
 * _MapReduceFirst_
 * _MapReducePipe_
@@ -159,7 +158,7 @@ Dependencies
 The components that are used by this project are:
 
 * Scala (2.11.7)
-* Akka (2.4.1) although it was developed using 2.3.12 and assuredly, earlier versions would work too.
+* Akka (2.4.1) although it was developed using 2.3.12 and the only difference in source code is terminate instead of shutdown.
 * and dependencies thereof
 
 Examples
@@ -195,8 +194,8 @@ Here is the _CountWords_ app. It actually uses a "mock" URI rather than the real
 	  val countWords = stage1 compose stage2 compose stage3
 	  val ws = if (args.length>0) args.toSeq else Seq("http://www.bbc.com/doc1", "http://www.cnn.com/doc2", "http://default/doc3", "http://www.bbc.com/doc2", "http://www.bbc.com/doc3")  
 	  countWords.apply(ws).onComplete {
-	    case Success(n) => println(s"total words: $n"); system.shutdown
-	    case Failure(x) => Console.err.println(s"Map/reduce error: ${x.getLocalizedMessage}"); system.shutdown
+	    case Success(n) => println(s"total words: $n"); system.terminate
+	    case Failure(x) => Console.err.println(s"Map/reduce error: ${x.getLocalizedMessage}"); system.terminate
 	  }
 	}
 	
