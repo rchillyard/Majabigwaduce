@@ -14,13 +14,13 @@ import java.net.URL
 
 /**
  * WebCrawler: an example application of the MapReduce framework.
- * NOT YET READY!
  * This application is a three-stage map-reduce process (the final stage is a pure reduce process).
  * Stage 1 takes a list of Strings representing URIs, converts to URIs, opens each as a stream, reading the contents and finally returns a map of URI->Seq[String]
- * where the key is the URI of a server, and the Strings are the contents of each of the documents retrieved from that server. 
- * Stage 2 takes the map of URI->Seq[String] resulting from stage 1 and adds the lengths of the documents (in words) to each other. The final result is a map of
- * URI->Int where the value is the total number of words read from the server represented by the key.
- * Stage 3 then sums these values together to yield a grand total. 
+ * where the key is the URI of a server, and the Strings are the links retrieved from all the documents read on that server. 
+ * Stage 2 takes the map of URI->Seq[String] resulting from stage 1 and combines the lists of links.
+ * Stage 3 then combines these altogether.
+ * 
+ * This pipeline of stages 1 through 3 is then executed recursively to a given depth. The final output is the list of URLs which have been visited. 
  * 
  * @author scalaprof
  */
@@ -34,43 +34,40 @@ object WebCrawler extends App {
   
   def init = Seq[String]()
   val stage1: MapReduce[String,URI,Seq[String]] = MapReduceFirstFold(
-      {(q, w: String) => val u = new URI(w); (getHostURI(u), Source.fromURL(u.toURL).mkString)},
-      {(a: Seq[String],v: String)=>a:+v},
+      {(q, w: String) => val u = new URI(w); (getHostURI(u), u)},
+      {(a: Seq[String],v: URI)=> val s = Source.fromURL(v.toURL).mkString; a:+s},
       init _
     )
-
   val stage2 = MapReducePipeFold(
       {(w: URI, gs: Seq[String])=>(w, (for(g <- gs) yield getLinks(w,g)) reduce(_++_))},
       {(a: Seq[String],v: Seq[String])=>a++v},
       init _,
       1
     )
-    
-  def getLinks(w: URI, g: String): Seq[String] = for (
+  val stage3 = Reduce[Seq[String],Seq[String]]({_++_})
+  val crawler = stage1 compose stage2 compose stage3  
+  val f = doCrawl(ws,Seq[String](),2) transform ({n: Seq[String] => println(s"total links: ${n.length}"); system.terminate}, {x: Throwable=>system.log.error(x,"Map/reduce error (typically in map function)"); x})
+  Await.result(f,10.minutes)
+  
+  private def getLinks(w: URI, g: String): Seq[String] = for (
     nsA <- HTMLParser.parse(g) \\ "a";
     nsH <- nsA \ "@href";
     nH <- nsH.apply(0)
     ) yield normalizeURL(w,nH.toString)
-
-  val stage3 = Reduce[Seq[String],Seq[String]]({_++_})
-  val crawler = stage1 compose stage2 compose stage3
-  
-  doCrawl(ws,Seq[String](),2).onComplete {
-    case Success(n) => println(s"total links: ${n.length}")
-    case Failure(x) => system.log.error(x, "Map/reduce error (typically in map function)")
+  private def doCrawl(us: Seq[String], all: Seq[String], depth: Int): Future[Seq[String]] =
+    if (depth<0) Future(all)
+    else {
+      system.log.info(s"doCrawl: depth=$depth; #us=${us.length}; #all=${all.length}")
+      val (in, out) = us.partition { x => all.contains(x) }
+      for (ws <- crawler(cleanup(out)); x <- doCrawl(ws, all++us, depth-1)) yield x
+    }
+  private def cleanup(ws: Seq[String]): Seq[String] = (for (w <- ws; if (w.indexOf('?') == -1); t=trim(w,'#')) yield t).distinct
+  private def trim(s: String, p: Char): String = {
+    val hash = s.indexOf(p)
+    if (hash>=0) s.substring(0, hash) else s
   }
-  
-  private def doCrawl(us: Seq[String], all: Seq[String], depth: Int): Future[Seq[String]] = {
-    if (depth==0) Future(all)
-    Console.err.println(s"doCrawl: $us; $all; $depth")
-    val (in,out) = us.partition { x => all.contains(x) }
-    val wsf = crawler(out.distinct)
-    for (ws <- wsf; x <- doCrawl(ws, all++us, depth-1)) yield x
-  }
-  
-  private def getHostURI(u: java.net.URI) = new URL(u.getScheme+"://"+u.getHost).toURI
+  private def getHostURI(u: URI): URI = new URL(u.getScheme+"://"+u.getHost).toURI
   private def normalizeURL(w: URI, w2: String) = new URL(w.toURL,w2.toString).toString
-  
   def getTimeout(t: String) = {
     val durationR = """(\d+)\s*(\w+)""".r
     t match {
@@ -79,4 +76,3 @@ object WebCrawler extends App {
     }
   }
 }
-

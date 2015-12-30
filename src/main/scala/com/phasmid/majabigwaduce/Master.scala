@@ -5,6 +5,7 @@ import scala.concurrent.{Future,Await}
 import scala.concurrent.duration._
 import scala.util._
 import akka.actor.{ ActorSystem, Props, ActorRef }
+//import akka.event.LoggingAdapter
 import akka.pattern.ask
 import akka.util.Timeout
 import java.net.URL
@@ -21,12 +22,12 @@ class Master_First_Fold[V1, K2, W, V2](config: Config, f: (Unit,V1)=>(K2,W), g: 
 
 trait ByReduce[K1, V1, K2, W, V2>:W] {
     def mapperProps(f: (K1,V1)=>(K2,W), config: Config): Props = 
-      if (config.getBoolean("forgiving")) Props.create(classOf[Mapper_Forgiving[K1,V1,K2,W]], f) else Props.create(classOf[Mapper[K1,V1,K2,W]], f)
+      if (Master.isForgiving(config)) Props.create(classOf[Mapper_Forgiving[K1,V1,K2,W]], f) else Props.create(classOf[Mapper[K1,V1,K2,W]], f)
     def reducerProps(f: (K1,V1)=>(K2,W), g: (V2,W)=>V2, z: ()=>V2): Props = Props.create(classOf[Reducer[K2,W,V2]], g)
 }
 trait ByFold[K1, V1, K2, W, V2]{
     def mapperProps(f: (K1,V1)=>(K2,W), config: Config): Props =
-      if (config.getBoolean("forgiving")) Props.create(classOf[Mapper_Forgiving[K1,V1,K2,W]], f) else Props.create(classOf[Mapper[K1,V1,K2,W]], f)
+      if (Master.isForgiving(config: Config)) Props.create(classOf[Mapper_Forgiving[K1,V1,K2,W]], f) else Props.create(classOf[Mapper[K1,V1,K2,W]], f)
     def reducerProps(f: (K1,V1)=>(K2,W), g: (V2,W)=>V2, z: ()=>V2): Props = Props.create(classOf[Reducer_Fold[K2,W,V2]], g, z)
 }
 
@@ -77,10 +78,12 @@ abstract class MasterBaseFirst[V1, K2, W, V2](config: Config, f: (Unit,V1)=>(K2,
  * @param n the stage number of this map-reduce stage.
  */
 abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1,V1)=>(K2,W), g: (V2,W)=>V2, z: ()=>V2) extends MapReduceActor {
-  implicit val timeout = Master.getTimeout(config.getString("timeout"))
+  implicit val timeout = getTimeout(config.getString("timeout"))
   val mapper = context.actorOf(mapperProps(f,config), "mpr")
   val reducers = for (i <- 1 to config.getInt("reducers")) yield context.actorOf(reducerProps(f,g,z), s"rdcr-$i")
   import context.dispatcher
+  
+  if (Master.isForgiving(config)) log.info("setting forgiving mode")
   
   def mapperProps(f: (K1,V1)=>(K2,W), config: Config): Props
   def reducerProps(f: (K1,V1)=>(K2,W), g: (V2,W)=>V2, z: ()=>V2): Props
@@ -90,19 +93,19 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1,V1)=>(K2,W),
   override def receive = {
     case v1K1m: Map[K1,V1] =>
       log.info(s"received Map[K1,V1]: with ${v1K1m.size} elements")
-      maybeLog("received",v1K1m)
+      maybeLog("received: {}",v1K1m)
       val caller = sender
       doMapReduce(Incoming.map[K1,V1](v1K1m)).onComplete {
         case Success(v2XeK2m) =>
-          maybeLog("response", v2XeK2m)
+          maybeLog("response: {}", v2XeK2m)
           caller ! Response(v2XeK2m)
         case Failure(x) =>
-          log.warning(s"no response--failure:",x)
+          log.error(x,s"no response--failure")
           caller ! akka.actor.Status.Failure(x)
       }
     case v1s: Seq[(K1,V1)] @unchecked =>
       log.info(s"received Seq[(K1,V1)]: with ${v1s.length} elements")
-      maybeLog("received",v1s)
+      maybeLog("received: {}",v1s)
       val caller = sender
       doMapReduce(Incoming[K1,V1](v1s)).onComplete {
         case Success(v2XeK2m) => caller ! Response(v2XeK2m)
@@ -114,15 +117,15 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1,V1)=>(K2,W),
   
   def doMapReduce(i: Incoming[K1,V1]) = for {
       wsK2m <- doMap(i)
-      z = maybeLog("shuffle", wsK2m)
+      z = maybeLog("shuffle: {}", wsK2m)
       v2XeK2m <- doDistributeReduceCollate(wsK2m)
     } yield v2XeK2m
     
   private def doMap(i: Incoming[K1,V1]): Future[Map[K2,Seq[W]]] = {
     val reply = (mapper ? i)
-    if (config.getBoolean("forgiving"))
+    if (Master.isForgiving(config: Config))
       reply.mapTo[(Map[K2,Seq[W]],Seq[Throwable])] map {
-        _ match { case (wsK2m,xs) => for (x <- xs) log.warning("mapper exception:",x); wsK2m }
+        _ match { case (wsK2m,xs) => for (x <- xs) log.error(x,"mapper exception"); wsK2m }
       }
     else {
       val wsK2mtf = reply.mapTo[Try[Map[K2,Seq[W]]]]
@@ -131,8 +134,8 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1,V1)=>(K2,W),
   }
 
   private def doDistributeReduceCollate(wsK2m: Map[K2,Seq[W]]): Future[Map[K2,Either[Throwable,V2]]] = {
-    if (wsK2m.size==0) log.warning("mapper returned empty map"+(if(config.getBoolean("forgiving"))""else": see log for problem and consider using Mapper_Forgiving instead"))
-    maybeLog("doDistributeReduceCollate", wsK2m)
+    if (wsK2m.size==0) log.warning("mapper returned empty map"+(if(Master.isForgiving(config: Config))""else": see log for problem and consider using Mapper_Forgiving instead"))
+    maybeLog("doDistributeReduceCollate: {}", wsK2m)
     val rs = Stream.continually(reducers.toStream).flatten
     val wsK2s = for ((k2,ws) <- wsK2m.toSeq) yield (k2,ws)
     val v2XeK2fs = for (((k2,ws),a) <- (wsK2s zip rs)) yield (a ? Intermediate(k2,ws)).mapTo[(K2,Either[Throwable,V2])]
@@ -189,11 +192,5 @@ object Master {
   def partition[K, V, X](vXeKm: Map[K,Either[X,V]]): (Seq[(K,Either[X,V])],Seq[(K,Either[X,V])]) = vXeKm.toSeq.partition({case (k,v) => v.isLeft})
   def toMap[K, V, X](t: (Seq[(K,X)],Seq[(K,V)])): (Map[K,X],Map[K,V]) = (t._1.toMap,t._2.toMap)
   def sequenceLeftRight[K, V, X](vXeKm: Map[K,Either[X,V]]): (Seq[(K,X)],Seq[(K,V)]) = tupleMap[Seq[(K,Either[X,V])],Seq[(K,X)],Seq[(K,Either[X,V])],Seq[(K,V)]](sequenceLeft,sequenceRight)(partition(vXeKm))
-  def getTimeout(t: String) = {
-    val durationR = """(\d+)\s*(\w+)""".r
-    t match {
-      case durationR(n,s) => new Timeout(FiniteDuration(n.toLong,s))
-      case _ => Timeout(10 seconds)
-    }
-  }
+  def isForgiving(config: Config) = config.getBoolean("forgiving")
 }

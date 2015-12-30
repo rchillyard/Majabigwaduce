@@ -126,7 +126,6 @@ case class Reduce[V1, S>:V1](f: (S,V1)=>S) extends Function1[Map[_,V1],S] {
 abstract class MapReduce_Base[T, K2, V2](system: ActorSystem)(implicit timeout: Timeout) extends MapReduce[T,K2,V2] { self =>
   implicit def ec = system.dispatcher
 	val master = system.actorOf(createProps, createName)
-//  val selection = system.actorSelection("akka://WebCrawler/user/mrpf-mstr-1")
   def apply(ts: Seq[T]) = {
     // Note: currently, we ignore the value of ok but we could pass back a tuple that includes ok and the resulting map
     for (v2K2r <- master.ask(ts).mapTo[Response[K2,V2]]; ok = report(v2K2r)) yield v2K2r.right
@@ -134,7 +133,7 @@ abstract class MapReduce_Base[T, K2, V2](system: ActorSystem)(implicit timeout: 
   def createProps: Props
   def createName: String
   def report(v2K2r: Response[K2,V2]): Boolean = {
-     for ((k,x) <- v2K2r.left) system.log.warning(s"exception thrown for key $k:",x)
+     for ((k,x) <- v2K2r.left) system.log.error(x,s"exception thrown (but forgiven) for key $k")
      v2K2r.size==0
   }
 }

@@ -220,8 +220,54 @@ Note that the first stage uses _MapReduceFirstFold_, the second stage uses _MapR
 
 If the names of variables look a bit odd to you, then see my "ScalaProf" blog: http://scalaprof.blogspot.com/2015/12/naming-of-identifiers.html
 
+WebCrawler
+----------
+
+Here is the web crawler example app:
+
+	object WebCrawler extends App {
+	  implicit val config = ConfigFactory.load
+	  val configApp = config.getConfig("WebCrawler")
+	  implicit val system = ActorSystem(configApp.getString("name"))   
+	  implicit val timeout: Timeout = getTimeout(config.getString("timeout"))
+	  import ExecutionContext.Implicits.global
+	  val ws = if (args.length>0) args.toSeq else Seq("http://www.htmldog.com/examples/")
+	  def init = Seq[String]()
+	  val stage1: MapReduce[String,URI,Seq[String]] = MapReduceFirstFold(
+	      {(q, w: String) => val u = new URI(w); (getHostURI(u), u)},
+	      {(a: Seq[String],v: URI)=> val s = Source.fromURL(v.toURL).mkString; a:+s},
+	      init _
+	    )
+	  val stage2 = MapReducePipeFold(
+	      {(w: URI, gs: Seq[String])=>(w, (for(g <- gs) yield getLinks(w,g)) reduce(_++_))},
+	      {(a: Seq[String],v: Seq[String])=>a++v},
+	      init _,
+	      1
+	    )
+	  val stage3 = Reduce[Seq[String],Seq[String]]({_++_})
+	  val crawler = stage1 compose stage2 compose stage3  
+	  val f = doCrawl(ws,Seq[String](),2) transform ({n: Seq[String] => println(s"total links: ${n.length}"); system.terminate}, {x: Throwable=>system.log.error(x,"Map/reduce error (typically in map function)"); x})
+	  Await.result(f,10.minutes)
+	  private def doCrawl(us: Seq[String], all: Seq[String], depth: Int): Future[Seq[String]] =
+	    if (depth<0) Future(all)
+	    else {
+	      system.log.info(s"doCrawl: depth=$depth; #us=${us.length}; #all=${all.length}")
+	      val (in, out) = us.partition { x => all.contains(x) }
+	      for (ws <- crawler(cleanup(out)); x <- doCrawl(ws, all++us, depth-1)) yield x
+	    }
+	  // For the other methods required, please see the project source code on github.
+	}
+  
+The application is somewhat similar to the _CountWords_ app, but because of the much greater load in reading all of the documents at any level of recursion, the first stage
+performs the actual document reading during its reduce phase. However, it also has three stages.
+
+The three stages combined as a pipeline called _crawler_ are invoked recursively by the method doCrawl.
+
+Because you cannot predict in advance what problems you will run into with badly formed (or non-existent) links, it is better to run this app in forgiving mode.
+
 Future enhancements
 ===================
 
 * Enable the shuffle process to match keys with reducers according to an application-specific mapping (rather than the current, arbitrary, mapping).
 * Enable reducers (and possibly mappers) to be replicated across a cluster.
+* Improve the configuration.
