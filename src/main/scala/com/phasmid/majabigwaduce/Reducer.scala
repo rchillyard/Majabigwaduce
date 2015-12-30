@@ -42,6 +42,18 @@ class Reducer_Fold[K2,W,V2](g: (V2,W)=>V2, z: =>V2) extends ReducerBase[K2,W,V2]
   def getValue(ws: Seq[W]): V2 = ws.foldLeft(z)(g)
 }
 
+/**
+ * Base class to implement different types of reducer.
+ * 
+ * Note that logging the actual values received in the incoming message can be VERY verbose.
+ * It is therefore recommended practice to log the values as they pass through the reducer function (g, in the sub-classes) which is
+ * under the control of the application.
+ * Therefore the call to maybeLog is commented out.
+ * 
+ * @param <K2> key type
+ * @param <W> value type
+ * @param <V2> the aggregation of W objects
+ */
 abstract class ReducerBase[K2,W,V2] extends MapReduceActor {
   
   override def receive = {

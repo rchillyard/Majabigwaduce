@@ -31,7 +31,7 @@ object CountWords extends App {
   
   def init = Seq[String]()
   val stage1 = MapReduceFirstFold(
-      {(q,w: String) => val u = MockURI(w); (u.getServer, u.content)},
+      {(q,w: String) => val u = MockURI(w); system.log.debug(s"stage1 map: $w"); (u.getServer, u.content)},
       {(a: Seq[String],v: String)=>a:+v},
       init _
     )

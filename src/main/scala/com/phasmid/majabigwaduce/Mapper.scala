@@ -24,6 +24,11 @@ import scala.util._
  * The normal reply is in the form of: Try[Map[K2,Seq[W]]] but, if the forgiving form of the mapper is used,
  * then the reply is in the form of a tuple: (Map[K2,Seq[W]], Seq[Throwable])
  * 
+ * Note that logging the actual values received in the incoming message can be VERY verbose.
+ * It is therefore recommended practice to log the values as they pass through the mapper function (f) which is
+ * under the control of the application.
+ * Therefore the call to maybeLog is commented out.
+ * 
  * @author scalaprof
  *
  * @param <K1> (input) key type (may be Unit)

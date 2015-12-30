@@ -48,7 +48,7 @@ trait MapReduce[T,K2,V2] extends Function1[Seq[T],Future[Map[K2,V2]]] {
  * @param <W> intermediate type
  * @param <V2> output value type (super-type of W)
  */
-case class MapReduceFirst[V1,K2,W,V2>:W](f: (Unit,V1)=>(K2,W), g: (V2,W)=>V2)(implicit config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_Base[V1,K2,V2](system)(timeout) {
+case class MapReduceFirst[V1,K2,W,V2>:W](f: (Unit,V1)=>(K2,W), g: (V2,W)=>V2)(implicit config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_LoggingBase[V1,K2,V2](config,system)(timeout) {
   def createProps= Props(new Master_First(config,f,g))
   def createName = s"""mrf-mstr"""
 }
@@ -62,7 +62,7 @@ case class MapReduceFirst[V1,K2,W,V2>:W](f: (Unit,V1)=>(K2,W), g: (V2,W)=>V2)(im
  * @param <W> intermediate type
  * @param <V2> output value type (super-type of W)
  */
-case class MapReducePipe[K1,V1,K2,W,V2>:W](f: (K1,V1)=>(K2,W), g: (V2,W)=>V2, n: Int)(implicit config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_Base[(K1,V1),K2,V2](system)(timeout) {
+case class MapReducePipe[K1,V1,K2,W,V2>:W](f: (K1,V1)=>(K2,W), g: (V2,W)=>V2, n: Int)(implicit config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_LoggingBase[(K1,V1),K2,V2](config,system)(timeout) {
   def createProps = Props(new Master(config,f,g))  
   def createName = s"""mrp-mstr-$n"""
 }
@@ -75,7 +75,7 @@ case class MapReducePipe[K1,V1,K2,W,V2>:W](f: (K1,V1)=>(K2,W), g: (V2,W)=>V2, n:
  * @param <W> intermediate type
  * @param <V2> output value type
  */
-case class MapReduceFirstFold[V1,K2,W,V2](f: (Unit,V1)=>(K2,W), g: (V2,W)=>V2, z: ()=>V2)(implicit config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_Base[V1,K2,V2](system)(timeout) {
+case class MapReduceFirstFold[V1,K2,W,V2](f: (Unit,V1)=>(K2,W), g: (V2,W)=>V2, z: ()=>V2)(implicit config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_LoggingBase[V1,K2,V2](config,system)(timeout) {
   def createProps = Props(new Master_First_Fold(config,f,g,z))  
   def createName = s"""mrff-mstr"""
 }
@@ -89,7 +89,7 @@ case class MapReduceFirstFold[V1,K2,W,V2](f: (Unit,V1)=>(K2,W), g: (V2,W)=>V2, z
  * @param <W> intermediate type
  * @param <V2> output value type
  */
-case class MapReducePipeFold[K1,V1,K2,W,V2](f: (K1,V1)=>(K2,W), g: (V2,W)=>V2, z: ()=>V2, n: Int)(implicit config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_Base[(K1,V1),K2,V2](system)(timeout) {
+case class MapReducePipeFold[K1,V1,K2,W,V2](f: (K1,V1)=>(K2,W), g: (V2,W)=>V2, z: ()=>V2, n: Int)(implicit config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_LoggingBase[(K1,V1),K2,V2](config,system)(timeout) {
   def createProps = Props(new Master_Fold(config,f,g,z))  
   def createName = s"""mrpf-mstr-$n"""
 }
@@ -119,6 +119,11 @@ case class Reduce[V1, S>:V1](f: (S,V1)=>S) extends Function1[Map[_,V1],S] {
   def apply(m: Map[_,V1]) = m.values reduceLeft f
 }
 
+abstract class MapReduce_LoggingBase[T, K2, V2](config: Config, system: ActorSystem)(implicit timeout: Timeout) extends MapReduce_Base[T,K2,V2](system)(timeout) { 
+  val exceptionStack = config.getBoolean("exceptionStack")
+  def logException(m: String, x: Throwable): Unit = if (exceptionStack) system.log.error(x,m) else system.log.warning(s"$m: ${x.getLocalizedMessage}")
+}
+
 /**
  * An abstract base class for MapReduce classes (other than MapReduceComposed).
  */
@@ -132,7 +137,8 @@ abstract class MapReduce_Base[T, K2, V2](system: ActorSystem)(implicit timeout: 
   def createProps: Props
   def createName: String
   def report(v2K2r: Response[K2,V2]): Boolean = {
-     for ((k,x) <- v2K2r.left) system.log.error(x,s"exception thrown (but forgiven) for key $k")
+     for ((k,x) <- v2K2r.left) logException(s"exception thrown (but forgiven) for key $k",x)
      v2K2r.size==0
   }
+  def logException(m: String, x: Throwable): Unit
 }

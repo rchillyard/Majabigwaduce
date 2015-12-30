@@ -48,7 +48,7 @@ abstract class MasterBaseFirst[V1, K2, W, V2](config: Config, f: (Unit,V1)=>(K2,
   override def receive = {
     case v1s: Seq[V1] =>
       log.info(s"received Seq[V1]: with ${v1s.length} elements")
-      maybeLog("received {}",v1s)
+//      maybeLog("received {}",v1s)
       val caller = sender
       doMapReduce(Incoming.sequence[Unit,V1](v1s)).onComplete {
         case Success(wXeK2m) => caller ! Response(wXeK2m)
@@ -60,6 +60,11 @@ abstract class MasterBaseFirst[V1, K2, W, V2](config: Config, f: (Unit,V1)=>(K2,
 }
 
 /**
+ * Note that logging the actual values received in the incoming message and other places can be VERY verbose.
+ * It is therefore recommended practice to log the values as they pass through the mapper/reducer functions (f,g) which are
+ * under the control of the application.
+ * Therefore the various calls to maybeLog are commented out.
+ * 
  * @author scalaprof
  *
  * @param <K1> key type: input may be organized by this key (may be "Unit").
@@ -81,6 +86,7 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1,V1)=>(K2,W),
   log.debug(s"creating $nReducers reducers")
   val reducers = for (i <- 1 to nReducers) yield context.actorOf(reducerProps(f,g,z), s"rdcr-$i")  
   if (Master.isForgiving(config)) log.debug("setting forgiving mode")
+  val exceptionStack = config.getBoolean("exceptionStack")
   
   def mapperProps(f: (K1,V1)=>(K2,W), config: Config): Props
   def reducerProps(f: (K1,V1)=>(K2,W), g: (V2,W)=>V2, z: ()=>V2): Props
@@ -90,7 +96,7 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1,V1)=>(K2,W),
   override def receive = {
     case v1K1m: Map[K1,V1] =>
       log.info(s"received Map[K1,V1]: with ${v1K1m.size} elements")
-      maybeLog("received: {}",v1K1m)
+//      maybeLog("received: {}",v1K1m)
       val caller = sender
       doMapReduce(Incoming.map[K1,V1](v1K1m)).onComplete {
         case Success(v2XeK2m) =>
@@ -102,7 +108,7 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1,V1)=>(K2,W),
       }
     case v1s: Seq[(K1,V1)] @unchecked =>
       log.info(s"received Seq[(K1,V1)]: with ${v1s.length} elements")
-      maybeLog("received: {}",v1s)
+//      maybeLog("received: {}",v1s)
       val caller = sender
       doMapReduce(Incoming[K1,V1](v1s)).onComplete {
         case Success(v2XeK2m) => caller ! Response(v2XeK2m)
@@ -114,7 +120,7 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1,V1)=>(K2,W),
   
   def doMapReduce(i: Incoming[K1,V1]) = for {
       wsK2m <- doMap(i)
-      z = maybeLog("shuffle: {}", wsK2m)
+//      z = maybeLog("shuffle: {}", wsK2m)
       v2XeK2m <- doDistributeReduceCollate(wsK2m)
     } yield v2XeK2m
     
@@ -122,7 +128,9 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1,V1)=>(K2,W),
     val reply = (mapper ? i)
     if (Master.isForgiving(config: Config))
       reply.mapTo[(Map[K2,Seq[W]],Seq[Throwable])] map {
-        _ match { case (wsK2m,xs) => for (x <- xs) log.error(x,"mapper exception"); wsK2m }
+        _ match {
+            case (wsK2m,xs) => for (x <- xs) logException(x); wsK2m
+          }
       }
     else {
       val wsK2mtf = reply.mapTo[Try[Map[K2,Seq[W]]]]
@@ -132,12 +140,14 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1,V1)=>(K2,W),
 
   private def doDistributeReduceCollate(wsK2m: Map[K2,Seq[W]]): Future[Map[K2,Either[Throwable,V2]]] = {
     if (wsK2m.size==0) log.warning("mapper returned empty map"+(if(Master.isForgiving(config: Config))""else": see log for problem and consider using Mapper_Forgiving instead"))
-    maybeLog("doDistributeReduceCollate: {}", wsK2m)
+//    maybeLog("doDistributeReduceCollate: {}", wsK2m)
     val rs = Stream.continually(reducers.toStream).flatten
     val wsK2s = for ((k2,ws) <- wsK2m.toSeq) yield (k2,ws)
     val v2XeK2fs = for (((k2,ws),a) <- (wsK2s zip rs)) yield (a ? Intermediate(k2,ws)).mapTo[(K2,Either[Throwable,V2])]
     for (wXeK2s <- Future.sequence(v2XeK2fs)) yield wXeK2s.toMap
   }
+  
+  private def logException(x: Throwable): Unit = if (exceptionStack) log.error(x,"mapper exception") else log.warning("mapper exception {}",x.getLocalizedMessage)
 }
 
 case class Response[K,V](left: Map[K,Throwable], right: Map[K,V]) {
