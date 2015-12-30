@@ -251,9 +251,8 @@ Here is the web crawler example app:
 	  private def doCrawl(us: Seq[String], all: Seq[String], depth: Int): Future[Seq[String]] =
 	    if (depth<0) Future(all)
 	    else {
-	      system.log.info(s"doCrawl: depth=$depth; #us=${us.length}; #all=${all.length}")
-	      val (in, out) = us.partition { x => all.contains(x) }
-	      for (ws <- crawler(cleanup(out)); x <- doCrawl(ws, all++us, depth-1)) yield x
+	      val (in, out) = us.partition { u => all.contains(u) }
+	      for (ws <- crawler(cleanup(out)); gs <- doCrawl(ws.distinct, (all++us).distinct, depth-1)) yield gs
 	    }
 	  // For the other methods required, please see the project source code on github.
 	}
@@ -261,9 +260,10 @@ Here is the web crawler example app:
 The application is somewhat similar to the _CountWords_ app, but because of the much greater load in reading all of the documents at any level of recursion, the first stage
 performs the actual document reading during its reduce phase. However, it also has three stages.
 
-The three stages combined as a pipeline called _crawler_ are invoked recursively by the method doCrawl.
+The three stages combined as a pipeline called _crawler_ are invoked recursively by the method _doCrawl_.
 
 Because you cannot predict in advance what problems you will run into with badly formed (or non-existent) links, it is better to run this app in forgiving mode.
+Expect about 250 links to be visited given the default value of _ws_.
 
 Future enhancements
 ===================

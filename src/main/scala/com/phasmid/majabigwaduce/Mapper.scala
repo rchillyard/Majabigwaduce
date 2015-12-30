@@ -5,7 +5,7 @@ import scala.collection.mutable.HashMap
 import scala.util._
 
 /**
- * The purpose of this mapper is to convert a sequence of V objects into several sequences, each of which is
+ * The purpose of this mapper is to convert a sequence of objects into several sequences, each of which is
  * associated with a key. It must be possible to do further processing (the reduce phase) on each of these
  * resulting sequences independently (and, thus in parallel).
  * Furthermore, the mapping function should try, when possible, to divide the input sequence into a number
@@ -21,7 +21,8 @@ import scala.util._
  * and returns an empty map (after logging an error). However, you can change this behavior in the configuration
  * file by setting forgiving=true.
  * 
- * The reply is in the form of a tuple: Try[Map[K2,W]]
+ * The normal reply is in the form of: Try[Map[K2,Seq[W]]] but, if the forgiving form of the mapper is used,
+ * then the reply is in the form of a tuple: (Map[K2,Seq[W]], Seq[Throwable])
  * 
  * @author scalaprof
  *

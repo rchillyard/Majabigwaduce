@@ -58,8 +58,8 @@ object WebCrawler extends App {
     if (depth<0) Future(all)
     else {
       system.log.info(s"doCrawl: depth=$depth; #us=${us.length}; #all=${all.length}")
-      val (in, out) = us.partition { x => all.contains(x) }
-      for (ws <- crawler(cleanup(out)); x <- doCrawl(ws, all++us, depth-1)) yield x
+      val (in, out) = us.partition { u => all.contains(u) }
+      for (ws <- crawler(cleanup(out)); gs <- doCrawl(ws.distinct, (all++us).distinct, depth-1)) yield gs
     }
   private def cleanup(ws: Seq[String]): Seq[String] = (for (w <- ws; if (w.indexOf('?') == -1); t=trim(w,'#')) yield t).distinct
   private def trim(s: String, p: Char): String = {

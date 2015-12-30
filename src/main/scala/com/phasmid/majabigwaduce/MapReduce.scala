@@ -6,7 +6,6 @@ import scala.concurrent.duration._
 import akka.actor.{ActorSystem, Props, ActorRef}
 import akka.util.Timeout
 import akka.pattern.ask
-import java.net.URI
 import com.typesafe.config.Config
 
 /**

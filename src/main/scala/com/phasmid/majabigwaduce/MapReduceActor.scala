@@ -1,6 +1,6 @@
 package com.phasmid.majabigwaduce
 
-import akka.actor.{ Actor, ActorLogging, ActorRef }
+import akka.actor.{ Actor, ActorLogging }
 import scala.concurrent.duration._
 import akka.util.Timeout
 
