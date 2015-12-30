@@ -174,7 +174,7 @@ Examples
 There are several examples provided (in the examples directory):
 
 * CountWords: a simple example which counts the words in documents and can provide a total word count of all documents.
-* WebCralwer: a more complex version of the same sort of thing.
+* WebCrawler: a more complex version of the same sort of thing.
 
 CountWords
 ----------
@@ -271,7 +271,7 @@ performs the actual document reading during its reduce phase. However, it also h
 The three stages combined as a pipeline called _crawler_ are invoked recursively by the method _doCrawl_.
 
 Because you cannot predict in advance what problems you will run into with badly formed (or non-existent) links, it is better to run this app in forgiving mode.
-Expect about 250 links to be visited given the default value of _ws_.
+Expect about 250 links to be visited given the default value of _ws_ and depth of 2.
 
 Future enhancements
 ===================

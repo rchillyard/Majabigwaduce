@@ -30,7 +30,8 @@ object WebCrawler extends App {
   implicit val system = ActorSystem(config.getString("name"))   
   implicit val timeout: Timeout = getTimeout(config.getString("timeout"))
   import ExecutionContext.Implicits.global
-  val ws = if (args.length>0) args.toSeq else Seq("http://www.htmldog.com/examples/")  
+  val ws = if (args.length>0) args.toSeq else Seq(config.getString("start"))
+  val depth = config.getInt("depth")
   
   def init = Seq[String]()
   val stage1: MapReduce[String,URI,Seq[String]] = MapReduceFirstFold(
@@ -46,7 +47,7 @@ object WebCrawler extends App {
     )
   val stage3 = Reduce[Seq[String],Seq[String]]({_++_})
   val crawler = stage1 compose stage2 compose stage3  
-  val f = doCrawl(ws,Seq[String](),2) transform ({n: Seq[String] => println(s"total links: ${n.length}"); system.terminate}, {x: Throwable=>system.log.error(x,"Map/reduce error (typically in map function)"); x})
+  val f = doCrawl(ws,Seq[String](),depth) transform ({n: Seq[String] => println(s"total links: ${n.length}"); system.terminate}, {x: Throwable=>system.log.error(x,"Map/reduce error (typically in map function)"); x})
   Await.result(f,10.minutes)
   
   private def getLinks(w: URI, g: String): Seq[String] = for (
