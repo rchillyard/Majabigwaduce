@@ -68,6 +68,8 @@ object WebCrawler extends App {
   }
   private def getHostURI(u: URI): URI = new URL(u.getScheme+"://"+u.getHost).toURI
   private def normalizeURL(w: URI, w2: String) = new URL(w.toURL,w2.toString).toString
+  
+  // TODO try to combine this with the same method in MapReduceActor
   def getTimeout(t: String) = {
     val durationR = """(\d+)\s*(\w+)""".r
     t match {

@@ -81,6 +81,7 @@ Russian President Vladimir Putin was rebuffed in his bid to gain support for his
       }
   }
   
+  // TODO try to combine this with the same method in MapReduceActor
   def getTimeout(t: String) = {
     val durationR = """(\d+)\s*(\w+)""".r
     t match {

@@ -152,6 +152,12 @@ Thus a pipeline in functional form is a closure which captures all of the functi
 
 See the _CountWords_ example (below). 
 
+Configuration
+============
+
+Configuration is based on Typesafe _Config_ (as is normal with _Akka_ applications).
+Please see the _reference.conf_ file in the main/resources directory for the list of configurable parameters with their explanations.
+
 Dependencies
 ============
 
@@ -159,6 +165,7 @@ The components that are used by this project are:
 
 * Scala (2.11.7)
 * Akka (2.4.1) although it was developed using 2.3.12 and the only difference in source code is terminate instead of shutdown.
+* Typesafe Configuration (1.3.0)
 * and dependencies thereof
 
 Examples
