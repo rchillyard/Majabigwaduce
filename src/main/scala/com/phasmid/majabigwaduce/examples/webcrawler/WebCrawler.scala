@@ -25,9 +25,9 @@ import java.net.URL
  * @author scalaprof
  */
 object WebCrawler extends App {
-  implicit val config = ConfigFactory.load
-  val configApp = config.getConfig("WebCrawler")
-  implicit val system = ActorSystem(configApp.getString("name"))   
+  val configRoot = ConfigFactory.load
+  implicit val config = configRoot.getConfig("WebCrawler")
+  implicit val system = ActorSystem(config.getString("name"))   
   implicit val timeout: Timeout = getTimeout(config.getString("timeout"))
   import ExecutionContext.Implicits.global
   val ws = if (args.length>0) args.toSeq else Seq("http://www.htmldog.com/examples/")  

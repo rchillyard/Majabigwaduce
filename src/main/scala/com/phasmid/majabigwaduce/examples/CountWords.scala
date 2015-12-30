@@ -23,8 +23,9 @@ import com.phasmid.majabigwaduce._
  * @author scalaprof
  */
 object CountWords extends App {
-  implicit val config = ConfigFactory.load
-  implicit val system = ActorSystem(config.getString("name")+"_CountWords")   
+  val configRoot = ConfigFactory.load
+  implicit val config = configRoot.getConfig("CountWords")
+  implicit val system = ActorSystem(config.getString("name"))   
   implicit val timeout: Timeout = getTimeout(config.getString("timeout"))
   import ExecutionContext.Implicits.global
   

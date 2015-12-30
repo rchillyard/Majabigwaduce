@@ -75,11 +75,12 @@ abstract class MasterBaseFirst[V1, K2, W, V2](config: Config, f: (Unit,V1)=>(K2,
  */
 abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1,V1)=>(K2,W), g: (V2,W)=>V2, z: ()=>V2) extends MapReduceActor {
   implicit val timeout = getTimeout(config.getString("timeout"))
-  val mapper = context.actorOf(mapperProps(f,config), "mpr")
-  val reducers = for (i <- 1 to config.getInt("reducers")) yield context.actorOf(reducerProps(f,g,z), s"rdcr-$i")
   import context.dispatcher
-  
-  if (Master.isForgiving(config)) log.info("setting forgiving mode")
+  val mapper = context.actorOf(mapperProps(f,config), "mpr")
+  val nReducers = config.getInt("reducers")
+  log.debug(s"creating $nReducers reducers")
+  val reducers = for (i <- 1 to nReducers) yield context.actorOf(reducerProps(f,g,z), s"rdcr-$i")  
+  if (Master.isForgiving(config)) log.debug("setting forgiving mode")
   
   def mapperProps(f: (K1,V1)=>(K2,W), config: Config): Props
   def reducerProps(f: (K1,V1)=>(K2,W), g: (V2,W)=>V2, z: ()=>V2): Props
@@ -137,7 +138,6 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1,V1)=>(K2,W),
     val v2XeK2fs = for (((k2,ws),a) <- (wsK2s zip rs)) yield (a ? Intermediate(k2,ws)).mapTo[(K2,Either[Throwable,V2])]
     for (wXeK2s <- Future.sequence(v2XeK2fs)) yield wXeK2s.toMap
   }
-  
 }
 
 case class Response[K,V](left: Map[K,Throwable], right: Map[K,V]) {

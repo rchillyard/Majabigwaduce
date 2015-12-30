@@ -27,7 +27,7 @@ abstract class MapReduceActor extends Actor with ActorLogging {
       case durationR(n,s) => new Timeout(FiniteDuration(n.toLong,s))
       case _ => Timeout(10 seconds)
     }
-    log.info(s"setting timeout to: $timeout")
+    log.debug(s"setting timeout to: $timeout")
     timeout
   }
   def close = {

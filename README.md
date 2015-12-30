@@ -175,9 +175,10 @@ CountWords
 Here is the _CountWords_ app. It actually uses a "mock" URI rather than the real thing, but of course, it's simple to change it to use real URIs. I have not included the mock URI code:
 
 	object CountWords extends App {
-	  val config = ConfigFactory.load()
-	  implicit val system = ActorSystem("CountWords")    
-	  implicit val timeout: Timeout = Timeout(10 seconds)
+	  val configRoot = ConfigFactory.load
+	  implicit val config = configRoot.getConfig("CountWords")
+	  implicit val system = ActorSystem(config.getString("name"))   
+	  implicit val timeout: Timeout = getTimeout(config.getString("timeout"))
 	  import ExecutionContext.Implicits.global
 	  def init = Seq[String]()
 	  val stage1= MapReduceFirstFold(
@@ -226,9 +227,9 @@ WebCrawler
 Here is the web crawler example app:
 
 	object WebCrawler extends App {
-	  implicit val config = ConfigFactory.load
-	  val configApp = config.getConfig("WebCrawler")
-	  implicit val system = ActorSystem(configApp.getString("name"))   
+	  val configRoot = ConfigFactory.load
+	  implicit val config = configRoot.getConfig("WebCrawler")
+	  implicit val system = ActorSystem(config.getString("name"))   
 	  implicit val timeout: Timeout = getTimeout(config.getString("timeout"))
 	  import ExecutionContext.Implicits.global
 	  val ws = if (args.length>0) args.toSeq else Seq("http://www.htmldog.com/examples/")
@@ -270,4 +271,3 @@ Future enhancements
 
 * Enable the shuffle process to match keys with reducers according to an application-specific mapping (rather than the current, arbitrary, mapping).
 * Enable reducers (and possibly mappers) to be replicated across a cluster.
-* Improve the configuration.

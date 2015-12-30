@@ -94,7 +94,7 @@ class MapReduceSpec extends FlatSpec with Matchers with Futures with ScalaFuture
     val props2 = Props.create(classOf[Master[URL,Seq[String],URL,Int,Int]], config, mapper2 _, adder _)
     val master2 = system.actorOf(props2, s"WC-2b-master")
     val wsUrf = master1.ask(Seq("http://www.bbc.com/", "http://www.cnn.com/", "http://default/")).mapTo[Response[URL,Seq[String]]]
-    val iUrf = wsUrf flatMap {wsUr => val wsUm = wsUr.right; Console.err.println(s"wsUm=$wsUm"); master2.ask(wsUm).mapTo[Response[URL,Int]]}
+    val iUrf = wsUrf flatMap {wsUr => val wsUm = wsUr.right; master2.ask(wsUm).mapTo[Response[URL,Int]]}
     iUrf.onComplete {
       case Failure(x) => {
         x shouldBe a [MapReduceException]
