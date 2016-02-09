@@ -35,7 +35,7 @@ object WebCrawler extends App {
   
   def init = Seq[String]()
   val stage1: MapReduce[String,URI,Seq[String]] = MapReduceFirstFold(
-      {(q, w: String) => val u = new URI(w); (getHostURI(u), u)},
+      {w: String => val u = new URI(w); (getHostURI(u), u)},
       {(a: Seq[String],v: URI)=> val s = Source.fromURL(v.toURL).mkString; a:+s},
       init _
     )

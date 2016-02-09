@@ -1,6 +1,5 @@
 package com.phasmid.majabigwaduce
 
-import akka.actor.ActorRef
 import scala.util._
 
 /**

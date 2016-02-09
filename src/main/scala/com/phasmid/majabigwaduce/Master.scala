@@ -3,28 +3,109 @@ package com.phasmid.majabigwaduce
 import scala.concurrent._
 import scala.concurrent.duration._
 import scala.util._
-import akka.actor.{ ActorSystem, Props, ActorRef }
-import akka.pattern.ask
-import akka.util.Timeout
+
 import com.typesafe.config.Config
 
+import akka.actor.Props
+import akka.pattern.ask
+
+/**
+ * @author scalaprof
+ *
+ * @param <V1> input type: the message which this actor responds to is of type Seq[V1].
+ * @param <V1> input type: the message which this actor responds to is of type Seq[V1].
+ * @param <K2> key type: mapper groups things by this key and reducer processes said groups.
+ * @param <W> transitional type -- used internally
+ * @param <V2> output type: the message which is sent on completion to the sender is of type Response[K2,V2]
+ * 
+ * @param config an instance of Config which defines a suitable configuration
+ * @param f the mapper function which takes a V1 and creates a key-value tuple of type (K2,W)
+ * @param g the reducer function which combines two values (an V2 and a W) into one V2
+ * @param z the "zero" or "unit" (i.e. initializer) function which creates an "empty" V2.
+ */
 class Master[K1, V1, K2, W, V2>:W](config: Config, f: (K1,V1)=>(K2,W), g: (V2,W)=>V2) extends MasterBase[K1, V1, K2, W, V2](config, f, g, Master.zero) with ByReduce[K1, V1, K2, W, V2] 
 
+/**
+ * @param <V1> input type: the message which this actor responds to is of type Seq[V1].
+ * @param <V1> input type: the message which this actor responds to is of type Seq[V1].
+ * @param <K2> key type: mapper groups things by this key and reducer processes said groups.
+ * @param <W> transitional type -- used internally
+ * @param <V2> output type: the message which is sent on completion to the sender is of type Response[K2,V2]
+ * 
+ * @param config an instance of Config which defines a suitable configuration
+ * @param f the mapper function which takes a V1 and creates a key-value tuple of type (K2,W)
+ * @param g the reducer function which combines two values (an V2 and a W) into one V2
+ * @param z the "zero" or "unit" (i.e. initializer) function which creates an "empty" V2.
+ */
 class Master_Fold[K1, V1, K2, W, V2](config: Config, f: (K1,V1)=>(K2,W), g: (V2,W)=>V2, z: ()=>V2) extends MasterBase[K1, V1, K2, W, V2](config, f, g, z) with ByFold[K1, V1, K2, W, V2]
 
-class Master_First[V1, K2, W, V2>:W](config: Config, f: (Unit,V1)=>(K2,W), g: (V2,W)=>V2) extends MasterBaseFirst[V1, K2, W, V2](config, f, g, Master.zero) with ByReduce[Unit, V1, K2, W, V2]
+/**
+ * @param <V1> input type: the message which this actor responds to is of type Seq[V1].
+ * @param <V1> input type: the message which this actor responds to is of type Seq[V1].
+ * @param <K2> key type: mapper groups things by this key and reducer processes said groups.
+ * @param <W> transitional type -- used internally
+ * @param <V2> output type: the message which is sent on completion to the sender is of type Response[K2,V2]
+ * 
+ * @param config an instance of Config which defines a suitable configuration
+ * @param f the mapper function which takes a V1 and creates a key-value tuple of type (K2,W)
+ * @param g the reducer function which combines two values (an V2 and a W) into one V2
+ * @param z the "zero" or "unit" (i.e. initializer) function which creates an "empty" V2.
+ */
+class Master_First[V1, K2, W, V2>:W](config: Config, f: V1=>(K2,W), g: (V2,W)=>V2) extends MasterBaseFirst[V1, K2, W, V2](config, f, g, Master.zero) with ByReduce[Unit, V1, K2, W, V2]
 
-class Master_First_Fold[V1, K2, W, V2](config: Config, f: (Unit,V1)=>(K2,W), g: (V2,W)=>V2, z: ()=>V2) extends MasterBaseFirst[V1, K2, W, V2](config, f, g, z) with ByFold[Unit, V1, K2, W, V2]
+/**
+ * @param <V1> input type: the message which this actor responds to is of type Seq[V1].
+ * @param <V1> input type: the message which this actor responds to is of type Seq[V1].
+ * @param <K2> key type: mapper groups things by this key and reducer processes said groups.
+ * @param <W> transitional type -- used internally
+ * @param <V2> output type: the message which is sent on completion to the sender is of type Response[K2,V2]
+ * 
+ * @param config an instance of Config which defines a suitable configuration
+ * @param f the mapper function which takes a V1 and creates a key-value tuple of type (K2,W)
+ * @param g the reducer function which combines two values (an V2 and a W) into one V2
+ * @param z the "zero" or "unit" (i.e. initializer) function which creates an "empty" V2.
+ */
+class Master_First_Fold[V1, K2, W, V2](config: Config, f: V1=>(K2,W), g: (V2,W)=>V2, z: ()=>V2) extends MasterBaseFirst[V1, K2, W, V2](config, f, g, z) with ByFold[Unit, V1, K2, W, V2]
 
+/**
+ * @param <V1> input type: the message which this actor responds to is of type Seq[V1].
+ * @param <V1> input type: the message which this actor responds to is of type Seq[V1].
+ * @param <K2> key type: mapper groups things by this key and reducer processes said groups.
+ * @param <W> transitional type -- used internally
+ * @param <V2> output type: the message which is sent on completion to the sender is of type Response[K2,V2]
+ * 
+ * @param config an instance of Config which defines a suitable configuration
+ * @param f the mapper function which takes a V1 and creates a key-value tuple of type (K2,W)
+ * @param g the reducer function which combines two values (an V2 and a W) into one V2
+ * @param z the "zero" or "unit" (i.e. initializer) function which creates an "empty" V2.
+ */
 trait ByReduce[K1, V1, K2, W, V2>:W] {
-    def mapperProps(f: (K1,V1)=>(K2,W), config: Config): Props = 
-      if (Master.isForgiving(config)) Props.create(classOf[Mapper_Forgiving[K1,V1,K2,W]], f) else Props.create(classOf[Mapper[K1,V1,K2,W]], f)
-    def reducerProps(f: (K1,V1)=>(K2,W), g: (V2,W)=>V2, z: ()=>V2): Props = Props.create(classOf[Reducer[K2,W,V2]], g)
+    /**
+     * @param g
+     * @param z ignored
+     * @return
+     */
+    def reducerProps(g: (V2,W)=>V2, z: ()=>V2): Props = Props.create(classOf[Reducer[K2,W,V2]], g)
 }
+/**
+ * @param <V1> input type: the message which this actor responds to is of type Seq[V1].
+ * @param <V1> input type: the message which this actor responds to is of type Seq[V1].
+ * @param <K2> key type: mapper groups things by this key and reducer processes said groups.
+ * @param <W> transitional type -- used internally
+ * @param <V2> output type: the message which is sent on completion to the sender is of type Response[K2,V2]
+ * 
+ * @param config an instance of Config which defines a suitable configuration
+ * @param f the mapper function which takes a V1 and creates a key-value tuple of type (K2,W)
+ * @param g the reducer function which combines two values (an V2 and a W) into one V2
+ * @param z the "zero" or "unit" (i.e. initializer) function which creates an "empty" V2.
+ */
 trait ByFold[K1, V1, K2, W, V2]{
-    def mapperProps(f: (K1,V1)=>(K2,W), config: Config): Props =
-      if (Master.isForgiving(config: Config)) Props.create(classOf[Mapper_Forgiving[K1,V1,K2,W]], f) else Props.create(classOf[Mapper[K1,V1,K2,W]], f)
-    def reducerProps(f: (K1,V1)=>(K2,W), g: (V2,W)=>V2, z: ()=>V2): Props = Props.create(classOf[Reducer_Fold[K2,W,V2]], g, z)
+    /**
+     * @param g
+		 * @param z the "zero" or "unit" (i.e. initializer) function which creates an "empty" V2.
+     * @return
+     */
+    def reducerProps(g: (V2,W)=>V2, z: ()=>V2): Props = Props.create(classOf[Reducer_Fold[K2,W,V2]], g, z)
 }
 
 /**
@@ -33,17 +114,17 @@ trait ByFold[K1, V1, K2, W, V2]{
  * This version of the MasterBase class (which it extends) take a different type of message: to wit, a Seq[V1].
  * That is to say, there is no K1 type.
  * 
- * @author scalaprof
- *
  * @param <V1> input type: the message which this actor responds to is of type Seq[V1].
  * @param <K2> key type: mapper groups things by this key and reducer processes said groups.
  * @param <W> transitional type -- used internally
  * @param <V2> output type: the message which is sent on completion to the sender is of type Response[K2,V2]
  * 
+ * @param config an instance of Config which defines a suitable configuration
  * @param f the mapper function which takes a V1 and creates a key-value tuple of type (K2,W)
  * @param g the reducer function which combines two values (an V2 and a W) into one V2
+ * @param z the "zero" or "unit" (i.e. initializer) function which creates an "empty" V2.
  */
-abstract class MasterBaseFirst[V1, K2, W, V2](config: Config, f: (Unit,V1)=>(K2,W), g: (V2,W)=>V2, z: ()=>V2) extends MasterBase[Unit, V1, K2, W, V2](config, f, g, z) {
+abstract class MasterBaseFirst[V1, K2, W, V2](config: Config, f: V1=>(K2,W), g: (V2,W)=>V2, z: ()=>V2) extends MasterBase[Unit, V1, K2, W, V2](config,Master.lift(f), g, z) {
   import context.dispatcher
   override def receive = {
     case v1s: Seq[V1] =>
@@ -65,31 +146,39 @@ abstract class MasterBaseFirst[V1, K2, W, V2](config: Config, f: (Unit,V1)=>(K2,
  * under the control of the application.
  * Therefore the various calls to maybeLog are commented out.
  * 
- * @author scalaprof
- *
  * @param <K1> key type: input may be organized by this key (may be "Unit").
  * @param <V1> input type: the message which this actor responds to is of type Map[K1,V1]
  * @param <K2> key type: mapper groups things by this key and reducer processes said groups.
  * @param <W> transitional type -- used internally
  * @param <V2> output type: the message which is sent on completion to the sender is of type Response[K2,V2]
  * 
+ * @param config an instance of Config which defines a suitable configuration
  * @param f the mapper function which takes a K1,V1 pair and creates a key-value tuple of type (K2,W)
  * @param g the reducer function which combines two values (an V2 and a W) into one V2
- * @param z the zero (initializer) function which creates an "empty" V2.
- * @param n the stage number of this map-reduce stage.
+ * @param z the "zero" or "unit" (i.e. initializer) function which creates an "empty" V2.
  */
 abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1,V1)=>(K2,W), g: (V2,W)=>V2, z: ()=>V2) extends MapReduceActor {
   implicit val timeout = getTimeout(config.getString("timeout"))
   import context.dispatcher
-  val mapper = context.actorOf(mapperProps(f,config), "mpr")
+  val mapper = context.actorOf(mapperProps, "mpr")
   val nReducers = config.getInt("reducers")
   log.debug(s"creating $nReducers reducers")
-  val reducers = for (i <- 1 to nReducers) yield context.actorOf(reducerProps(f,g,z), s"rdcr-$i")  
+  val reducers = for (i <- 1 to nReducers) yield context.actorOf(reducerProps(g,z), s"rdcr-$i")  
   if (Master.isForgiving(config)) log.debug("setting forgiving mode")
   val exceptionStack = config.getBoolean("exceptionStack")
   
-  def mapperProps(f: (K1,V1)=>(K2,W), config: Config): Props
-  def reducerProps(f: (K1,V1)=>(K2,W), g: (V2,W)=>V2, z: ()=>V2): Props
+  /**
+	 * @return an instance of Props appropriate to the the given parameters
+   */
+    def mapperProps: Props = 
+      if (Master.isForgiving(config)) Props.create(classOf[Mapper_Forgiving[K1,V1,K2,W]], f) else Props.create(classOf[Mapper[K1,V1,K2,W]], f)
+  /**
+	 * @param f the mapper function which takes a K1,V1 pair and creates a key-value tuple of type (K2,W)
+	 * @param g the reducer function which combines two values (an V2 and a W) into one V2
+	 * @param z the "zero" or "unit" (i.e. initializer) function which creates an "empty" V2.
+	 * @return an instance of Props appropriate to the the given parameters
+	 */
+  def reducerProps(g: (V2,W)=>V2, z: ()=>V2): Props
   
   // CONSIDER reworking this so that there is only one possible valid message: 
   // either in Map[] form of Seq[()] form. I don't really like having both
@@ -240,8 +329,17 @@ object Master {
   def sequenceLeftRight[K, V, X](vXeKm: Map[K,Either[X,V]]): (Seq[(K,X)],Seq[(K,V)]) = tupleMap[Seq[(K,Either[X,V])],Seq[(K,X)],Seq[(K,Either[X,V])],Seq[(K,V)]](sequenceLeft,sequenceRight)(partition(vXeKm))
   /**
    * method isForgiving which looks up the value of the forgiving property of the configuration.
-	 * @param config an instance of Config
+	 * @param config an instance of Config which defines a suitable configuration
 	 * @return true/false according to the property's value in config
 	 */
   def isForgiving(config: Config) = config.getBoolean("forgiving")
+  /**
+   * Method toTuple which takes a plain value of type V and creates a (Unit,V) tuple
+   * 
+   * CONSIDER rewriting this so that it returns Function1[(Unit,V1),(K2,W)], i.e. currying the returned function
+   * 
+	 * @param v the value
+	 * @return a tuple of (Unit,v)
+	 */
+  def lift[V1, K2, W](f: V1=>(K2,W)): Function2[Unit,V1,(K2,W)] = {case (u,v) => f(v)}
 }

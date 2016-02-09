@@ -33,7 +33,7 @@ class MapReduceSpec extends FlatSpec with Matchers with Futures with ScalaFuture
   val spec3 = "TF-2"
 
  `spec1` should "work for http://www.bbc.com/ http://www.cnn.com/ http://default/" in {    
-    def mapper(q: Unit, w: String): (URL,String) = {val u = MockURL(w); (u.get, u.content)}
+    def mapper(w: String): (URL,String) = {val u = MockURL(w); (u.get, u.content)}
     val props = Props.create(classOf[Master_First_Fold[String,URL,String,Seq[String]]], config, mapper _, reducer _, init _)
     val master = system.actorOf(props, s"""mstr-$spec1""")
     val wsUrf = master.ask(Seq("http://www.bbc.com/", "http://www.cnn.com/", "http://default/")).mapTo[Response[URL,Seq[String]]]
@@ -66,7 +66,7 @@ class MapReduceSpec extends FlatSpec with Matchers with Futures with ScalaFuture
   }
   
   `spec0` should "work for http://www.bbc.com/ http://www.cnn.com/ http://default/" in {    
-    def mapper1(q: Unit, w: String): (URL,String) = {val u = MockURL(w); (u.get, u.content)}
+    def mapper1(w: String): (URL,String) = {val u = MockURL(w); (u.get, u.content)}
     val props1 = Props.create(classOf[Master_First_Fold[String,URL,String,Seq[String]]], config, mapper1 _, reducer _, init _)
     val master1 = system.actorOf(props1, s"WC-1-master")
     def mapper2(w: URL, gs: Seq[String]): (URL,Int) = (w, (for(g <- gs) yield g.split("""\s+""").length) reduce(_+_))
@@ -87,7 +87,7 @@ class MapReduceSpec extends FlatSpec with Matchers with Futures with ScalaFuture
   }
   
   it should "fail because mapper is incorrectly defined" in {    
-    def mapper1(q: Unit, w: String): (URL,String) = {val u = MockURL(w); (u.get, u.content)}
+    def mapper1(w: String): (URL,String) = {val u = MockURL(w); (u.get, u.content)}
     val props1 = Props.create(classOf[Master_First_Fold[String,URL,String,Seq[String]]], config, mapper1 _, reducer _, init _)
     val master1 = system.actorOf(props1, s"WC-1b-master")
     def mapper2(w: String, gs: Seq[String]): (String,Int) = (w, (for(g <- gs) yield g.split("""\s+""").length) reduce(_+_))

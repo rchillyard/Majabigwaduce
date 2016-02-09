@@ -1,12 +1,14 @@
 package com.phasmid.majabigwaduce
 
-import scala.util._
 import scala.concurrent._
 import scala.concurrent.duration._
-import akka.actor.{ActorSystem, Props, ActorRef}
+import scala.util._
+
+import com.typesafe.config.Config
+
+import akka.actor.{ActorSystem,Props}
 import akka.util.Timeout
 import akka.pattern.ask
-import com.typesafe.config.Config
 
 /**
  * MapReduce is a trait, with case classes, which implements a functional API for the map-reduce classes in this package.
@@ -22,15 +24,17 @@ import com.typesafe.config.Config
 trait MapReduce[T,K2,V2] extends Function1[Seq[T],Future[Map[K2,V2]]] {
     /**
      * compose this MapReduce object with mr, yielding a new MapReduce object.
+		 * @param <K3> the key type of the composed MapReduce object
+		 * @param <V3> the value type of the composed MapReduce object
      * @param mr the other MapReduce object
      * @return a new MapReduceComposed object
      */
     def compose[K3,V3](mr: MapReduce[(K2,V2),K3,V3]): MapReduce[T,K3,V3] = MapReduceComposed(this,mr)
     /**
      * terminate this MapReduce object with r, a reducer which yields a simple value
+     * @param <S> the return type
      * @param r the Reduce object
      * @param executionContext (implicit)
-     * @param <S> the return type
      * @return a Future of an object of type S (for sum, or sigma).
      */
     def compose[S>:V2](r: Reduce[V2,S])(implicit executionContext: ExecutionContext): Function1[Seq[T],Future[S]]= { ts => for (v2K2m <- apply(ts); s = r.apply(v2K2m)) yield s }
@@ -47,8 +51,15 @@ trait MapReduce[T,K2,V2] extends Function1[Seq[T],Future[Map[K2,V2]]] {
  * @param <K2> output key type
  * @param <W> intermediate type
  * @param <V2> output value type (super-type of W)
+ * 
+ * @param f the mapper function which takes a V1 instance and creates a key-value tuple of type (K2,W)
+ * @param g the reducer function which combines two values (an V2 and a W) into one V2
+ * 
+ * @param config an instance of Config which defines a suitable configuration
+ * @param system the actor system
+ * @param timeout the value of timeout to be used
  */
-case class MapReduceFirst[V1,K2,W,V2>:W](f: (Unit,V1)=>(K2,W), g: (V2,W)=>V2)(implicit config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_LoggingBase[V1,K2,V2](config,system)(timeout) {
+case class MapReduceFirst[V1,K2,W,V2>:W](f: V1=>(K2,W), g: (V2,W)=>V2)(implicit config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_LoggingBase[V1,K2,V2](config,system)(timeout) {
   def createProps= Props(new Master_First(config,f,g))
   def createName = s"""mrf-mstr"""
 }
@@ -61,6 +72,14 @@ case class MapReduceFirst[V1,K2,W,V2>:W](f: (Unit,V1)=>(K2,W), g: (V2,W)=>V2)(im
  * @param <K2> output key type
  * @param <W> intermediate type
  * @param <V2> output value type (super-type of W)
+ * 
+ * @param f the mapper function which takes a K1,V1 pair and creates a key-value tuple of type (K2,W)
+ * @param g the reducer function which combines two values (an V2 and a W) into one V2
+ * @param n the stage number of this map-reduce stage.
+ * 
+ * @param config an instance of Config which defines a suitable configuration
+ * @param system the actor system
+ * @param timeout the value of timeout to be used
  */
 case class MapReducePipe[K1,V1,K2,W,V2>:W](f: (K1,V1)=>(K2,W), g: (V2,W)=>V2, n: Int)(implicit config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_LoggingBase[(K1,V1),K2,V2](config,system)(timeout) {
   def createProps = Props(new Master(config,f,g))  
@@ -74,8 +93,16 @@ case class MapReducePipe[K1,V1,K2,W,V2>:W](f: (K1,V1)=>(K2,W), g: (V2,W)=>V2, n:
  * @param <K2> output key type
  * @param <W> intermediate type
  * @param <V2> output value type
+ * 
+ * @param f the mapper function which takes a V1 instance and creates a key-value tuple of type (K2,W)
+ * @param g the reducer function which combines two values (an V2 and a W) into one V2
+ * @param n the stage number of this map-reduce stage.
+ * 
+ * @param config an instance of Config which defines a suitable configuration
+ * @param system the actor system
+ * @param timeout the value of timeout to be used
  */
-case class MapReduceFirstFold[V1,K2,W,V2](f: (Unit,V1)=>(K2,W), g: (V2,W)=>V2, z: ()=>V2)(implicit config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_LoggingBase[V1,K2,V2](config,system)(timeout) {
+case class MapReduceFirstFold[V1,K2,W,V2](f: V1=>(K2,W), g: (V2,W)=>V2, z: ()=>V2)(implicit config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_LoggingBase[V1,K2,V2](config,system)(timeout) {
   def createProps = Props(new Master_First_Fold(config,f,g,z))  
   def createName = s"""mrff-mstr"""
 }
@@ -88,6 +115,14 @@ case class MapReduceFirstFold[V1,K2,W,V2](f: (Unit,V1)=>(K2,W), g: (V2,W)=>V2, z
  * @param <K2> output key type
  * @param <W> intermediate type
  * @param <V2> output value type
+ * 
+ * @param f the mapper function which takes a V1 instance and creates a key-value tuple of type (K2,W)
+ * @param g the reducer function which combines two values (an V2 and a W) into one V2
+ * @param n the stage number of this map-reduce stage.
+ * 
+ * @param config an instance of Config which defines a suitable configuration
+ * @param system the actor system
+ * @param timeout the value of timeout to be used
  */
 case class MapReducePipeFold[K1,V1,K2,W,V2](f: (K1,V1)=>(K2,W), g: (V2,W)=>V2, z: ()=>V2, n: Int)(implicit config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_LoggingBase[(K1,V1),K2,V2](config,system)(timeout) {
   def createProps = Props(new Master_Fold(config,f,g,z))  
@@ -102,6 +137,9 @@ case class MapReducePipeFold[K1,V1,K2,W,V2](f: (K1,V1)=>(K2,W), g: (V2,W)=>V2, z
  * @param <V2> intermediate value type
  * @param <K3> output key type
  * @param <V3> output value type
+ * 
+ * @param f the mapper function which takes a V1 instance and creates a key-value tuple of type (K2,W)
+ * @param g the reducer function which combines two values (an V2 and a W) into one V2
  */
 case class MapReduceComposed[T,K2,V2,K3,V3](f: MapReduce[T,K2,V2], g: MapReduce[(K2,V2),K3,V3]) extends MapReduce[T,K3,V3] { 
   implicit val executionContext = f.ec
@@ -112,13 +150,25 @@ case class MapReduceComposed[T,K2,V2,K3,V3](f: MapReduce[T,K2,V2], g: MapReduce[
 /**
  * A reduce function which can be composed (on the right) with a MapReduce object.
  *
- * @param <V1>
- * @param <S>
+ * @param <T> the input (free) type of this reduction
+ * @param <S> the output (derived) type of this reduction
  */
-case class Reduce[V1, S>:V1](f: (S,V1)=>S) extends Function1[Map[_,V1],S] {
-  def apply(m: Map[_,V1]) = m.values reduceLeft f
+case class Reduce[T, S>:T](f: (S,T)=>S) extends Function1[Map[_,T],S] {
+  def apply(m: Map[_,T]) = m.values reduceLeft f
 }
 
+/**
+ * @author scalaprof
+ *
+ * @param <T>
+ * @param <K2>
+ * @param <V2>
+ * 
+ * @param config an instance of Config which defines a suitable configuration
+ * @param system the actor system
+ * 
+ * @param timeout the value of timeout to be used
+ */
 abstract class MapReduce_LoggingBase[T, K2, V2](config: Config, system: ActorSystem)(implicit timeout: Timeout) extends MapReduce_Base[T,K2,V2](system)(timeout) { 
   val exceptionStack = config.getBoolean("exceptionStack")
   def logException(m: String, x: Throwable): Unit = if (exceptionStack) system.log.error(x,m) else system.log.warning(s"$m: ${x.getLocalizedMessage}")
@@ -127,18 +177,18 @@ abstract class MapReduce_LoggingBase[T, K2, V2](config: Config, system: ActorSys
 /**
  * An abstract base class for MapReduce classes (other than MapReduceComposed).
  */
-abstract class MapReduce_Base[T, K2, V2](system: ActorSystem)(implicit timeout: Timeout) extends MapReduce[T,K2,V2] { self =>
+abstract class MapReduce_Base[T, K, V](system: ActorSystem)(implicit timeout: Timeout) extends MapReduce[T,K,V] { self =>
   implicit def ec = system.dispatcher
 	val master = system.actorOf(createProps, createName)
   def apply(ts: Seq[T]) = {
     // Note: currently, we ignore the value of ok but we could pass back a tuple that includes ok and the resulting map
-    for (v2K2r <- master.ask(ts).mapTo[Response[K2,V2]]; ok = report(v2K2r)) yield v2K2r.right
+    for (vKr <- master.ask(ts).mapTo[Response[K,V]]; ok = report(vKr)) yield vKr.right
   }
   def createProps: Props
   def createName: String
-  def report(v2K2r: Response[K2,V2]): Boolean = {
-     for ((k,x) <- v2K2r.left) logException(s"exception thrown (but forgiven) for key $k",x)
-     v2K2r.size==0
+  def report(vKr: Response[K,V]): Boolean = {
+     for ((k,x) <- vKr.left) logException(s"exception thrown (but forgiven) for key $k",x)
+     vKr.size==0
   }
   def logException(m: String, x: Throwable): Unit
 }
