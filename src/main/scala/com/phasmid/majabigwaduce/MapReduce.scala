@@ -29,6 +29,16 @@ trait MapReduce[T, K2, V2] extends ((Seq[T]) => Future[Map[K2, V2]]) {
   def compose[K3, V3](mr: MapReduce[(K2, V2), K3, V3]): MapReduce[T, K3, V3] = MapReduceComposed(this, mr)
 
   /**
+    * alternative name for compose
+    *
+    * @param mr the other MapReduce object
+    * @tparam K3 the key type of the composed MapReduce object
+    * @tparam V3 the value type of the composed MapReduce object
+    * @return a new MapReduceComposed object
+   */
+  def | [K3, V3](mr: MapReduce[(K2, V2), K3, V3]): MapReduce[T, K3, V3] = compose(mr)
+
+  /**
     * terminate this MapReduce object with r, a reducer which yields a simple value
     *
     * @tparam S the return type
@@ -37,6 +47,15 @@ trait MapReduce[T, K2, V2] extends ((Seq[T]) => Future[Map[K2, V2]]) {
     * @return a Future of an object of type S (for sum, or sigma).
     */
   def compose[S >: V2](r: Reduce[V2, S])(implicit executionContext: ExecutionContext): (Seq[T]) => Future[S] = { ts => for (v2K2m <- apply(ts); s = r.apply(v2K2m)) yield s }
+
+  /**
+    * alternative name to compose
+    * @param r                the Reduce object
+    * @param executionContext (implicit)
+    * @tparam S the return type
+    * @return a Future of an object of type S (for sum, or sigma).
+    */
+  def | [S >: V2](r: Reduce[V2, S])(implicit executionContext: ExecutionContext): (Seq[T]) => Future[S] = compose(r)(executionContext)
 
   /**
     * @return a suitable execution context

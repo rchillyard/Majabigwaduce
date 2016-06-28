@@ -49,10 +49,8 @@ object CountWords {
       { (w: URI, gs: Seq[String]) => (w, (for (g <- gs) yield g.split("""\s+""").length) reduce (_ + _)) }, { (x: Int, y: Int) => x + y },
       1
     )
-    val stage3 = Reduce[Int, Int]({
-      _ + _
-    })
-    val countWords = stage1 compose stage2 compose stage3
+    val stage3 = Reduce[Int, Int](_ + _)
+    val countWords = stage1 | stage2 | stage3
 
     val ws = if (args.length > 0) args.toSeq else Seq("http://www.bbc.com/doc1", "http://www.cnn.com/doc2", "http://default/doc3", "http://www.bbc.com/doc2", "http://www.bbc.com/doc3")
 

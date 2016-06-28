@@ -2,10 +2,10 @@ package com.phasmid.majabigwaduce.examples.webcrawler
 
 import java.net.{URI, URL}
 
-import akka.actor.ActorSystem
+import akka.actor.{ActorSystem, Terminated}
 import akka.util.Timeout
 import com.phasmid.majabigwaduce._
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{Config, ConfigFactory}
 
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -33,39 +33,43 @@ object WebCrawler extends App {
   import ExecutionContext.Implicits.global
 
   val ws = if (args.length > 0) args.toSeq else Seq(config.getString("start"))
-  val depth = config.getInt("depth")
+  private val eventualInt = runWebCrawler(ws, config.getInt("depth"))
+  Await.result(eventualInt, 10.minutes)
+  for (x <- eventualInt) println(s"total links: ${x}")
 
-  def init = Seq[String]()
+  def runWebCrawler(ws: Seq[String], depth: Int)(implicit system: ActorSystem, config: Config, timeout: Timeout): Future[Int] = {
 
-  val stage1: MapReduce[String, URI, Seq[String]] = MapReduceFirstFold(
-    { w: String => val u = new URI(w); (getHostURI(u), u) }, { (a: Seq[String], v: URI) => val s = Source.fromURL(v.toURL).mkString; a :+ s },
-    init _
-  )
-  val stage2 = MapReducePipeFold(
-    { (w: URI, gs: Seq[String]) => (w, (for (g <- gs) yield getLinks(w, g)) reduce (_ ++ _)) }, { (a: Seq[String], v: Seq[String]) => a ++ v },
-    init _,
-    1
-  )
-  val stage3 = Reduce[Seq[String], Seq[String]]({
-    _ ++ _
-  })
-  val crawler = stage1 compose stage2 compose stage3
-  val f = doCrawl(ws, Seq[String](), depth) transform( { n: Seq[String] => println(s"total links: ${n.length}"); system.terminate }, { x: Throwable => system.log.error(x, "Map/reduce error (typically in map function)"); x })
-  Await.result(f, 10.minutes)
+    def init = Seq[String]()
+
+    val stage1: MapReduce[String, URI, Seq[String]] = MapReduceFirstFold(
+      { w: String => val u = new URI(w); (getHostURI(u), u) }, { (a: Seq[String], v: URI) => val s = Source.fromURL(v.toURL).mkString; a :+ s },
+      init _
+    )
+    val stage2 = MapReducePipeFold(
+      { (w: URI, gs: Seq[String]) => (w, (for (g <- gs) yield getLinks(w, g)) reduce (_ ++ _)) }, { (a: Seq[String], v: Seq[String]) => a ++ v },
+      init _,
+      1
+    )
+    val stage3 = Reduce[Seq[String], Seq[String]](_ ++ _)
+
+    val crawler = stage1 | stage2 | stage3
+
+    def doCrawl(us: Seq[String], all: Seq[String], depth: Int): Future[Seq[String]] =
+      if (depth < 0) Future(all)
+      else {
+        system.log.info(s"doCrawl: depth=$depth; #us=${us.length}; #all=${all.length}")
+        val (in, out) = us.partition { u => all.contains(u) }
+        for (ws <- crawler(cleanup(out)); gs <- doCrawl(ws.distinct, (all ++ us).distinct, depth - 1)) yield gs
+      }
+
+    doCrawl(ws, Seq[String](), depth) transform( { n: Seq[String] => val z = n.length; system.terminate; z }, { x: Throwable => system.log.error(x, "Map/reduce error (typically in map function)"); x })
+  }
 
   private def getLinks(w: URI, g: String): Seq[String] = for (
     nsA <- HTMLParser.parse(g) \\ "a";
     nsH <- nsA \ "@href";
     nH <- nsH.apply(0)
   ) yield normalizeURL(w, nH.toString)
-
-  private def doCrawl(us: Seq[String], all: Seq[String], depth: Int): Future[Seq[String]] =
-    if (depth < 0) Future(all)
-    else {
-      system.log.info(s"doCrawl: depth=$depth; #us=${us.length}; #all=${all.length}")
-      val (in, out) = us.partition { u => all.contains(u) }
-      for (ws <- crawler(cleanup(out)); gs <- doCrawl(ws.distinct, (all ++ us).distinct, depth - 1)) yield gs
-    }
 
   private def cleanup(ws: Seq[String]): Seq[String] = (for (w <- ws; if w.indexOf('?') == -1; t = trim(w, '#')) yield t).distinct
 
