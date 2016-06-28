@@ -1,59 +1,56 @@
 package com.phasmid.majabigwaduce.examples
 
+import java.net.URI
+
+import org.scalamock.scalatest.MockFactory
 import org.scalatest._
-import scala.concurrent.duration._
-import scala.concurrent.Await
-import scala.util._
-import scala.io.Source
-import scala.concurrent._
-import scala.concurrent.duration._
-import com.typesafe.config.{ ConfigFactory, Config }
-import java.net.{URL,URI}
 import org.scalatest.concurrent._
 import org.scalatest.time._
-import org.scalamock.scalatest.MockFactory
 
 class CountWordsSpec extends FlatSpec with Matchers with Futures with ScalaFutures with Inside with MockFactory {
- "CountWords" should "work for http://www.bbc.com/ http://www.cnn.com/ http://default/" in {
-   val wBBC = "http://www.bbc.com/" 
-   val wCNN = "http://www.cnn.com/"
-   val wDef = "http://default/"
-   val uBBC = new URI(wBBC)
-   val uCNN = new URI(wCNN)
-   val uDef = new URI(wDef)
-   val hc = mock[HttpClient]
-   val rBBC = mock[Resource]
-   (rBBC.getServer _).expects().returning(uBBC)
-   (rBBC.getContent _) expects() returning(CountWordsSpec.bbcText)
-   val rCNN = mock[Resource]
-   (rCNN.getServer _) expects() returning(uCNN)
-   (rCNN.getContent _) expects() returning(CountWordsSpec.cnnText)
-   val rDef = mock[Resource]
-   (rDef.getServer _) expects() returning(uDef)
-   (rDef.getContent _) expects() returning(CountWordsSpec.defaultText)
-   (hc.getResource _) expects(wBBC) returning(rBBC)
-   (hc.getResource _) expects(wCNN) returning(rCNN)
-   (hc.getResource _) expects(wDef) returning(rDef)
-   val nf = CountWords(hc,Array(wBBC, wCNN, wDef))
-   whenReady(nf, timeout(Span(6, Seconds))) {
-     case i => assert(i==556)
-   }
- }
+  "CountWords" should "work for http://www.bbc.com/ http://www.cnn.com/ http://default/" in {
+    val wBBC = "http://www.bbc.com/"
+    val wCNN = "http://www.cnn.com/"
+    val wDef = "http://default/"
+    val uBBC = new URI(wBBC)
+    val uCNN = new URI(wCNN)
+    val uDef = new URI(wDef)
+    val hc = mock[HttpClient]
+    val rBBC = mock[Resource]
+    (rBBC.getServer _).expects().returning(uBBC)
+    rBBC.getContent _ expects() returning CountWordsSpec.bbcText
+    val rCNN = mock[Resource]
+    rCNN.getServer _ expects() returning uCNN
+    rCNN.getContent _ expects() returning CountWordsSpec.cnnText
+    val rDef = mock[Resource]
+    rDef.getServer _ expects() returning uDef
+    rDef.getContent _ expects() returning CountWordsSpec.defaultText
+    hc.getResource _ expects wBBC returning rBBC
+    hc.getResource _ expects wCNN returning rCNN
+    hc.getResource _ expects wDef returning rDef
+    val nf = CountWords(hc, Array(wBBC, wCNN, wDef))
+    whenReady(nf, timeout(Span(6, Seconds))) {
+      case i => assert(i == 556)
+    }
+  }
 }
 
 object CountWordsSpec {
-    // there are 556 words in total between the three extracts
-      val bbcText = """The US military has delivered more than 45 tonnes of ammunition to rebels fighting the jihadist group Islamic State (IS) in north-eastern Syria.
+  // there are 556 words in total between the three extracts
+  val bbcText =
+    """The US military has delivered more than 45 tonnes of ammunition to rebels fighting the jihadist group Islamic State (IS) in north-eastern Syria.
 C-17 transport aircraft, accompanied by fighter escorts, dropped pallets of supplies overnight in Hassakeh province, a Pentagon spokesman said.
 The consignment reportedly comprised small arms, ammunition and grenades.
 It comes days after the US abandoned a $500m (£326m) plan to train thousands of "moderate" rebels to fight IS.
 The money will instead be used to provide much-needed ammunition and some weapons to commanders of rebel groups already established on the ground."""
-    val cnnText = """(CNN) Vladimir Putin just confirmed what many suspected -- that Russian airstrikes in Syria are meant to bolster President Bashar al-Assad's regime.
+  val cnnText =
+    """(CNN) Vladimir Putin just confirmed what many suspected -- that Russian airstrikes in Syria are meant to bolster President Bashar al-Assad's regime.
 But exactly how they're doing that remains a point of contention: Are Russians really focused on pummeling ISIS, or are they targeting Syrian rebels demanding an end to the Assad dynasty?
 "Our task is to stabilize the legitimate government and to create conditions for a political compromise ... by military means, of course," Putin told the state-run Russia 24 TV.
 "The units of international terrorists and their ilk have no desire to negotiate with the Syrian government, who is almost sieged in its own capital."
 Russia has said it's coordinating with the Syrian regime to target ISIS and other terrorists. Al-Assad has used the term "terrorists" to describe Syrians who seek his ouster."""
-    val defaultText = """U.S. forces airdropped small arms ammunition and other supplies to Syrian Arab rebels, barely two weeks after Russia raised the stakes in the long-running civil war by intervening on the side of President Bashar al-Assad.
+  val defaultText =
+    """U.S. forces airdropped small arms ammunition and other supplies to Syrian Arab rebels, barely two weeks after Russia raised the stakes in the long-running civil war by intervening on the side of President Bashar al-Assad.
 One military official said the drop, by Air Force C-17 cargo planes in northern Syria on Sunday, was part of a revamped U.S. strategy announced last week to help rebels in Syria battling Islamic State militants.
 Last week, Washington shelved a program to train and equip "moderate" rebels opposed to Assad who would join the fight against Islamic State.[:nL1N1221MR]
 The only group on the ground to have success against Islamic State while cooperating with the U.S.-led coalition is a Kurdish militia, the YPG, which has carved out an autonomous zone in northern Syria and advanced deep into Islamic State's stronghold Raqqa province.

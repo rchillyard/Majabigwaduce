@@ -23,11 +23,11 @@ the _map_ stage and is used as input to the _reduce_ stage is:
     
 Thus the first job of designing an application to use map-reduce is to figure out the types _K2_ and _W_. If you are chaining map-reduce operations together, then the input to stage _N_+1
 will be of the same form as the output of stage _N_. Thus, in general, the input to the map-reduce process is a map of key-value pairs. We call the type of the key _K1_ and the type of
-the value _V1_. Thus the input to the map stage is:
+the value _V1_. Thus the input to the map stage is, in general:
 
     Map[K1,V1]
     
-For the first stage, there is usually no appropriate key so instead we pass in a message of the following form:
+For the first stage, there is usually no appropriate key so instead we pass in a message of the following form (which is more or less equivalent to _Map[Unit,V1]_):
 
 	Seq[V1]
 	
@@ -80,7 +80,7 @@ Thus, we have four forms of _Master_ all told:
 * _Master_Fold_
 * _Master_First_Fold_
 
-The "fold" variations require the _z_ parameter, whereas the other variations do not. Thus the non-"fold" variations require that _Z3_ be a super-type of _Z2_ (as required by _reduceLeft_).
+The "fold" variations require the _z_ parameter, whereas the other variations do not. Thus the non-"fold" variations require that _Z2_ be a super-type of _W_ (as required by _reduceLeft_).
 
 The "first" variations do not require a _K1_ to be defined (it defaults to _Unit_) and see below in _Mapper_ for the difference in input message types.
 
