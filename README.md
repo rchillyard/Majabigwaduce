@@ -13,7 +13,7 @@ Of course, it turns out that it's a perfect application for actors and indeed de
 API
 ---
 
-Quick link to the [API](../api/index.html)
+Quick link to the [API](https://github.com/rchillyard/Majabigwaduce/tree/master/api/index.html)
 
 Introduction
 ------------
