@@ -10,6 +10,11 @@ Of course, it turns out that it's a perfect application for actors and indeed de
 
 \* Majabigwaduce was the Native American name for the site of the battle of Penobscot Bay, Maine in 1779, see [Penobscot Expedition](https://en.wikipedia.org/wiki/Penobscot_Expedition)
 
+API
+---
+
+Quick link to the [API](../api/index.html)
+
 Introduction
 ------------
 

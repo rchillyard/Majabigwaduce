@@ -2,7 +2,7 @@ package com.phasmid.majabigwaduce.examples.webcrawler
 
 import java.net.{URI, URL}
 
-import akka.actor.{ActorSystem, Terminated}
+import akka.actor.ActorSystem
 import akka.util.Timeout
 import com.phasmid.majabigwaduce._
 import com.typesafe.config.{Config, ConfigFactory}

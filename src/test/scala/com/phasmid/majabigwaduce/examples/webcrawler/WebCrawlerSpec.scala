@@ -8,8 +8,6 @@ import org.scalatest.concurrent.{Futures, ScalaFutures}
 import org.scalatest.time.{Seconds, Span}
 import org.scalatest.{FlatSpec, Inside, Matchers}
 
-import scala.concurrent.Await
-import scala.concurrent.duration._
 import scala.language.postfixOps
 
 /**
