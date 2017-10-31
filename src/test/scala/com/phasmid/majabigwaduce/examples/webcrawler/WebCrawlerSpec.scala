@@ -26,8 +26,8 @@ import scala.language.postfixOps
       val ws = Seq(config.getString("start"))
       val eventualInt = WebCrawler.runWebCrawler(ws, config.getInt("depth"))
       whenReady(eventualInt, timeout(Span(300, Seconds))) {
-        // The actual number is approximate and will vary (currently 266)
-        case i => assert(i > 200 && i <300)
+        // The actual number is approximate and will vary (currently 9)
+        case i => assert(i > 5 && i < 15)
       }
     }
   }
