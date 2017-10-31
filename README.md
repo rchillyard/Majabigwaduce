@@ -1,5 +1,6 @@
-[![CircleCI](https://circleci.com/gh/rchillyard/Majabigwaduce.svg?style=svg)](https://circleci.com/gh/rchillyard/Majabigwaduce)Majabigwaduce
+[![CircleCI](https://circleci.com/gh/rchillyard/Majabigwaduce.svg?style=svg)](https://circleci.com/gh/rchillyard/Majabigwaduce)
 
+Majabigwaduce
 =============
 
 Majabigwaduce\* (aka _Akka/MapReduce_) is a framework for implementing map-reduce using [Scala](http://www.scala-lang.org) and [Akka](http://akka.io) actors.
