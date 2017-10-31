@@ -35,8 +35,8 @@ trait MapReduce[T, K2, V2] extends ((Seq[T]) => Future[Map[K2, V2]]) {
     * @tparam K3 the key type of the composed MapReduce object
     * @tparam V3 the value type of the composed MapReduce object
     * @return a new MapReduceComposed object
-   */
-  def | [K3, V3](mr: MapReduce[(K2, V2), K3, V3]): MapReduce[T, K3, V3] = compose(mr)
+    */
+  def |[K3, V3](mr: MapReduce[(K2, V2), K3, V3]): MapReduce[T, K3, V3] = compose(mr)
 
   /**
     * terminate this MapReduce object with r, a reducer which yields a simple value
@@ -50,12 +50,13 @@ trait MapReduce[T, K2, V2] extends ((Seq[T]) => Future[Map[K2, V2]]) {
 
   /**
     * alternative name to compose
+    *
     * @param r                the Reduce object
     * @param executionContext (implicit)
     * @tparam S the return type
     * @return a Future of an object of type S (for sum, or sigma).
     */
-  def | [S >: V2](r: Reduce[V2, S])(implicit executionContext: ExecutionContext): (Seq[T]) => Future[S] = compose(r)(executionContext)
+  def |[S >: V2](r: Reduce[V2, S])(implicit executionContext: ExecutionContext): (Seq[T]) => Future[S] = compose(r)(executionContext)
 
   /**
     * @return a suitable execution context
@@ -155,11 +156,11 @@ case class MapReducePipeFold[K1, V1, K2, W, V2](f: (K1, V1) => (K2, W), g: (V2, 
   * @param g the reducer function which combines two values (an V2 and a W) into one V2
   */
 case class MapReduceComposed[T, K2, V2, K3, V3](f: MapReduce[T, K2, V2], g: MapReduce[(K2, V2), K3, V3]) extends MapReduce[T, K3, V3] {
-  implicit val executionContext = f.ec
+  implicit val executionContext: ExecutionContext = f.ec
 
-  def ec = executionContext
+  def ec: ExecutionContext = executionContext
 
-  def apply(ts: Seq[T]) = for (v2K2m <- f.apply(ts); v3K3m <- g.apply(v2K2m.toSeq)) yield v3K3m
+  def apply(ts: Seq[T]): Future[Map[K3, V3]] = for (v2K2m <- f.apply(ts); v3K3m <- g.apply(v2K2m.toSeq)) yield v3K3m
 }
 
 /**
@@ -169,7 +170,7 @@ case class MapReduceComposed[T, K2, V2, K3, V3](f: MapReduce[T, K2, V2], g: MapR
   * @tparam S the output (derived) type of this reduction
   */
 case class Reduce[T, S >: T](f: (S, T) => S) extends ((Map[_, T]) => S) {
-  def apply(m: Map[_, T]) = m.values reduceLeft f
+  def apply(m: Map[_, T]): S = m.values reduceLeft f
 }
 
 /**
@@ -182,7 +183,7 @@ case class Reduce[T, S >: T](f: (S, T) => S) extends ((Map[_, T]) => S) {
   * @param timeout the value of timeout to be used
   */
 abstract class MapReduce_LoggingBase[T, K2, V2](config: Config, system: ActorSystem)(implicit timeout: Timeout) extends MapReduce_Base[T, K2, V2](system)(timeout) {
-  val exceptionStack = config.getBoolean("exceptionStack")
+  private val exceptionStack = config.getBoolean("exceptionStack")
 
   def logException(m: String, x: Throwable): Unit = if (exceptionStack) system.log.error(x, m) else system.log.warning(s"$m: ${x.getLocalizedMessage}")
 }
@@ -192,11 +193,11 @@ abstract class MapReduce_LoggingBase[T, K2, V2](config: Config, system: ActorSys
   */
 abstract class MapReduce_Base[T, K, V](system: ActorSystem)(implicit timeout: Timeout) extends MapReduce[T, K, V] {
   self =>
-  implicit def ec = system.dispatcher
+  implicit def ec: ExecutionContextExecutor = system.dispatcher
 
-  val master = system.actorOf(createProps, createName)
+  private val master = system.actorOf(createProps, createName)
 
-  def apply(ts: Seq[T]) = {
+  def apply(ts: Seq[T]): Future[Map[K, V]] = {
     // Note: currently, we ignore the value of ok but we could pass back a tuple that includes ok and the resulting map
     for (vKr <- master.ask(ts).mapTo[Response[K, V]]; ok = report(vKr)) yield vKr.right
   }

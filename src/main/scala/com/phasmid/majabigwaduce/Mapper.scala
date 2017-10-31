@@ -1,5 +1,7 @@
 package com.phasmid.majabigwaduce
 
+import com.phasmid.majabigwaduce.FP._
+
 import scala.collection.mutable
 import scala.util._
 
@@ -37,10 +39,9 @@ import scala.util._
   */
 class Mapper[K1, V1, K2, W](f: (K1, V1) => (K2, W)) extends MapReduceActor {
 
-  override def receive = {
+  override def receive: PartialFunction[Any, Unit] = {
     case i: Incoming[K1, V1] =>
       log.info(s"received $i")
-      //      maybeLog(s"with map {}", i.m)
       // CONSIDER using a form of groupBy to perform this operation
       val wk2ts = for ((k1, v1) <- i.m) yield Try(f(k1, v1))
       sender ! prepareReply(wk2ts)
@@ -51,7 +52,7 @@ class Mapper[K1, V1, K2, W](f: (K1, V1) => (K2, W)) extends MapReduceActor {
   def prepareReply(wk2ts: Seq[Try[(K2, W)]]): Any = prepareReplyAsTry(wk2ts)
 
   private def prepareReplyAsTry(wk2ts: Seq[Try[(K2, W)]]): Try[Map[K2, Seq[W]]] =
-    Master.sequence(wk2ts) match {
+    sequence(wk2ts) match {
       case Success(wk2s) =>
         val wsK2m = mutable.HashMap[K2, Seq[W]]() // mutable
         for ((k2, w) <- wk2s) wsK2m put(k2, w +: wsK2m.getOrElse(k2, Nil))
@@ -79,7 +80,7 @@ class Mapper_Forgiving[K1, V1, K2, W](f: (K1, V1) => (K2, W)) extends Mapper[K1,
   private def prepareReplyAsTuple(wk2ts: Seq[Try[(K2, W)]]): (Map[K2, Seq[W]], Seq[Throwable]) = {
     val wsK2m = mutable.HashMap[K2, Seq[W]]() // mutable
     val xs = Seq[Throwable]() // mutable
-    for (wk2t <- wk2ts; wk2e = Master.sequence(wk2t))
+    for (wk2t <- wk2ts; wk2e = sequence(wk2t))
       wk2e match {
         case Right((k2, w)) => wsK2m put(k2, w +: wsK2m.getOrElse(k2, Nil))
         case Left(x) => xs :+ x
@@ -93,9 +94,7 @@ case class Incoming[K, V](m: Seq[(K, V)]) {
 }
 
 object Incoming {
-  def sequence[K, V](vs: Seq[V]): Incoming[K, V] = Incoming((vs zip Stream.continually(null.asInstanceOf[K])).map {
-    _.swap
-  })
+  def sequence[K, V](vs: Seq[V]): Incoming[K, V] = Incoming((vs zip Stream.continually(null.asInstanceOf[K])).map(_.swap))
 
   def map[K, V](vKm: Map[K, V]): Incoming[K, V] = Incoming(vKm.toSeq)
 }

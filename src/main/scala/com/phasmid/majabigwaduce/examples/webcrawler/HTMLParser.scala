@@ -16,7 +16,7 @@ object HTMLParser {
 
 
   lazy val adapter = new NoBindingFactoryAdapter()
-  lazy val parser = (new SAXFactoryImpl).newSAXParser
+  private lazy val parser = (new SAXFactoryImpl).newSAXParser
 
   def parse(html: String, encoding: String = "UTF-8"): Node = {
     this.parse(html.getBytes(encoding))

@@ -26,8 +26,8 @@ import scala.language.postfixOps
   */
 object WebCrawler extends App {
   val configRoot = ConfigFactory.load
-  implicit val config = configRoot.getConfig("WebCrawler")
-  implicit val system = ActorSystem(config.getString("name"))
+  implicit val config: Config = configRoot.getConfig("WebCrawler")
+  implicit val system: ActorSystem = ActorSystem(config.getString("name"))
   implicit val timeout: Timeout = getTimeout(config.getString("timeout"))
 
   import ExecutionContext.Implicits.global
@@ -35,7 +35,7 @@ object WebCrawler extends App {
   val ws = if (args.length > 0) args.toSeq else Seq(config.getString("start"))
   private val eventualInt = runWebCrawler(ws, config.getInt("depth"))
   Await.result(eventualInt, 10.minutes)
-  for (x <- eventualInt) println(s"total links: ${x}")
+  for (x <- eventualInt) println(s"total links: $x")
 
   def runWebCrawler(ws: Seq[String], depth: Int)(implicit system: ActorSystem, config: Config, timeout: Timeout): Future[Int] = {
 
@@ -58,7 +58,7 @@ object WebCrawler extends App {
       if (depth < 0) Future(all)
       else {
         system.log.info(s"doCrawl: depth=$depth; #us=${us.length}; #all=${all.length}")
-        val (in, out) = us.partition { u => all.contains(u) }
+        val (_, out) = us.partition { u => all.contains(u) }
         for (ws <- crawler(cleanup(out)); gs <- doCrawl(ws.distinct, (all ++ us).distinct, depth - 1)) yield gs
       }
 
@@ -68,7 +68,7 @@ object WebCrawler extends App {
   private def getLinks(w: URI, g: String): Seq[String] = for (
     nsA <- HTMLParser.parse(g) \\ "a";
     nsH <- nsA \ "@href";
-    nH <- nsH.apply(0)
+    nH <- nsH.head
   ) yield normalizeURL(w, nH.toString)
 
   private def cleanup(ws: Seq[String]): Seq[String] = (for (w <- ws; if w.indexOf('?') == -1; t = trim(w, '#')) yield t).distinct

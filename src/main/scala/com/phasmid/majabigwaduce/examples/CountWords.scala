@@ -5,7 +5,7 @@ import java.net.URI
 import akka.actor.ActorSystem
 import akka.util.Timeout
 import com.phasmid.majabigwaduce._
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{Config, ConfigFactory}
 
 import scala.concurrent._
 import scala.concurrent.duration._
@@ -33,14 +33,15 @@ trait Resource {
   * @author scalaprof
   */
 object CountWords {
-  def apply(hc: HttpClient, args: Array[String]) = {
+  def apply(hc: HttpClient, args: Array[String]): Future[Int] = {
     val configRoot = ConfigFactory.load
-    implicit val config = configRoot.getConfig("CountWords")
-    implicit val system = ActorSystem(config.getString("name"))
+    implicit val config: Config = configRoot.getConfig("CountWords")
+    implicit val system: ActorSystem = ActorSystem(config.getString("name"))
     implicit val timeout: Timeout = getTimeout(config.getString("timeout"))
     import ExecutionContext.Implicits.global
 
     def init = Seq[String]()
+
     val stage1 = MapReduceFirstFold(
       { w: String => val u = hc.getResource(w); system.log.debug(s"stage1 map: $w"); (u.getServer, u.getContent) }, { (a: Seq[String], v: String) => a :+ v },
       init _
@@ -58,7 +59,7 @@ object CountWords {
   }
 
   // TODO try to combine this with the same method in MapReduceActor
-  def getTimeout(t: String) = {
+  def getTimeout(t: String): Timeout = {
     val durationR = """(\d+)\s*(\w+)""".r
     t match {
       case durationR(n, s) => new Timeout(FiniteDuration(n.toLong, s))

@@ -1,5 +1,7 @@
 package com.phasmid.majabigwaduce
 
+import com.phasmid.majabigwaduce.FP._
+
 import scala.util._
 
 /**
@@ -53,11 +55,10 @@ class Reducer_Fold[K2, W, V2](g: (V2, W) => V2, z: => V2) extends ReducerBase[K2
   */
 abstract class ReducerBase[K2, W, V2] extends MapReduceActor {
 
-  override def receive = {
+  override def receive: PartialFunction[Any, Unit] = {
     case i: Intermediate[K2, W] =>
       log.info(s"received $i")
-      //      maybeLog(s"with elements: {}",i.ws)
-      sender !(i.k2, Master.sequence(Try(getValue(i.ws))))
+      sender ! (i.k2, sequence(Try(getValue(i.ws))))
     case q =>
       super.receive(q)
   }

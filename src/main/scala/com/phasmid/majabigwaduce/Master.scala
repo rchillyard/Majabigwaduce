@@ -2,9 +2,11 @@ package com.phasmid.majabigwaduce
 
 import akka.actor.Props
 import akka.pattern.ask
+import akka.util.Timeout
 import com.typesafe.config.Config
 
 import scala.concurrent._
+import scala.reflect.ClassTag
 import scala.util._
 
 /**
@@ -65,7 +67,7 @@ class Master_First_Fold[V1, K2, W, V2](config: Config, f: V1 => (K2, W), g: (V2,
   */
 trait ByReduce[K1, V1, K2, W, V2 >: W] {
   /**
-    * @param g the reduce funtion
+    * @param g the reduce function
     * @param z ignored
     * @return a Props instance
     */
@@ -107,11 +109,10 @@ abstract class MasterBaseFirst[V1, K2, W, V2](config: Config, f: V1 => (K2, W), 
 
   import context.dispatcher
 
-  override def receive = {
+  override def receive: PartialFunction[Any, Unit] = {
     case v1s: Seq[V1] =>
       log.info(s"received Seq[V1]: with ${v1s.length} elements")
-      //      maybeLog("received {}",v1s)
-      val caller = sender
+      val caller = sender // XXX: this looks strange but it is required
       doMapReduce(Incoming.sequence[Unit, V1](v1s)).onComplete {
         case Success(wXeK2m) => caller ! Response(wXeK2m)
         case Failure(x) => caller ! akka.actor.Status.Failure(x)
@@ -138,16 +139,16 @@ abstract class MasterBaseFirst[V1, K2, W, V2](config: Config, f: V1 => (K2, W), 
   * @param z      the "zero" or "unit" (i.e. initializer) function which creates an "empty" V2.
   */
 abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => (K2, W), g: (V2, W) => V2, z: () => V2) extends MapReduceActor {
-  implicit val timeout = getTimeout(config.getString("timeout"))
+  implicit val timeout: Timeout = getTimeout(config.getString("timeout"))
 
   import context.dispatcher
 
-  val mapper = context.actorOf(mapperProps, "mpr")
-  val nReducers = config.getInt("reducers")
+  private val mapper = context.actorOf(mapperProps, "mpr")
+  private val nReducers = config.getInt("reducers")
   log.debug(s"creating $nReducers reducers")
-  val reducers = for (i <- 1 to nReducers) yield context.actorOf(reducerProps(g, z), s"rdcr-$i")
+  private val reducers = for (i <- 1 to nReducers) yield context.actorOf(reducerProps(g, z), s"rdcr-$i")
   if (Master.isForgiving(config)) log.debug("setting forgiving mode")
-  val exceptionStack = config.getBoolean("exceptionStack")
+  private val exceptionStack = config.getBoolean("exceptionStack")
 
   /**
     * @return an instance of Props appropriate to the the given parameters
@@ -164,7 +165,7 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => (K2,
 
   // CONSIDER reworking this so that there is only one possible valid message: 
   // either in Map[] form of Seq[()] form. I don't really like having both
-  override def receive = {
+  override def receive: PartialFunction[Any, Unit] = {
     case v1K1m: Map[K1, V1] =>
       log.info(s"received Map[K1,V1]: with ${v1K1m.size} elements")
       //      maybeLog("received: {}",v1K1m)
@@ -189,27 +190,23 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => (K2,
       super.receive(q)
   }
 
-  def doMapReduce(i: Incoming[K1, V1]) = for {
+  def doMapReduce(i: Incoming[K1, V1]): Future[Map[K2, Either[Throwable, V2]]] = for {
     wsK2m <- doMap(i)
-    //      z = maybeLog("shuffle: {}", wsK2m)
     v2XeK2m <- doDistributeReduceCollate(wsK2m)
   } yield v2XeK2m
 
   private def doMap(i: Incoming[K1, V1]): Future[Map[K2, Seq[W]]] = {
-    val reply = mapper ? i
+    def iToMapper[Z: ClassTag]: Future[Z] = (mapper ? i).mapTo[Z]
+
     if (Master.isForgiving(config: Config))
-      reply.mapTo[(Map[K2, Seq[W]], Seq[Throwable])] map {
+      iToMapper[(Map[K2, Seq[W]], Seq[Throwable])] map {
         case (wsK2m, xs) => for (x <- xs) logException(x); wsK2m
       }
-    else {
-      val wsK2mtf = reply.mapTo[Try[Map[K2, Seq[W]]]]
-      Master.flatten(wsK2mtf)
-    }
+    else FP.flatten(iToMapper[Try[Map[K2, Seq[W]]]])
   }
 
   private def doDistributeReduceCollate(wsK2m: Map[K2, Seq[W]]): Future[Map[K2, Either[Throwable, V2]]] = {
     if (wsK2m.isEmpty) log.warning("mapper returned empty map" + (if (Master.isForgiving(config: Config)) "" else ": see log for problem and consider using Mapper_Forgiving instead"))
-    //    maybeLog("doDistributeReduceCollate: {}", wsK2m)
     val rs = Stream.continually(reducers.toStream).flatten
     val wsK2s = for ((k2, ws) <- wsK2m.toSeq) yield (k2, ws)
     val v2XeK2fs = for (((k2, ws), a) <- wsK2s zip rs) yield (a ? Intermediate(k2, ws)).mapTo[(K2, Either[Throwable, V2])]
@@ -222,114 +219,18 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => (K2,
 case class Response[K, V](left: Map[K, Throwable], right: Map[K, V]) {
   override def toString = s"left: $left; right: $right"
 
-  def size = right.size
+  def size: Int = right.size
 }
 
 object Response {
-  def apply[K, V](vXeKm: Map[K, Either[Throwable, V]]) = {
-    val t = Master.toMap(Master.sequenceLeftRight(vXeKm))
+  def apply[K, V](vXeKm: Map[K, Either[Throwable, V]]): Response[K, V] = {
+    val t = FP.toMap(FP.sequenceLeftRight(vXeKm))
     new Response(t._1, t._2)
   }
 }
 
 object Master {
-  def zero[V]() = 0.asInstanceOf[V]
-
-  /**
-    * Method sequence which applied to a Try[X] returns an Either[Throwable,X].
-    *
-    * @param xt : Try[X]
-    * @return : Either[Throwable,X]
-    */
-  def sequence[X](xt: Try[X]): Either[Throwable, X] = xt match {
-    case Success(s) => Right(s);
-    case Failure(e) => Left(e)
-  }
-
-  /**
-    * Method sequence which, applied to a Seq[Try[X]], returns a Try[Seq[X]]
-    *
-    * @param xts : Seq[Try[X]]
-    * @return : Try[Seq[X]]
-    */
-  def sequence[X](xts: Seq[Try[X]]): Try[Seq[X]] = (Try(Seq[X]()) /: xts) { (xst, xt) => for (xs <- xst; x <- xt) yield xs :+ x }
-
-  /**
-    * Method flatten which, applied to a Future[Try[X]], returns a Future[X]
-    *
-    * @param xyf      the input
-    * @param executor the execution context
-    * @return a future X
-    */
-  def flatten[X](xyf: Future[Try[X]])(implicit executor: ExecutionContext): Future[X] = {
-    def convert[W](wy: Try[W]): Future[W] = {
-      val wp = Promise[W]
-      wy match {
-        case Success(y) => wp complete Success(y)
-        case Failure(e) => wp complete Failure(e)
-      }
-      wp.future
-    }
-    for (xy <- xyf; x <- convert(xy)) yield x
-  }
-
-  /**
-    * Method sequence to separate out the left and right parts of a map of Eithers.
-    *
-    * @param vXeKm a Map[K,Either[X,V]]
-    * @return a tuple of two maps, a Map[K,X] and a Map[K,V]
-    */
-  def sequence[K, V, X](vXeKm: Map[K, Either[X, V]]): (Map[K, X], Map[K, V]) = toMap(sequenceLeftRight(vXeKm))
-
-  /**
-    * Method sequenceLeft which, given a Map[K,Either[X,V]] (in sequential form), returns a Map[K,X] (also in sequential form) for those elements of the input map which are a (left) X (as opposed to a (right) V).
-    *
-    * @param vXeKs a Map[K,Either[X,V]] (in sequential form)
-    * @return a Map[K,X] (in sequential form)
-    */
-  def sequenceLeft[K, V, X](vXeKs: Seq[(K, Either[X, V])]): Seq[(K, X)] = for ((k, e) <- vXeKs) yield (k, e.left.get)
-
-  /**
-    * Method sequenceRight which, given a Map[K,Either[X,V]] (in sequential form), returns a Map[K,V] (also in sequential form) for those elements of the input map which are a (right) V (as opposed to a (left) X).
-    *
-    * @param vXeKs a Map[K,Either[X,V]] (in sequential form)
-    * @return a Map[K,V] (in sequential form)
-    */
-  def sequenceRight[K, V, X](vXeKs: Seq[(K, Either[X, V])]): Seq[(K, V)] = for ((k, e) <- vXeKs) yield (k, e.right.get)
-
-  /**
-    * Method tupleMap which, given a left-function and a right-function, operates on a tuple, returning a new tuple with each component transformed by the appropriate function.
-    *
-    * @param fl the left-function
-    * @param fr the right-function
-    * @param t  a tuple
-    * @return the tuple transformed by the appropriate functions
-    */
-  def tupleMap[L1, L2, R1, R2](fl: L1 => L2, fr: R1 => R2)(t: (L1, R1)): (L2, R2) = (fl(t._1), fr(t._2))
-
-  /**
-    * Method to take a Map[K,Either[X,V]] and generated a tuple of two sequenced-maps, each of the same form as the input but containing only the left-values or right-values as appropriate.
-    *
-    * @param vXeKm the input map
-    * @return a tuple of Map[K,Either[X,V]] maps in sequenced form.
-    **/
-  def partition[K, V, X](vXeKm: Map[K, Either[X, V]]): (Seq[(K, Either[X, V])], Seq[(K, Either[X, V])]) = vXeKm.toSeq.partition({ case (k, v) => v.isLeft })
-
-  /**
-    * Method toMap which takes a tuple of sequenced maps and returns a tuple of actual maps (each map has the same key type but different value types)
-    *
-    * @param t the input tuple
-    * @return the output tuple
-    */
-  def toMap[K, V, X](t: (Seq[(K, X)], Seq[(K, V)])): (Map[K, X], Map[K, V]) = (t._1.toMap, t._2.toMap)
-
-  /**
-    * Method sequenceLeftRight which, given a Map[K,Either[X,V]], returns a tuple of sequenced maps (each with the same key type), with the X values on the left and the V values on the right.
-    *
-    * @param vXeKm the map
-    * @return the separated maps as a tuple of sequenced maps
-    */
-  def sequenceLeftRight[K, V, X](vXeKm: Map[K, Either[X, V]]): (Seq[(K, X)], Seq[(K, V)]) = tupleMap[Seq[(K, Either[X, V])], Seq[(K, X)], Seq[(K, Either[X, V])], Seq[(K, V)]](sequenceLeft, sequenceRight)(partition(vXeKm))
+  def zero[V](): V = 0.asInstanceOf[V]
 
   /**
     * method isForgiving which looks up the value of the forgiving property of the configuration.
@@ -337,7 +238,7 @@ object Master {
     * @param config an instance of Config which defines a suitable configuration
     * @return true/false according to the property's value in config
     */
-  def isForgiving(config: Config) = config.getBoolean("forgiving")
+  def isForgiving(config: Config): Boolean = config.getBoolean("forgiving")
 
   /**
     * Method lift which takes a function V1=>(K2,W) and returns a (Unit,V1)=>(K2,W)
@@ -351,6 +252,6 @@ object Master {
     * @return a function of (Unit,V1)=>(K2,W)
     */
   def lift[V1, K2, W](f: V1 => (K2, W)): (Unit, V1) => (K2, W) = {
-    case (u, v) => f(v)
+    case (_, v) => f(v)
   }
 }

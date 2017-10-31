@@ -7,17 +7,17 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 
 abstract class MapReduceActor extends Actor with ActorLogging {
-  override def preStart = {
+  override def preStart: Unit = {
     log.debug("is starting")
     super.preStart
   }
 
-  override def postStop = {
+  override def postStop: Unit = {
     super.postStop
     log.debug("has shut down")
   }
 
-  override def receive = {
+  override def receive: PartialFunction[Any, Unit] = {
     case Close =>
       close()
       context stop self
@@ -27,7 +27,7 @@ abstract class MapReduceActor extends Actor with ActorLogging {
 
   def maybeLog(w: String, z: Any): Unit = if (log.isDebugEnabled) log.debug(w, z)
 
-  def getTimeout(t: String) = {
+  def getTimeout(t: String): Timeout = {
     val durationR = """(\d+)\s*(\w+)""".r
     val timeout = t match {
       case durationR(n, s) => new Timeout(FiniteDuration(n.toLong, s))
@@ -37,7 +37,7 @@ abstract class MapReduceActor extends Actor with ActorLogging {
     timeout
   }
 
-  def close() = {
+  def close(): Unit = {
     // close down any non-actor resources (actors get closed anyway).
   }
 }

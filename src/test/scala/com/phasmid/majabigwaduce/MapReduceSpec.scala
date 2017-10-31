@@ -50,6 +50,7 @@ class MapReduceSpec extends FlatSpec with Matchers with Futures with ScalaFuture
 
   `spec2` should "yield 556" in {
     def mapper(w: String, gs: Seq[String]): (String, Int) = (w, (for (g <- gs) yield g.split("""\s+""").length) reduce (_ + _))
+
     val props = Props.create(classOf[Master[String, Seq[String], String, Int, Int]], config, mapper _, adder _)
     val master = system.actorOf(props, s"""master-$spec2""")
     val part1result = Map[String, Seq[String]]("http://www.bbc.com/" -> Seq(MapReduceSpec.bbcText),
@@ -71,9 +72,10 @@ class MapReduceSpec extends FlatSpec with Matchers with Futures with ScalaFuture
     def mapper1(w: String): (URL, String) = {
       val u = MockURL(w); (u.get, u.content)
     }
+
+    def mapper2(w: URL, gs: Seq[String]): (URL, Int) = (w, (for (g <- gs) yield g.split("""\s+""").length) reduce (_ + _))
     val props1 = Props.create(classOf[Master_First_Fold[String, URL, String, Seq[String]]], config, mapper1 _, reducer _, init _)
     val master1 = system.actorOf(props1, s"WC-1-master")
-    def mapper2(w: URL, gs: Seq[String]): (URL, Int) = (w, (for (g <- gs) yield g.split("""\s+""").length) reduce (_ + _))
     val props2 = Props.create(classOf[Master[URL, Seq[String], URL, Int, Int]], config, mapper2 _, adder _)
     val master2 = system.actorOf(props2, s"WC-2-master")
     val wsUrf = master1.ask(Seq("http://www.bbc.com/", "http://www.cnn.com/", "http://default/")).mapTo[Response[URL, Seq[String]]]
@@ -94,9 +96,10 @@ class MapReduceSpec extends FlatSpec with Matchers with Futures with ScalaFuture
     def mapper1(w: String): (URL, String) = {
       val u = MockURL(w); (u.get, u.content)
     }
+
+    def mapper2(w: String, gs: Seq[String]): (String, Int) = (w, (for (g <- gs) yield g.split("""\s+""").length) reduce (_ + _))
     val props1 = Props.create(classOf[Master_First_Fold[String, URL, String, Seq[String]]], config, mapper1 _, reducer _, init _)
     val master1 = system.actorOf(props1, s"WC-1b-master")
-    def mapper2(w: String, gs: Seq[String]): (String, Int) = (w, (for (g <- gs) yield g.split("""\s+""").length) reduce (_ + _))
     val props2 = Props.create(classOf[Master[URL, Seq[String], URL, Int, Int]], config, mapper2 _, adder _)
     val master2 = system.actorOf(props2, s"WC-2b-master")
     val wsUrf = master1.ask(Seq("http://www.bbc.com/", "http://www.cnn.com/", "http://default/")).mapTo[Response[URL, Seq[String]]]
@@ -113,6 +116,7 @@ class MapReduceSpec extends FlatSpec with Matchers with Futures with ScalaFuture
 
   `spec3` should "work for word map" in {
     def mapper(w: String, us: Seq[URL]): (String, Int) = (w, us.length)
+
     val props = Props.create(classOf[Master[String, Seq[URL], String, Int, Int]], config, mapper _, adder _)
     val master = system.actorOf(props, s"TF2-master")
     val bbc = new URL("http://www.bbc.com/")
