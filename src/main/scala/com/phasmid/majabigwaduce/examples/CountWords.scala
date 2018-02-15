@@ -23,20 +23,23 @@ trait Resource {
 
 case class CountWords(resourceFunc: String => Resource)(implicit system: ActorSystem, config: Config, timeout: Timeout, ec: ExecutionContext) extends (Seq[String] => Future[Int]) {
   override def apply(v1: Seq[String]): Future[Int] = {
-    def init = Seq[String]()
 
     val stage1: MapReduce[String, URI, Seq[String]] = MapReduceFirstFold(
-      { w: String => val u = resourceFunc(w); system.log.debug(s"stage1 map: $w"); (u.getServer, u.getContent) }, { (a: Seq[String], v: String) => a :+ v },
+      { w: String => val u = resourceFunc(w); system.log.debug(s"stage1 map: $w"); (u.getServer, u.getContent) }, appendString,
       init _
     )
     val stage2: MapReduce[(URI, Seq[String]), URI, Int] = MapReducePipe(
-      { (w: URI, gs: Seq[String]) => (w, (for (g <- gs) yield g.split("""\s+""").length) reduce (_ + _)) }, { (x: Int, y: Int) => x + y },
+      { (w: URI, gs: Seq[String]) => (w, (for (g <- gs) yield g.split("""\s+""").length) reduce (_ + _)) }, addInts,
       1
     )
     val stage3 = Reduce[Int, Int](_ + _)
     val mr = stage1 | stage2 | stage3
     mr(v1)
   }
+
+  private def init = Seq[String]()
+  private def addInts(x: Int, y: Int) = x + y
+  private def appendString(a: Seq[String], v: String) = a :+ v
 }
 
 /**

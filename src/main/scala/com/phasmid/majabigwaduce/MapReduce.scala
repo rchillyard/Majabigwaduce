@@ -198,8 +198,8 @@ abstract class MapReduce_Base[T, K, V](system: ActorSystem)(implicit timeout: Ti
   private val master = system.actorOf(createProps, createName)
 
   def apply(ts: Seq[T]): Future[Map[K, V]] = {
-    // Note: currently, we ignore the value of ok but we could pass back a tuple that includes ok and the resulting map
-    for (vKr <- master.ask(ts).mapTo[Response[K, V]]; ok = report(vKr)) yield vKr.right
+    // Note: currently, we ignore the value of report but we could pass back a tuple that includes ok and the resulting map
+    for (vKr <- master.ask(ts).mapTo[Response[K, V]]; _ = report(vKr)) yield vKr.right
   }
 
   def createProps: Props

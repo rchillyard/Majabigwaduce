@@ -21,12 +21,12 @@ case class MockURL(url: String) {
 }
 
 class MapReduceSpec extends FlatSpec with Matchers with Futures with ScalaFutures with Inside {
-  implicit val system = ActorSystem("MapReduceSpec")
-  implicit val timeout = Timeout(5 seconds)
+  implicit val system: ActorSystem = ActorSystem("MapReduceSpec")
+  implicit val timeout: Timeout = Timeout(5 seconds)
 
   import system.dispatcher
 
-  val config = ConfigFactory.load()
+  private val config = ConfigFactory.load()
   val spec0 = "WC"
   val spec1 = "WC-1"
   val spec2 = "WC-2"
@@ -40,7 +40,7 @@ class MapReduceSpec extends FlatSpec with Matchers with Futures with ScalaFuture
     val master = system.actorOf(props, s"""mstr-$spec1""")
     val wsUrf = master.ask(Seq("http://www.bbc.com/", "http://www.cnn.com/", "http://default/")).mapTo[Response[URL, Seq[String]]]
     whenReady(wsUrf, timeout(Span(6, Seconds))) {
-      case wsUr =>
+      wsUr =>
         assert(wsUr.size == 3)
         assert(wsUr.left.isEmpty)
         assert(wsUr.right.size == 3)
@@ -58,7 +58,7 @@ class MapReduceSpec extends FlatSpec with Matchers with Futures with ScalaFuture
       "http://default/" -> Seq(MapReduceSpec.defaultText))
     val iSrf = master.ask(part1result).mapTo[Response[String, Int]]
     whenReady(iSrf, timeout(Span(6, Seconds))) {
-      case iSr =>
+      iSr =>
         assert(iSr.size == 3)
         assert(iSr.right.get("http://www.bbc.com/") match { case Some(94) => true; case _ => false })
         assert(iSr.right.get("http://www.cnn.com/") match { case Some(135) => true; case _ => false })
@@ -81,7 +81,7 @@ class MapReduceSpec extends FlatSpec with Matchers with Futures with ScalaFuture
     val wsUrf = master1.ask(Seq("http://www.bbc.com/", "http://www.cnn.com/", "http://default/")).mapTo[Response[URL, Seq[String]]]
     val iUrf = wsUrf flatMap { wsUr => val wsUm = wsUr.right; master2.ask(wsUm).mapTo[Response[URL, Int]] }
     whenReady(iUrf, timeout(Span(6, Seconds))) {
-      case iUr =>
+      iUr =>
         assert(iUr.size == 3)
         assert(iUr.right.get(new URL("http://www.bbc.com/")) match { case Some(94) => true; case _ => false })
         assert(iUr.right.get(new URL("http://www.cnn.com/")) match { case Some(135) => true; case _ => false })
@@ -124,17 +124,15 @@ class MapReduceSpec extends FlatSpec with Matchers with Futures with ScalaFuture
     val other = new URL("http://default/")
     val occurrences = Map("the" -> Seq(bbc, cnn, other), "Syria" -> Seq(bbc, cnn))
     val iSrf = master.ask(occurrences).mapTo[Response[String, Int]]
-    whenReady(iSrf, timeout(Span(6, Seconds))) {
-      case iSr =>
-        assert(iSr.size == 2)
-      //        println(s"r: $r")
-    }
+    whenReady(iSrf, timeout(Span(6, Seconds)))(iSr =>
+      assert(iSr.size == 2)
+    )
     system.stop(master)
   }
 
-  def reducer(a: Seq[String], v: String) = a :+ v
+  private def reducer(a: Seq[String], v: String) = a :+ v
 
-  def init = Seq[String]()
+  private def init = Seq[String]()
 
   def adder(x: Int, y: Int): Int = x + y
 }
@@ -165,7 +163,7 @@ The Russian intervention in the four-year Syrian war has caught U.S. President B
 DANGEROUS CONSEQUENCES
 Russian President Vladimir Putin was rebuffed in his bid to gain support for his country's bombing campaign, with Saudi sources saying they had warned the Kremlin leader of dangerous consequences and Europe issuing its strongest criticism yet."""
 
-  def getMockContent(u: URL) = {
+  def getMockContent(u: URL): String = {
     u.getHost match {
       case "www.bbc.com" => bbcText
       case "www.cnn.com" => cnnText

@@ -29,9 +29,7 @@ class CountWordsSpec extends FlatSpec with Matchers with Futures with ScalaFutur
     hc.getResource _ expects wCNN returning rCNN
     hc.getResource _ expects wDef returning rDef
     val nf = CountWords(hc, Array(wBBC, wCNN, wDef))
-    whenReady(nf, timeout(Span(6, Seconds))) {
-      case i => assert(i == 556)
-    }
+    whenReady(nf, timeout(Span(6, Seconds)))(i => assert(i == 556))
   }
 }
 
