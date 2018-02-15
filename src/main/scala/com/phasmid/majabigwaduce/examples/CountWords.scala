@@ -21,6 +21,24 @@ trait Resource {
   def getContent: String
 }
 
+case class CountWords(resourceFunc: String => Resource)(implicit system: ActorSystem, config: Config, timeout: Timeout, ec: ExecutionContext) extends (Seq[String] => Future[Int]) {
+  override def apply(v1: Seq[String]): Future[Int] = {
+    def init = Seq[String]()
+
+    val stage1: MapReduce[String, URI, Seq[String]] = MapReduceFirstFold(
+      { w: String => val u = resourceFunc(w); system.log.debug(s"stage1 map: $w"); (u.getServer, u.getContent) }, { (a: Seq[String], v: String) => a :+ v },
+      init _
+    )
+    val stage2: MapReduce[(URI, Seq[String]), URI, Int] = MapReducePipe(
+      { (w: URI, gs: Seq[String]) => (w, (for (g <- gs) yield g.split("""\s+""").length) reduce (_ + _)) }, { (x: Int, y: Int) => x + y },
+      1
+    )
+    val stage3 = Reduce[Int, Int](_ + _)
+    val mr = stage1 | stage2 | stage3
+    mr(v1)
+  }
+}
+
 /**
   * CountWords: an example application of the MapReduce framework.
   * This application is a three-stage map-reduce process (the final stage is a pure reduce process).
@@ -40,22 +58,8 @@ object CountWords {
     implicit val timeout: Timeout = getTimeout(config.getString("timeout"))
     import ExecutionContext.Implicits.global
 
-    def init = Seq[String]()
-
-    val stage1 = MapReduceFirstFold(
-      { w: String => val u = hc.getResource(w); system.log.debug(s"stage1 map: $w"); (u.getServer, u.getContent) }, { (a: Seq[String], v: String) => a :+ v },
-      init _
-    )
-    val stage2 = MapReducePipe(
-      { (w: URI, gs: Seq[String]) => (w, (for (g <- gs) yield g.split("""\s+""").length) reduce (_ + _)) }, { (x: Int, y: Int) => x + y },
-      1
-    )
-    val stage3 = Reduce[Int, Int](_ + _)
-    val countWords = stage1 | stage2 | stage3
-
     val ws = if (args.length > 0) args.toSeq else Seq("http://www.bbc.com/doc1", "http://www.cnn.com/doc2", "http://default/doc3", "http://www.bbc.com/doc2", "http://www.bbc.com/doc3")
-
-    countWords.apply(ws)
+    CountWords(hc.getResource).apply(ws)
   }
 
   // TODO try to combine this with the same method in MapReduceActor
