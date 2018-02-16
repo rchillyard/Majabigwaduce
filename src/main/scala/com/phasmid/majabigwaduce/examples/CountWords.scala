@@ -35,7 +35,7 @@ case class CountWords(resourceFunc: String => Resource)(implicit system: ActorSy
       addInts,
       1
     )
-    val stage3 = Reduce[Int, Int](addInts)
+    val stage3 = Reduce[Int, Int](() => 0)(addInts)
     val mr = stage1 | stage2 | stage3
     mr(v1)
   }
@@ -66,7 +66,7 @@ object CountWords {
     implicit val config: Config = configRoot.getConfig("CountWords")
     implicit val system: ActorSystem = ActorSystem(config.getString("name"))
     implicit val timeout: Timeout = getTimeout(config.getString("timeout"))
-    implicit val logger = system.log
+    implicit val logger: LoggingAdapter = system.log
     import ExecutionContext.Implicits.global
 
     val ws = if (args.length > 0) args.toSeq else Seq("http://www.bbc.com/doc1", "http://www.cnn.com/doc2", "http://default/doc3", "http://www.bbc.com/doc2", "http://www.bbc.com/doc3")

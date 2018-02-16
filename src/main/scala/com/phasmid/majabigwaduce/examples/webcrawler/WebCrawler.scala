@@ -25,11 +25,11 @@ import scala.language.postfixOps
   * @author scalaprof
   */
 object WebCrawler extends App {
+  type Strings = Seq[String]
   val configRoot = ConfigFactory.load
   implicit val config: Config = configRoot.getConfig("WebCrawler")
   implicit val system: ActorSystem = ActorSystem(config.getString("name"))
   implicit val timeout: Timeout = getTimeout(config.getString("timeout"))
-
   import ExecutionContext.Implicits.global
 
   val ws = if (args.length > 0) args.toSeq else Seq(config.getString("start"))
@@ -37,41 +37,65 @@ object WebCrawler extends App {
   Await.result(eventualInt, 10.minutes)
   for (x <- eventualInt) println(s"total links: $x")
 
-  def runWebCrawler(ws: Seq[String], depth: Int)(implicit system: ActorSystem, config: Config, timeout: Timeout): Future[Int] = {
+  def runWebCrawler(ws: Strings, depth: Int)(implicit system: ActorSystem, config: Config, timeout: Timeout): Future[Int] = {
 
-    def init = Seq[String]()
+    def init = Nil
 
-    val stage1: MapReduce[String, URI, Seq[String]] = MapReduceFirstFold(
-      { w: String => val u = new URI(w); (getHostURI(u), u) }, { (a: Seq[String], v: URI) => val s = Source.fromURL(v.toURL).mkString; a :+ s },
+    def appendContent(a: Strings, v: URI): Strings = a :+ Source.fromURL(v.toURL).mkString
+
+    def joinWordLists(a: Strings, v: Strings) = a ++ v
+
+    val stage1: MapReduce[String, URI, Strings] = MapReduceFirstFold(
+      getHostAndURI,
+      appendContent,
       init _
     )
-    val stage2 = MapReducePipeFold(
-      { (w: URI, gs: Seq[String]) => (w, (for (g <- gs) yield getLinks(w, g)) reduce (_ ++ _)) }, { (a: Seq[String], v: Seq[String]) => a ++ v },
+
+    // We are passing the wrong URL into getLinks: the value of u is the server, not the current directory.
+    val stage2: MapReduce[(URI, Strings), URI, Strings] = MapReducePipeFold(
+      (u, gs) => (u, (for (g <- gs) yield getLinks(u, g)) reduce (_ ++ _)),
+      joinWordLists,
       init _,
       1
     )
-    val stage3 = Reduce[Seq[String], Seq[String]](_ ++ _)
+    val stage3: Reduce[Strings, Strings] = Reduce[Strings, Strings](() => Nil)(_ ++ _)
 
-    val crawler = stage1 | stage2 | stage3
+    val crawler: Strings => Future[Strings] = stage1 | stage2 | stage3
 
-    def doCrawl(us: Seq[String], all: Seq[String], depth: Int): Future[Seq[String]] =
+    /**
+      * Note that this method is recursive but not tail-recursive
+      *
+      * @param ws    a sequence of String each representing a URI
+      * @param all   the current representation of the result (will be returned if depth < 0)
+      * @param depth the depth to which we will recurse
+      * @return
+      */
+    def doCrawl(ws: Strings, all: Strings, depth: Int): Future[Strings] =
       if (depth < 0) Future(all)
       else {
-        system.log.info(s"doCrawl: depth=$depth; #us=${us.length}; #all=${all.length}")
-        val (_, out) = us.partition { u => all.contains(u) }
-        for (ws <- crawler(cleanup(out)); gs <- doCrawl(ws.distinct, (all ++ us).distinct, depth - 1)) yield gs
+        system.log.info(s"doCrawl: depth=$depth; #ws=${ws.length}; #all=${all.length}")
+        system.log.debug(s"doCrawl: ws=$ws; all=$all")
+        val (_, out) = ws.partition { u => all.contains(u) }
+        system.log.debug(s"doCrawl: out=$out")
+        for (ws <- crawler(cleanup(out)); gs <- doCrawl(ws.distinct, (all ++ ws).distinct, depth - 1)) yield gs
       }
 
-    doCrawl(ws, Seq[String](), depth) transform( { n: Seq[String] => val z = n.length; system.terminate; z }, { x: Throwable => system.log.error(x, "Map/reduce error (typically in map function)"); x })
+    doCrawl(ws, Nil, depth) transform( { n => val z = n.length; system.terminate; z }, { x => system.log.error(x, "Map/reduce error (typically in map function)"); x })
   }
 
-  private def getLinks(w: URI, g: String): Seq[String] = for (
+  // Probably, we should get three URIs: the host, the directory and the URI for the string w
+  private def getHostAndURI(w: String): (URI, URI) = {
+    val u = new URI(w)
+    (getHostURI(u), u)
+  }
+
+  private def getLinks(u: URI, g: String): Strings = for (
     nsA <- HTMLParser.parse(g) \\ "a";
     nsH <- nsA \ "@href";
     nH <- nsH.head
-  ) yield normalizeURL(w, nH.toString)
+  ) yield normalizeURL(u, nH.toString)
 
-  private def cleanup(ws: Seq[String]): Seq[String] = (for (w <- ws; if w.indexOf('?') == -1; t = trim(w, '#')) yield t).distinct
+  private def cleanup(ws: Strings): Strings = (for (w <- ws; if w.indexOf('?') == -1; t = trim(w, '#')) yield t).distinct
 
   private def trim(s: String, p: Char): String = {
     val hash = s.indexOf(p)

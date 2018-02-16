@@ -162,11 +162,23 @@ case class MapReduceComposed[T, K2, V2, K3, V3](f: MapReduce[T, K2, V2], g: MapR
 /**
   * A reduce function which can be composed (on the right) with a MapReduce object.
   *
+  * CONSIDER changing the signature of this class to extend Seq[T] => S
+  *
+  * @param z the function which can generate a zero (starting) value for the reduction.
+  * @param f the function which will combine the current result with each element of an input set
   * @tparam T the input (free) type of this reduction
   * @tparam S the output (derived) type of this reduction
   */
-case class Reduce[T, S >: T](f: (S, T) => S) extends ((Map[_, T]) => S) {
-  def apply(m: Map[_, T]): S = m.values reduceLeft f
+case class Reduce[T, S >: T](z: () => S)(f: (S, T) => S) extends ((Map[_, T]) => S) {
+  /**
+    * This method cannot use reduce because, logically, reduce is not able to process an empty collection.
+    * Note that we ignore the keys of the input map (m)
+    *
+    * @param m the input map (keys will be ignored)
+    * @return the result of combining all values of m, using the f function.
+    *         An empty map will result in the value of z() being returned.
+    */
+  def apply(m: Map[_, T]): S = m.values.foldLeft(z())(f)
 }
 
 /**
