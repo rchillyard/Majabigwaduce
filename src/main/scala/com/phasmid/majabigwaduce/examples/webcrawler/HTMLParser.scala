@@ -14,7 +14,6 @@ object HTMLParser {
   import scala.xml.Node
   import scala.xml.parsing.NoBindingFactoryAdapter
 
-
   lazy val adapter = new NoBindingFactoryAdapter()
   private lazy val parser = (new SAXFactoryImpl).newSAXParser
 
@@ -23,10 +22,8 @@ object HTMLParser {
   }
 
   def parse(html: Array[Byte]): Node = {
-
     val stream = new ByteArrayInputStream(html)
     val source = new InputSource(stream)
     adapter.loadXML(source, parser)
-
   }
 }

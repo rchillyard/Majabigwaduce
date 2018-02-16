@@ -26,7 +26,7 @@ trait MapReduce[T, K2, V2] extends ((Seq[T]) => Future[Map[K2, V2]]) {
     * @param mr the other MapReduce object
     * @return a new MapReduceComposed object
     */
-  def compose[K3, V3](mr: MapReduce[(K2, V2), K3, V3]): MapReduce[T, K3, V3] = MapReduceComposed(this, mr)
+  def compose[K3, V3](mr: MapReduce[(K2, V2), K3, V3]): MapReduce[T, K3, V3] = MapReduceComposed(this, mr)(mr.ec)
 
   /**
     * alternative name for compose
@@ -46,7 +46,7 @@ trait MapReduce[T, K2, V2] extends ((Seq[T]) => Future[Map[K2, V2]]) {
     * @param executionContext (implicit)
     * @return a Future of an object of type S (for sum, or sigma).
     */
-  def compose[S >: V2](r: Reduce[V2, S])(implicit executionContext: ExecutionContext): (Seq[T]) => Future[S] = { ts => for (v2K2m <- apply(ts); s = r.apply(v2K2m)) yield s }
+  def compose[S >: V2](r: Reduce[V2, S])(implicit executionContext: ExecutionContext): (Seq[T]) => Future[S] = ts => for (v2K2m <- apply(ts); s = r(v2K2m)) yield s
 
   /**
     * alternative name to compose
@@ -155,12 +155,8 @@ case class MapReducePipeFold[K1, V1, K2, W, V2](f: (K1, V1) => (K2, W), g: (V2, 
   * @param f the mapper function which takes a V1 instance and creates a key-value tuple of type (K2,W)
   * @param g the reducer function which combines two values (an V2 and a W) into one V2
   */
-case class MapReduceComposed[T, K2, V2, K3, V3](f: MapReduce[T, K2, V2], g: MapReduce[(K2, V2), K3, V3]) extends MapReduce[T, K3, V3] {
-  implicit val executionContext: ExecutionContext = f.ec
-
-  def ec: ExecutionContext = executionContext
-
-  def apply(ts: Seq[T]): Future[Map[K3, V3]] = for (v2K2m <- f.apply(ts); v3K3m <- g.apply(v2K2m.toSeq)) yield v3K3m
+case class MapReduceComposed[T, K2, V2, K3, V3](f: MapReduce[T, K2, V2], g: MapReduce[(K2, V2), K3, V3])(implicit val ec: ExecutionContext) extends MapReduce[T, K3, V3] {
+  def apply(ts: Seq[T]): Future[Map[K3, V3]] = for (v2K2m <- f(ts); v3K3m <- g(v2K2m.toSeq)) yield v3K3m
 }
 
 /**

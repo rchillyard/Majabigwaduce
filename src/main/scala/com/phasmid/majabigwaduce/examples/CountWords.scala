@@ -3,6 +3,7 @@ package com.phasmid.majabigwaduce.examples
 import java.net.URI
 
 import akka.actor.ActorSystem
+import akka.event.LoggingAdapter
 import akka.util.Timeout
 import com.phasmid.majabigwaduce._
 import com.typesafe.config.{Config, ConfigFactory}
@@ -21,24 +22,30 @@ trait Resource {
   def getContent: String
 }
 
-case class CountWords(resourceFunc: String => Resource)(implicit system: ActorSystem, config: Config, timeout: Timeout, ec: ExecutionContext) extends (Seq[String] => Future[Int]) {
+case class CountWords(resourceFunc: String => Resource)(implicit system: ActorSystem, logger: LoggingAdapter, config: Config, timeout: Timeout, ec: ExecutionContext) extends (Seq[String] => Future[Int]) {
   override def apply(v1: Seq[String]): Future[Int] = {
 
     val stage1: MapReduce[String, URI, Seq[String]] = MapReduceFirstFold(
-      { w: String => val u = resourceFunc(w); system.log.debug(s"stage1 map: $w"); (u.getServer, u.getContent) }, appendString,
+      { w: String => val u = resourceFunc(w); logger.debug(s"stage1 map: $w"); (u.getServer, u.getContent) }, appendString,
       init _
     )
+
     val stage2: MapReduce[(URI, Seq[String]), URI, Int] = MapReducePipe(
-      { (w: URI, gs: Seq[String]) => (w, (for (g <- gs) yield g.split("""\s+""").length) reduce (_ + _)) }, addInts,
+      (w, gs) => w -> (countFields(gs) reduce addInts),
+      addInts,
       1
     )
-    val stage3 = Reduce[Int, Int](_ + _)
+    val stage3 = Reduce[Int, Int](addInts)
     val mr = stage1 | stage2 | stage3
     mr(v1)
   }
 
+  private def countFields(gs: Seq[String]) = for (g <- gs) yield g.split("""\s+""").length
+
   private def init = Seq[String]()
+
   private def addInts(x: Int, y: Int) = x + y
+
   private def appendString(a: Seq[String], v: String) = a :+ v
 }
 
@@ -59,6 +66,7 @@ object CountWords {
     implicit val config: Config = configRoot.getConfig("CountWords")
     implicit val system: ActorSystem = ActorSystem(config.getString("name"))
     implicit val timeout: Timeout = getTimeout(config.getString("timeout"))
+    implicit val logger = system.log
     import ExecutionContext.Implicits.global
 
     val ws = if (args.length > 0) args.toSeq else Seq("http://www.bbc.com/doc1", "http://www.cnn.com/doc2", "http://default/doc3", "http://www.bbc.com/doc2", "http://www.bbc.com/doc3")

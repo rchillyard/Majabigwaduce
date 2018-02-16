@@ -3,7 +3,7 @@ package com.phasmid.majabigwaduce
 import java.net.URL
 
 import akka.actor.{ActorSystem, Props}
-import akka.pattern.ask
+import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import org.scalatest._
@@ -14,10 +14,12 @@ import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.util._
 
-case class MockURL(url: String) {
-  def get: URL = new URL(url)
+case class MockURL(w: String) {
+  def url: URL = new URL(w)
 
-  def content: String = MapReduceSpec.getMockContent(get)
+  def content: String = MapReduceSpec.getMockContent(url)
+
+  def asTuple: (URL,String) = url -> content
 }
 
 class MapReduceSpec extends FlatSpec with Matchers with Futures with ScalaFutures with Inside {
@@ -33,9 +35,8 @@ class MapReduceSpec extends FlatSpec with Matchers with Futures with ScalaFuture
   val spec3 = "TF-2"
 
   `spec1` should "work for http://www.bbc.com/ http://www.cnn.com/ http://default/" in {
-    def mapper(w: String): (URL, String) = {
-      val u = MockURL(w); (u.get, u.content)
-    }
+    def mapper(w: String): (URL, String) = MockURL(w).asTuple
+
     val props = Props.create(classOf[Master_First_Fold[String, URL, String, Seq[String]]], config, mapper _, reducer _, init _)
     val master = system.actorOf(props, s"""mstr-$spec1""")
     val wsUrf = master.ask(Seq("http://www.bbc.com/", "http://www.cnn.com/", "http://default/")).mapTo[Response[URL, Seq[String]]]
@@ -69,11 +70,10 @@ class MapReduceSpec extends FlatSpec with Matchers with Futures with ScalaFuture
   }
 
   `spec0` should "work for http://www.bbc.com/ http://www.cnn.com/ http://default/" in {
-    def mapper1(w: String): (URL, String) = {
-      val u = MockURL(w); (u.get, u.content)
-    }
+    def mapper1(w: String): (URL, String) = MockURL(w).asTuple
 
     def mapper2(w: URL, gs: Seq[String]): (URL, Int) = (w, (for (g <- gs) yield g.split("""\s+""").length) reduce (_ + _))
+
     val props1 = Props.create(classOf[Master_First_Fold[String, URL, String, Seq[String]]], config, mapper1 _, reducer _, init _)
     val master1 = system.actorOf(props1, s"WC-1-master")
     val props2 = Props.create(classOf[Master[URL, Seq[String], URL, Int, Int]], config, mapper2 _, adder _)
@@ -93,11 +93,10 @@ class MapReduceSpec extends FlatSpec with Matchers with Futures with ScalaFuture
   }
 
   it should "fail because mapper is incorrectly defined" in {
-    def mapper1(w: String): (URL, String) = {
-      val u = MockURL(w); (u.get, u.content)
-    }
+    def mapper1(w: String): (URL, String) = MockURL(w).asTuple
 
     def mapper2(w: String, gs: Seq[String]): (String, Int) = (w, (for (g <- gs) yield g.split("""\s+""").length) reduce (_ + _))
+
     val props1 = Props.create(classOf[Master_First_Fold[String, URL, String, Seq[String]]], config, mapper1 _, reducer _, init _)
     val master1 = system.actorOf(props1, s"WC-1b-master")
     val props2 = Props.create(classOf[Master[URL, Seq[String], URL, Int, Int]], config, mapper2 _, adder _)
@@ -105,6 +104,7 @@ class MapReduceSpec extends FlatSpec with Matchers with Futures with ScalaFuture
     val wsUrf = master1.ask(Seq("http://www.bbc.com/", "http://www.cnn.com/", "http://default/")).mapTo[Response[URL, Seq[String]]]
     val iUrf = wsUrf flatMap { wsUr => val wsUm = wsUr.right; master2.ask(wsUm).mapTo[Response[URL, Int]] }
     iUrf.onComplete {
+      case Failure(x: AskTimeoutException) => fail(s"should throw MapReduceException, not $x")
       case Failure(x) =>
         x shouldBe a[MapReduceException]
         x.getCause shouldBe a[ClassCastException]

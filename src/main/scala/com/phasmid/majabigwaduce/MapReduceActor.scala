@@ -22,7 +22,7 @@ abstract class MapReduceActor extends Actor with ActorLogging {
       close()
       context stop self
     case q =>
-      log.warning(s"received unknown message type: $q")
+      log.warning(s"received unknown message type: ${q.getClass}")
   }
 
   def maybeLog(w: String, z: Any): Unit = if (log.isDebugEnabled) log.debug(w, z)
