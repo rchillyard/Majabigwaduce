@@ -30,6 +30,7 @@ object WebCrawler extends App {
   implicit val config: Config = configRoot.getConfig("WebCrawler")
   implicit val system: ActorSystem = ActorSystem(config.getString("name"))
   implicit val timeout: Timeout = getTimeout(config.getString("timeout"))
+
   import ExecutionContext.Implicits.global
 
   val ws = if (args.length > 0) args.toSeq else Seq(config.getString("start"))
@@ -39,27 +40,9 @@ object WebCrawler extends App {
 
   def runWebCrawler(ws: Strings, depth: Int)(implicit system: ActorSystem, config: Config, timeout: Timeout): Future[Int] = {
 
-    def init = Nil
-
-    def appendContent(a: Strings, v: URI): Strings = a :+ Source.fromURL(v.toURL).mkString
-
-    def joinWordLists(a: Strings, v: Strings) = a ++ v
-
-    val stage1: MapReduce[String, URI, Strings] = MapReduceFirstFold(
-      getHostAndURI,
-      appendContent,
-      init _
-    )
-
-    // We are passing the wrong URL into getLinks: the value of u is the server, not the current directory.
-    val stage2: MapReduce[(URI, Strings), URI, Strings] = MapReducePipeFold(
-      (u, gs) => (u, (for (g <- gs) yield getLinks(u, g)) reduce (_ ++ _)),
-      joinWordLists,
-      init _,
-      1
-    )
+    val stage1: MapReduce[String, URI, Strings] = MapReduceFirstFold(getHostAndURI, appendContent, init)
+    val stage2: MapReduce[(URI, Strings), URI, Strings] = MapReducePipeFold(getLinkStrings, joinWordLists, init, 1)
     val stage3: Reduce[Strings, Strings] = Reduce[Strings, Strings](() => Nil)(_ ++ _)
-
     val crawler: Strings => Future[Strings] = stage1 | stage2 | stage3
 
     /**
@@ -83,11 +66,20 @@ object WebCrawler extends App {
     doCrawl(ws, Nil, depth) transform( { n => val z = n.length; system.terminate; z }, { x => system.log.error(x, "Map/reduce error (typically in map function)"); x })
   }
 
+  private def init() = Nil: Strings
+
+  private def appendContent(a: Strings, v: URI): Strings = a :+ Source.fromURL(v.toURL).mkString
+
+  private def joinWordLists(a: Strings, v: Strings) = a ++ v
+
   // Probably, we should get three URIs: the host, the directory and the URI for the string w
   private def getHostAndURI(w: String): (URI, URI) = {
     val u = new URI(w)
     (getHostURI(u), u)
   }
+
+  // We are passing the wrong URL into getLinks: the value of u is the server, not the current directory.
+  private def getLinkStrings(u: URI, gs: Strings): (URI, Strings) = (u, (for (g <- gs) yield getLinks(u, g)) reduce (_ ++ _))
 
   private def getLinks(u: URI, g: String): Strings = for (
     nsA <- HTMLParser.parse(g) \\ "a";
