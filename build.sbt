@@ -2,7 +2,7 @@ name := "Majabigwaduce"
 
 version := "1.0.0-SNAPSHOT"
 
-scalaVersion := "2.11.8"
+scalaVersion := "2.12.5"
 
 val akkaGroup = "com.typesafe.akka"
 val akkaVersion = "2.5.11"
@@ -24,7 +24,7 @@ libraryDependencies ++= Seq(
 	"org.scalamock" %% "scalamock-scalatest-support" % "3.4.2" % "test",
 	"ch.qos.logback" % "logback-classic" % "1.2.3" % "runtime",
 // xml and tagsoup are for WebCrawler exemplar
-    "org.scala-lang.modules" %% "scala-xml" % "1.0.2",
+    "org.scala-lang.modules" %% "scala-xml" % "1.1.0",
 	"org.ccil.cowan.tagsoup" % "tagsoup" % "1.2.1"
 	
 )
