@@ -35,8 +35,8 @@ case class CountWords(resourceFunc: String => Resource)(implicit system: ActorSy
       addInts,
       1
     )
-    val stage3 = Reduce[Int, Int](() => 0)(addInts)
-    val mr = stage1 | stage2 | stage3
+    val stage3 = Reduce[URI, Int, Int](() => 0)(addInts)
+    val mr = stage1 & stage2 | stage3
     mr(v1)
   }
 

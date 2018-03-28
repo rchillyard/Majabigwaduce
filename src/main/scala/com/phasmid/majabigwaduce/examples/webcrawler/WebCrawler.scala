@@ -36,14 +36,16 @@ object WebCrawler extends App {
   val ws = if (args.length > 0) args.toSeq else Seq(config.getString("start"))
   private val eventualInt = runWebCrawler(ws, config.getInt("depth"))
   Await.result(eventualInt, 10.minutes)
-  for (x <- eventualInt) println(s"total links: $x")
+  eventualInt foreach (x => println(s"total links: $x"))
 
   def runWebCrawler(ws: Strings, depth: Int)(implicit system: ActorSystem, config: Config, timeout: Timeout): Future[Int] = {
 
     val stage1: MapReduce[String, URI, Strings] = MapReduceFirstFold(getHostAndURI, appendContent, init)
     val stage2: MapReduce[(URI, Strings), URI, Strings] = MapReducePipeFold(getLinkStrings, joinWordLists, init, 1)
-    val stage3: Reduce[Strings, Strings] = Reduce[Strings, Strings](() => Nil)(_ ++ _)
-    val crawler: Strings => Future[Strings] = stage1 | stage2 | stage3
+    val stage3 = Reduce[URI, Strings, Strings](() => Nil)(_ ++ _)
+    val crawler: Strings => Future[Strings] = stage1 & stage2 | stage3
+
+    val f1: Seq[String]=>Future[Map[URI, Strings]] = stage1
 
     /**
       * Note that this method is recursive but not tail-recursive
