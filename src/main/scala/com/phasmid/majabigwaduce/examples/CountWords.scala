@@ -68,7 +68,7 @@ object CountWords {
     implicit val timeout: Timeout = getTimeout(config.getString("timeout"))
     implicit val logger: LoggingAdapter = system.log
     import ExecutionContext.Implicits.global
-    import Init._
+//    import Init._
 
     val ws = if (args.length > 0) args.toSeq else Seq("http://www.bbc.com/doc1", "http://www.cnn.com/doc2", "http://default/doc3", "http://www.bbc.com/doc2", "http://www.bbc.com/doc3")
     CountWords(hc.getResource).apply(ws)
