@@ -32,6 +32,7 @@ class MapReduceSpec extends FlatSpec with Matchers with Futures with ScalaFuture
   val spec2 = "WC-2"
   val spec3 = "TF-2"
 
+  // TODO investigate why this works when not connected to network (ditto others)
   `spec1` should "work for http://www.bbc.com/ http://www.cnn.com/ http://default/" in {
     def mapper(w: String): (URL, String) = {
       val u = MockURL(w); (u.get, u.content)

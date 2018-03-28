@@ -77,7 +77,7 @@ trait MapReduce[T, K2, V2] extends ((Seq[T]) => Future[Map[K2, V2]]) {
   * @param system  the actor system
   * @param timeout the value of timeout to be used
   */
-case class MapReduceFirst[V1, K2, W, V2 >: W](f: V1 => (K2, W), g: (V2, W) => V2)(implicit config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_LoggingBase[V1, K2, V2](config, system)(timeout) {
+case class MapReduceFirst[V1, K2, W, V2 >: W: Init](f: V1 => (K2, W), g: (V2, W) => V2)(implicit config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_LoggingBase[V1, K2, V2](config, system)(timeout) {
   def createProps = Props(new Master_First(config, f, g))
 
   def createName = s"""mrf-mstr"""
@@ -98,7 +98,7 @@ case class MapReduceFirst[V1, K2, W, V2 >: W](f: V1 => (K2, W), g: (V2, W) => V2
   * @param system  the actor system
   * @param timeout the value of timeout to be used
   */
-case class MapReducePipe[K1, V1, K2, W, V2 >: W](f: (K1, V1) => (K2, W), g: (V2, W) => V2, n: Int)(implicit config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_LoggingBase[(K1, V1), K2, V2](config, system)(timeout) {
+case class MapReducePipe[K1, V1, K2, W, V2 >: W: Init](f: (K1, V1) => (K2, W), g: (V2, W) => V2, n: Int)(implicit config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_LoggingBase[(K1, V1), K2, V2](config, system)(timeout) {
   def createProps = Props(new Master(config, f, g))
 
   def createName = s"""mrp-mstr-$n"""
@@ -117,7 +117,7 @@ case class MapReducePipe[K1, V1, K2, W, V2 >: W](f: (K1, V1) => (K2, W), g: (V2,
   * @param system  the actor system
   * @param timeout the value of timeout to be used
   */
-case class MapReduceFirstFold[V1, K2, W, V2](f: V1 => (K2, W), g: (V2, W) => V2, z: () => V2)(implicit config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_LoggingBase[V1, K2, V2](config, system)(timeout) {
+case class MapReduceFirstFold[V1, K2, W, V2: Init](f: V1 => (K2, W), g: (V2, W) => V2, z: () => V2)(implicit config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_LoggingBase[V1, K2, V2](config, system)(timeout) {
   def createProps = Props(new Master_First_Fold(config, f, g, z))
 
   def createName = s"""mrff-mstr"""
@@ -138,7 +138,7 @@ case class MapReduceFirstFold[V1, K2, W, V2](f: V1 => (K2, W), g: (V2, W) => V2,
   * @param system  the actor system
   * @param timeout the value of timeout to be used
   */
-case class MapReducePipeFold[K1, V1, K2, W, V2](f: (K1, V1) => (K2, W), g: (V2, W) => V2, z: () => V2, n: Int)(implicit config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_LoggingBase[(K1, V1), K2, V2](config, system)(timeout) {
+case class MapReducePipeFold[K1, V1, K2, W, V2: Init](f: (K1, V1) => (K2, W), g: (V2, W) => V2, z: () => V2, n: Int)(implicit config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_LoggingBase[(K1, V1), K2, V2](config, system)(timeout) {
   def createProps = Props(new Master_Fold(config, f, g, z))
 
   def createName = s"""mrpf-mstr-$n"""
@@ -170,6 +170,7 @@ case class MapReduceComposed[T, K2, V2, K3, V3](f: MapReduce[T, K2, V2], g: MapR
   * @tparam S the output (derived) type of this reduction
   */
 case class Reduce[T, S >: T](f: (S, T) => S) extends ((Map[_, T]) => S) {
+  // FIXME doesn't work when m.values is empty
   def apply(m: Map[_, T]): S = m.values reduceLeft f
 }
 

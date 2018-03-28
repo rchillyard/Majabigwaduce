@@ -163,7 +163,7 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => (K2,
     */
   def reducerProps(g: (V2, W) => V2, z: () => V2): Props
 
-  // CONSIDER reworking this so that there is only one possible valid message: 
+  // CONSIDER reworking this so that there is only one possible valid message:
   // either in Map[] form of Seq[()] form. I don't really like having both
   override def receive: PartialFunction[Any, Unit] = {
     case v1K1m: Map[K1, V1] =>

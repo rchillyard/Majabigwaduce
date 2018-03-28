@@ -25,7 +25,7 @@ abstract class MapReduceActor extends Actor with ActorLogging {
       log.warning(s"received unknown message type: $q")
   }
 
-  def maybeLog(w: String, z: Any): Unit = if (log.isDebugEnabled) log.debug(w, z)
+  def maybeLog(w: String, z: => Any): Unit = if (log.isDebugEnabled) log.debug(w, z)
 
   def getTimeout(t: String): Timeout = {
     val durationR = """(\d+)\s*(\w+)""".r

@@ -39,6 +39,7 @@ object CountWords {
     implicit val system: ActorSystem = ActorSystem(config.getString("name"))
     implicit val timeout: Timeout = getTimeout(config.getString("timeout"))
     import ExecutionContext.Implicits.global
+    import Init._
 
     def init = Seq[String]()
 
