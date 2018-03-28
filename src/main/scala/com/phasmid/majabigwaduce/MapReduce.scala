@@ -26,7 +26,7 @@ trait MapReduce[T, K2, V2] extends ((Seq[T]) => Future[Map[K2, V2]]) {
     * @param mr the other MapReduce object
     * @return a new MapReduceComposed object
     */
-  def compose[K3, V3](mr: MapReduce[(K2, V2), K3, V3]): MapReduce[T, K3, V3] = MapReduceComposed(this, mr)
+  def compose[K3, V3](mr: MapReduce[(K2, V2), K3, V3]): MapReduce[T, K3, V3] = MapReduceComposed(this, mr)(mr.ec)
 
   /**
     * alternative name for compose
@@ -46,7 +46,7 @@ trait MapReduce[T, K2, V2] extends ((Seq[T]) => Future[Map[K2, V2]]) {
     * @param executionContext (implicit)
     * @return a Future of an object of type S (for sum, or sigma).
     */
-  def compose[S >: V2](r: Reduce[V2, S])(implicit executionContext: ExecutionContext): (Seq[T]) => Future[S] = { ts => for (v2K2m <- apply(ts); s = r.apply(v2K2m)) yield s }
+  def compose[S >: V2](r: Reduce[V2, S])(implicit executionContext: ExecutionContext): (Seq[T]) => Future[S] = ts => for (v2K2m <- apply(ts); s = r(v2K2m)) yield s
 
   /**
     * alternative name to compose
@@ -155,23 +155,30 @@ case class MapReducePipeFold[K1, V1, K2, W, V2: Init](f: (K1, V1) => (K2, W), g:
   * @param f the mapper function which takes a V1 instance and creates a key-value tuple of type (K2,W)
   * @param g the reducer function which combines two values (an V2 and a W) into one V2
   */
-case class MapReduceComposed[T, K2, V2, K3, V3](f: MapReduce[T, K2, V2], g: MapReduce[(K2, V2), K3, V3]) extends MapReduce[T, K3, V3] {
-  implicit val executionContext: ExecutionContext = f.ec
-
-  def ec: ExecutionContext = executionContext
-
-  def apply(ts: Seq[T]): Future[Map[K3, V3]] = for (v2K2m <- f.apply(ts); v3K3m <- g.apply(v2K2m.toSeq)) yield v3K3m
+case class MapReduceComposed[T, K2, V2, K3, V3](f: MapReduce[T, K2, V2], g: MapReduce[(K2, V2), K3, V3])(implicit val ec: ExecutionContext) extends MapReduce[T, K3, V3] {
+  def apply(ts: Seq[T]): Future[Map[K3, V3]] = for (v2K2m <- f(ts); v3K3m <- g(v2K2m.toSeq)) yield v3K3m
 }
 
 /**
   * A reduce function which can be composed (on the right) with a MapReduce object.
   *
+  * CONSIDER changing the signature of this class to extend Seq[T] => S
+  *
+  * @param z the function which can generate a zero (starting) value for the reduction.
+  * @param f the function which will combine the current result with each element of an input set
   * @tparam T the input (free) type of this reduction
   * @tparam S the output (derived) type of this reduction
   */
-case class Reduce[T, S >: T](f: (S, T) => S) extends ((Map[_, T]) => S) {
-  // FIXME doesn't work when m.values is empty
-  def apply(m: Map[_, T]): S = m.values reduceLeft f
+case class Reduce[T, S >: T](z: () => S)(f: (S, T) => S) extends ((Map[_, T]) => S) {
+  /**
+    * This method cannot use reduce because, logically, reduce is not able to process an empty collection.
+    * Note that we ignore the keys of the input map (m)
+    *
+    * @param m the input map (keys will be ignored)
+    * @return the result of combining all values of m, using the f function.
+    *         An empty map will result in the value of z() being returned.
+    */
+  def apply(m: Map[_, T]): S = m.values.foldLeft(z())(f)
 }
 
 /**
@@ -199,8 +206,8 @@ abstract class MapReduce_Base[T, K, V](system: ActorSystem)(implicit timeout: Ti
   private val master = system.actorOf(createProps, createName)
 
   def apply(ts: Seq[T]): Future[Map[K, V]] = {
-    // Note: currently, we ignore the value of ok but we could pass back a tuple that includes ok and the resulting map
-    for (vKr <- master.ask(ts).mapTo[Response[K, V]]; ok = report(vKr)) yield vKr.right
+    // Note: currently, we ignore the value of report but we could pass back a tuple that includes ok and the resulting map
+    for (vKr <- master.ask(ts).mapTo[Response[K, V]]; _ = report(vKr)) yield vKr.right
   }
 
   def createProps: Props

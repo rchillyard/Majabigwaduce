@@ -210,6 +210,7 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => (K2,
     val rs = Stream.continually(reducers.toStream).flatten
     val wsK2s = for ((k2, ws) <- wsK2m.toSeq) yield (k2, ws)
     val v2XeK2fs = for (((k2, ws), a) <- wsK2s zip rs) yield (a ? Intermediate(k2, ws)).mapTo[(K2, Either[Throwable, V2])]
+    // TODO Where are we getting a null from?
     for (wXeK2s <- Future.sequence(v2XeK2fs)) yield wXeK2s.toMap
   }
 
@@ -252,6 +253,6 @@ object Master {
     * @return a function of (Unit,V1)=>(K2,W)
     */
   def lift[V1, K2, W](f: V1 => (K2, W)): (Unit, V1) => (K2, W) = {
-    case (_, v) => f(v)
+    (_, v) => f(v)
   }
 }
