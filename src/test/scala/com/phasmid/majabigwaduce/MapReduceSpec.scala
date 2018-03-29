@@ -13,47 +13,56 @@ class MapReduceSpec extends FlatSpec with Matchers with Futures with ScalaFuture
   behavior of "MapReduce"
   it should "apply correctly" in {
     val target = MockMapReduce[Int, String, Int](xs => (for (x <- xs) yield (x.toString, x)).toMap)
-    val mf = target(Seq(1,2))
+    val mf = target(Seq(1, 2))
     val tf = mf map (_.unzip)
-    whenReady(tf) { u => u should matchPattern { case (Seq("1","2"),Seq(1,2)) => } }
+    whenReady(tf) { u => u should matchPattern { case (Seq("1", "2"), Seq(1, 2)) => } }
   }
 
   it should "compose correctly using MapReduceComposed" in {
     val mr1 = MockMapReduce[Int, String, Int](xs => (for (x <- xs) yield (x.toString, x)).toMap)
-    def mr2(wIs: Seq[(String,Int)]): Future[Map[Int,Int]] = Future((for (wi <- wIs) yield (wi._1.toInt,wi._2)).toMap)
-    val target = MapReduceComposed(mr1,mr2)
-    val mf = target(Seq(1,2))
+
+    def mr2(wIs: Seq[(String, Int)]): Future[Map[Int, Int]] = Future((for (wi <- wIs) yield (wi._1.toInt, wi._2)).toMap)
+
+    val target = MapReduceComposed(mr1, mr2)
+    val mf = target(Seq(1, 2))
     val tf = mf map (_.unzip)
-    whenReady(tf) { u => u should matchPattern { case (Seq(1,2),Seq(1,2)) => } }
+    whenReady(tf) { u => u should matchPattern { case (Seq(1, 2), Seq(1, 2)) => } }
   }
 
   it should "compose correctly with &" in {
     val mr1 = MockMapReduce[Int, String, Int](xs => (for (x <- xs) yield (x.toString, x)).toMap)
-    def mr2(wIs: Seq[(String,Int)]): Future[Map[Int,Int]] = Future((for (wi <- wIs) yield (wi._1.toInt,wi._2)).toMap)
+
+    def mr2(wIs: Seq[(String, Int)]): Future[Map[Int, Int]] = Future((for (wi <- wIs) yield (wi._1.toInt, wi._2)).toMap)
+
     val target = mr1 & mr2
-    val mf: Future[Map[Int, Int]] = target(Seq(1,2))
+    val mf: Future[Map[Int, Int]] = target(Seq(1, 2))
     val tf = mf map (_.unzip)
-    whenReady(tf) { u => u should matchPattern { case (Seq(1,2),Seq(1,2)) => } }
+    whenReady(tf) { u => u should matchPattern { case (Seq(1, 2), Seq(1, 2)) => } }
   }
 
   it should "terminate correctly" in {
     val mr: MockMapReduce[Int, String, Int] = MockMapReduce[Int, String, Int](xs => (for (x <- xs) yield (x.toString, x)).toMap)
-    def reduce(wIm: Map[String,Int]): Int = wIm.values.sum
+
+    def reduce(wIm: Map[String, Int]): Int = wIm.values.sum
+
     val target: ASync[Seq[Int], Int] = mr terminate reduce
-    val mf: Future[Int] = target(Seq(1,2))
+    val mf: Future[Int] = target(Seq(1, 2))
     whenReady(mf) { u => u should matchPattern { case 3 => } }
   }
 
   it should "terminate correctly with |" in {
     val mr: MockMapReduce[Int, String, Int] = MockMapReduce[Int, String, Int](xs => (for (x <- xs) yield (x.toString, x)).toMap)
-    def reduce(wIm: Map[String,Int]): Int = wIm.values.sum
+
+    def reduce(wIm: Map[String, Int]): Int = wIm.values.sum
+
     val target = mr | reduce
-    val mf = target(Seq(1,2))
+    val mf = target(Seq(1, 2))
     whenReady(mf) { u => u should matchPattern { case 3 => } }
   }
 }
 
-case class MockMapReduce[T,K,V](f: Seq[T]=>Map[K,V]) extends MapReduce[T,K,V] {
+case class MockMapReduce[T, K, V](f: Seq[T] => Map[K, V]) extends MapReduce[T, K, V] {
+
   import scala.concurrent.ExecutionContext.Implicits.global
 
   def ec: ExecutionContext = implicitly[ExecutionContext]

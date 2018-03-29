@@ -19,7 +19,7 @@ case class MockURL(w: String) {
 
   def content: String = MapReduceFuncSpec.getMockContent(url)
 
-  def asTuple: (URL,String) = url -> content
+  def asTuple: (URL, String) = url -> content
 }
 
 class MapReduceFuncSpec extends FlatSpec with Matchers with Futures with ScalaFutures with Inside {
