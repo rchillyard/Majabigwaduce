@@ -11,6 +11,7 @@ import com.typesafe.config.{Config, ConfigFactory}
 
 import scala.collection.immutable
 import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.language.postfixOps
 import scala.util.Random
 
 case class MatrixOperation[X: Numeric](keyFunc: Int=>Int)(implicit system: ActorSystem, logger: LoggingAdapter, config: Config, timeout: Timeout, ec: ExecutionContext) extends ((Seq[Seq[X]],Seq[X]) => Future[Seq[X]]) {
@@ -60,6 +61,6 @@ object Matrix extends App {
   val vector: Seq[Double] = row(-1)
   val isf: Future[Seq[Double]] = op(matrix,vector)
   Await.result(isf, 10.minutes)
-  isf foreach (println)
+  isf foreach println
   system.terminate()
 }

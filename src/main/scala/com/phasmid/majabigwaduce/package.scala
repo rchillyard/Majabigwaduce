@@ -17,5 +17,5 @@ package object majabigwaduce {
     * @tparam T value type
     * @tparam S the result type
     */
-  type RF[K, T, S >: T] = Map[K, T]=>S
+  type RF[K, T, S] = Map[K, T]=>S
 }

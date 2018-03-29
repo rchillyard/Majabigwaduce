@@ -12,6 +12,7 @@ import org.scalatest.time.{Seconds, Span}
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
+import scala.language.postfixOps
 
 class MatrixFuncSpec extends FlatSpec with Matchers with Futures with ScalaFutures with Inside with MockFactory {
   "matrix" should "work" in {
@@ -19,8 +20,6 @@ class MatrixFuncSpec extends FlatSpec with Matchers with Futures with ScalaFutur
     implicit val config: Config = configRoot.getConfig("Matrix")
     implicit val system: ActorSystem = ActorSystem(config.getString("name"))
     implicit val to: Timeout = getTimeout(config.getString("timeout"))
-    val rows = config.getInt("rows")
-    val cols = config.getInt("columns")
     implicit val logger: LoggingAdapter = system.log
     import ExecutionContext.Implicits.global
 

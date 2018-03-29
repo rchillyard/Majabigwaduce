@@ -45,8 +45,6 @@ object WebCrawler extends App {
     val stage3 = Reduce[URI, Strings, Strings](() => Nil)(_ ++ _)
     val crawler: Strings => Future[Strings] = stage1 & stage2 | stage3
 
-    val f1: Seq[String]=>Future[Map[URI, Strings]] = stage1
-
     /**
       * Note that this method is recursive but not tail-recursive
       *

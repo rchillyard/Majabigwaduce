@@ -49,7 +49,7 @@ trait MapReduce[T, K2, V2] extends ASync[Seq[T],Map[K2, V2]] {
     * @tparam S the return type, which is a super-class of V2 (for sum, or sigma)
     * @return an Async function of Seq[T]=>Future[S] type S.
     */
-  def terminate[S >: V2](r: RF[K2 ,V2, S])(implicit executionContext: ExecutionContext): ASync[Seq[T],S] = ts => for (v2K2m <- self(ts); s = r(v2K2m)) yield s
+  def terminate[S](r: RF[K2 ,V2, S])(implicit executionContext: ExecutionContext): ASync[Seq[T],S] = ts => for (v2K2m <- self(ts); s = r(v2K2m)) yield s
 
   /**
     * alternative name to terminate
@@ -59,7 +59,7 @@ trait MapReduce[T, K2, V2] extends ASync[Seq[T],Map[K2, V2]] {
     * @tparam S the return type, which is a super-class of V2 (for sum, or sigma)
     * @return an Async function of Seq[T]=>Future[S] type S.
     */
-  def |[S >: V2](r: RF[K2, V2, S])(implicit executionContext: ExecutionContext): ASync[Seq[T],S] = terminate(r)(executionContext)
+  def |[S](r: RF[K2, V2, S])(implicit executionContext: ExecutionContext): ASync[Seq[T],S] = terminate(r)(executionContext)
 
   /**
     * @return a suitable execution context
@@ -184,7 +184,7 @@ case class MapReduceComposed[T, K2, V2, K3, V3](f: MapReduce[T, K2, V2], g: ASyn
   * @tparam T the input (free) type of this reduction
   * @tparam S the output (derived) type of this reduction
   */
-case class Reduce[K, T, S >: T](z: () => S)(f: (S, T) => S) extends RF[K, T,S] {
+case class Reduce[K, T, S](z: () => S)(f: (S, T) => S) extends RF[K, T,S] {
   /**
     * This method cannot use reduce because, logically, reduce is not able to process an empty collection.
     * Note that we ignore the keys of the input map (m)
