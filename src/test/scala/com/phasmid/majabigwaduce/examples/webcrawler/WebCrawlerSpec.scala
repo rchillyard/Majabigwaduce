@@ -30,4 +30,3 @@ class WebCrawlerSpec extends FlatSpec with Matchers with Futures with ScalaFutur
       i => assert(i > 5 && i < 45))
   }
 }
-

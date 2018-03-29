@@ -54,13 +54,13 @@ object WebCrawler extends App {
       * @return
       */
     def doCrawl(ws: Strings, all: Strings, depth: Int): Future[Strings] =
-      if (depth < 0) Future(all)
+      if (depth < 0) Future((all ++ ws).distinct)
       else {
         system.log.info(s"doCrawl: depth=$depth; #ws=${ws.length}; #all=${all.length}")
         system.log.debug(s"doCrawl: ws=$ws; all=$all")
         val (_, out) = ws.partition { u => all.contains(u) }
         system.log.debug(s"doCrawl: out=$out")
-        for (ws <- crawler(cleanup(out)); gs <- doCrawl(ws.distinct, (all ++ ws).distinct, depth - 1)) yield gs
+        for (ws <- crawler(cleanup(out)); gs <- doCrawl(ws.distinct, (all ++ out).distinct, depth - 1)) yield gs
       }
 
     doCrawl(ws, Nil, depth) transform( { n => val z = n.length; system.terminate; z }, { x => system.log.error(x, "Map/reduce error (typically in map function)"); x })
