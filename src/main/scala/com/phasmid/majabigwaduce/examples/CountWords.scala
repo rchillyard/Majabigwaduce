@@ -23,30 +23,39 @@ trait Resource {
 }
 
 case class CountWords(resourceFunc: String => Resource)(implicit system: ActorSystem, logger: LoggingAdapter, config: Config, timeout: Timeout, ec: ExecutionContext) extends (Seq[String] => Future[Int]) {
-  override def apply(v1: Seq[String]): Future[Int] = {
+  type Strings = Seq[String]
 
-    val stage1: MapReduce[String, URI, Seq[String]] = MapReduceFirstFold(
-      { w: String => val u = resourceFunc(w); logger.debug(s"stage1 map: $w"); (u.getServer, u.getContent) }, appendString,
-      init _
-    )
+  trait StringsZero$ extends Zero[Strings] {
+    def zero: Strings = Nil: Strings
+  }
 
-    val stage2: MapReduce[(URI, Seq[String]), URI, Int] = MapReducePipe(
+  implicit object StringsZero$ extends StringsZero$
+
+  trait IntZero$ extends Zero[Int] {
+    def zero: Int = 0
+  }
+
+  implicit object IntZero$ extends IntZero$
+
+  override def apply(ws: Strings): Future[Int] = {
+
+    val stage1 = MapReduceFirstFold({ w: String => val u = resourceFunc(w); logger.debug(s"stage1 map: $w"); (u.getServer, u.getContent) }, appendString)(config, system, timeout)
+
+    val stage2 = MapReducePipe[URI, Strings, URI, Int, Int](
       (w, gs) => w -> (countFields(gs) reduce addInts),
       addInts,
       1
     )
-    val stage3 = Reduce[URI, Int, Int](() => 0)(addInts)
+    val stage3 = Reduce[URI, Int, Int](addInts)
     val mr = stage1 & stage2 | stage3
-    mr(v1)
+    mr(ws)
   }
 
-  private def countFields(gs: Seq[String]) = for (g <- gs) yield g.split("""\s+""").length
-
-  private def init = Seq[String]()
+  private def countFields(gs: Strings) = for (g <- gs) yield g.split("""\s+""").length
 
   private def addInts(x: Int, y: Int) = x + y
 
-  private def appendString(a: Seq[String], v: String) = a :+ v
+  private def appendString(a: Strings, v: String) = a :+ v
 }
 
 /**

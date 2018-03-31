@@ -22,7 +22,7 @@ class MatrixFuncSpec extends FlatSpec with Matchers with Futures with ScalaFutur
     implicit val to: Timeout = getTimeout(config.getString("timeout"))
     implicit val logger: LoggingAdapter = system.log
     import ExecutionContext.Implicits.global
-
+    import scala.math.Numeric.IntIsIntegral
     val op: MatrixOperation[Int] = MatrixOperation(x => x % 10)
     val matrix = Seq(Seq(1, 1), Seq(2, 1))
     val vector = Seq(3, 5)

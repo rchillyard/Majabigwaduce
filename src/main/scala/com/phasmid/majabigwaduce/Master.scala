@@ -67,6 +67,8 @@ class Master_First_Fold[V1, K2, W, V2](config: Config, f: V1 => (K2, W), g: (V2,
   */
 trait ByReduce[K1, V1, K2, W, V2 >: W] {
   /**
+    * CONSIDER eliminating this method and its trait
+    *
     * @param g the reduce function
     * @param z ignored
     * @return a Props instance

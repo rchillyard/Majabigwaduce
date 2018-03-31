@@ -26,6 +26,12 @@ import scala.language.postfixOps
   */
 object WebCrawler extends App {
   type Strings = Seq[String]
+
+  trait StringsZero$ extends Zero[Strings] {
+    def zero: Strings = Nil: Strings
+  }
+
+  implicit object StringsZero$ extends StringsZero$
   val configRoot = ConfigFactory.load
   implicit val config: Config = configRoot.getConfig("WebCrawler")
   implicit val system: ActorSystem = ActorSystem(config.getString("name"))
@@ -40,9 +46,9 @@ object WebCrawler extends App {
 
   def runWebCrawler(ws: Strings, depth: Int)(implicit system: ActorSystem, config: Config, timeout: Timeout): Future[Int] = {
 
-    val stage1: MapReduce[String, URI, Strings] = MapReduceFirstFold(getHostAndURI, appendContent, init)
-    val stage2: MapReduce[(URI, Strings), URI, Strings] = MapReducePipeFold(getLinkStrings, joinWordLists, init, 1)
-    val stage3 = Reduce[URI, Strings, Strings](() => Nil)(_ ++ _)
+    val stage1: MapReduce[String, URI, Strings] = MapReduceFirstFold(getHostAndURI, appendContent)(config, system, timeout)
+    val stage2: MapReduce[(URI, Strings), URI, Strings] = MapReducePipeFold(getLinkStrings, joinWordLists, 1)(config, system, timeout)
+    val stage3 = Reduce[URI, Strings, Strings](_ ++ _)
     val crawler: Strings => Future[Strings] = stage1 & stage2 | stage3
 
     /**
@@ -65,8 +71,6 @@ object WebCrawler extends App {
 
     doCrawl(ws, Nil, depth) transform( { n => val z = n.length; system.terminate; z }, { x => system.log.error(x, "Map/reduce error (typically in map function)"); x })
   }
-
-  private def init() = Nil: Strings
 
   private def appendContent(a: Strings, v: URI): Strings = a :+ Source.fromURL(v.toURL).mkString
 

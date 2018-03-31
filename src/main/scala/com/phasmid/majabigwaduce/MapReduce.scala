@@ -80,11 +80,6 @@ trait MapReduce[T, K2, V2] extends ASync[Seq[T], Map[K2, V2]] {
   * @param system  the actor system
   * @param timeout the value of timeout to be used
   */
-//case class MapReduceFirst[V1, K2, W, V2 >: W: Init](f: V1 => (K2, W), g: (V2, W) => V2)(implicit config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_LoggingBase[V1, K2, V2](config, system)(timeout) {
-//  def createProps = Props(new Master_First(config, f, g))
-//
-//  def createName = s"""mrf-mstr"""
-//}
 case class MapReduceFirst[V1, K2, W, V2 >: W](f: V1 => (K2, W), g: (V2, W) => V2)(implicit config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_LoggingBase[V1, K2, V2](config, system)(timeout) {
   def createProps = Props(new Master_First(config, f, g))
 
@@ -106,11 +101,6 @@ case class MapReduceFirst[V1, K2, W, V2 >: W](f: V1 => (K2, W), g: (V2, W) => V2
   * @param system  the actor system
   * @param timeout the value of timeout to be used
   */
-//case class MapReducePipe[K1, V1, K2, W, V2 >: W: Init](f: (K1, V1) => (K2, W), g: (V2, W) => V2, n: Int)(implicit config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_LoggingBase[(K1, V1), K2, V2](config, system)(timeout) {
-//  def createProps = Props(new Master(config, f, g))
-//
-//  def createName = s"""mrp-mstr-$n"""
-//}
 case class MapReducePipe[K1, V1, K2, W, V2 >: W](f: (K1, V1) => (K2, W), g: (V2, W) => V2, n: Int)(implicit config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_LoggingBase[(K1, V1), K2, V2](config, system)(timeout) {
   def createProps = Props(new Master(config, f, g))
 
@@ -123,16 +113,15 @@ case class MapReducePipe[K1, V1, K2, W, V2 >: W](f: (K1, V1) => (K2, W), g: (V2,
   * @tparam V1 input value type
   * @tparam K2 output key type
   * @tparam W  intermediate type
-  * @tparam V2 output value type (super-type of W)
+  * @tparam V2 output value type (must support type class Init)
   * @param f       the mapper function which takes a V1 instance and creates a key-value tuple of type (K2,W)
   * @param g       the reducer function which combines two values (an V2 and a W) into one V2
   * @param config  an instance of Config which defines a suitable configuration
   * @param system  the actor system
   * @param timeout the value of timeout to be used
   */
-//case class MapReduceFirstFold[V1, K2, W, V2: Init](f: V1 => (K2, W), g: (V2, W) => V2, z: () => V2)(implicit config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_LoggingBase[V1, K2, V2](config, system)(timeout) {
-case class MapReduceFirstFold[V1, K2, W, V2](f: V1 => (K2, W), g: (V2, W) => V2, z: () => V2)(implicit config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_LoggingBase[V1, K2, V2](config, system)(timeout) {
-  def createProps = Props(new Master_First_Fold(config, f, g, z))
+case class MapReduceFirstFold[V1, K2, W, V2: Zero](f: V1 => (K2, W), g: (V2, W) => V2)(config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_LoggingBase[V1, K2, V2](config, system)(timeout) {
+  def createProps = Props(new Master_First_Fold(config, f, g, implicitly[Zero[V2]].zero _))
 
   def createName = s"""mrff-mstr"""
 }
@@ -144,7 +133,7 @@ case class MapReduceFirstFold[V1, K2, W, V2](f: V1 => (K2, W), g: (V2, W) => V2,
   * @tparam V1 input value type
   * @tparam K2 output key type
   * @tparam W  intermediate type
-  * @tparam V2 output value type (super-type of W)
+  * @tparam V2 output value type (must support type class Init)
   * @param f       the mapper function which takes a V1 instance and creates a key-value tuple of type (K2,W)
   * @param g       the reducer function which combines two values (an V2 and a W) into one V2
   * @param n       the stage number of this map-reduce stage.
@@ -152,9 +141,8 @@ case class MapReduceFirstFold[V1, K2, W, V2](f: V1 => (K2, W), g: (V2, W) => V2,
   * @param system  the actor system
   * @param timeout the value of timeout to be used
   */
-//case class MapReducePipeFold[K1, V1, K2, W, V2: Init](f: (K1, V1) => (K2, W), g: (V2, W) => V2, z: () => V2, n: Int)(implicit config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_LoggingBase[(K1, V1), K2, V2](config, system)(timeout) {
-case class MapReducePipeFold[K1, V1, K2, W, V2](f: (K1, V1) => (K2, W), g: (V2, W) => V2, z: () => V2, n: Int)(implicit config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_LoggingBase[(K1, V1), K2, V2](config, system)(timeout) {
-  def createProps = Props(new Master_Fold(config, f, g, z))
+case class MapReducePipeFold[K1, V1, K2, W, V2: Zero](f: (K1, V1) => (K2, W), g: (V2, W) => V2, n: Int)(config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_LoggingBase[(K1, V1), K2, V2](config, system)(timeout) {
+  def createProps = Props(new Master_Fold(config, f, g, implicitly[Zero[V2]].zero _))
 
   def createName = s"""mrpf-mstr-$n"""
 }
@@ -177,14 +165,11 @@ case class MapReduceComposed[T, K2, V2, K3, V3](f: MapReduce[T, K2, V2], g: ASyn
 /**
   * A reduce function which can be composed (on the right) with a MapReduce object.
   *
-  * CONSIDER changing the signature of this class to extend Seq[T] => S
-  *
-  * @param z the function which can generate a zero (starting) value for the reduction.
   * @param f the function which will combine the current result with each element of an input set
   * @tparam T the input (free) type of this reduction
   * @tparam S the output (derived) type of this reduction
   */
-case class Reduce[K, T, S](z: () => S)(f: (S, T) => S) extends RF[K, T, S] {
+case class Reduce[K, T, S: Zero](f: (S, T) => S) extends RF[K, T, S] {
   /**
     * This method cannot use reduce because, logically, reduce is not able to process an empty collection.
     * Note that we ignore the keys of the input map (m)
@@ -193,7 +178,7 @@ case class Reduce[K, T, S](z: () => S)(f: (S, T) => S) extends RF[K, T, S] {
     * @return the result of combining all values of m, using the f function.
     *         An empty map will result in the value of z() being returned.
     */
-  def apply(m: Map[K, T]): S = m.values.foldLeft(z())(f)
+  def apply(m: Map[K, T]): S = m.values.foldLeft(implicitly[Zero[S]].zero)(f)
 }
 
 /**
@@ -237,3 +222,16 @@ abstract class MapReduce_Base[T, K, V](system: ActorSystem)(implicit timeout: Ti
   def logException(m: String, x: Throwable): Unit
 }
 
+/**
+  * Type-class Zero is used to add behavior of initialization (or zeroing) of X.
+  *
+  * @tparam X the type which we want to create a zero value for.
+  */
+trait Zero[X] {
+  /**
+    * Method to create a zero/empty/nothing value of X
+    *
+    * @return an X which is zero or empty
+    */
+  def zero: X
+}

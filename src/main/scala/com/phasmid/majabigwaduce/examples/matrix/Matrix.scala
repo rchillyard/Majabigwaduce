@@ -14,35 +14,33 @@ import scala.util.Random
 
 case class MatrixOperation[X: Numeric](keyFunc: Int => Int)(implicit system: ActorSystem, logger: LoggingAdapter, config: Config, timeout: Timeout, ec: ExecutionContext) extends ((Seq[Seq[X]], Seq[X]) => Future[Seq[X]]) {
 
-  override def apply(xss: Seq[Seq[X]], vector: Seq[X]): Future[Seq[X]] = {
-    val xn = implicitly[Numeric[X]]
+  type XS = Seq[X]
 
-    def f(i: Int, xs: Seq[X]): (Int, X) = (keyFunc(i), Matrix.dot(xs, vector))
-
-    def g(a: X, x: X) = xn.plus(a, x)
-
-    val s1: MapReduce[(Int, Seq[X]), Int, X] = MapReducePipe[Int, Seq[X], Int, X, X](
-      f,
-      g,
+  override def apply(xss: Seq[XS], vector: XS): Future[XS] = {
+    implicit object zeroSeqX$$ extends Zero[XS] {
+      def zero: XS = Seq[X]()
+    }
+    val s1: MapReduce[(Int, XS), Int, X] = MapReducePipe(
+      (i, xs) => (keyFunc(i), Matrix.dot(xs, vector)),
+      (a, x) => implicitly[Numeric[X]].plus(a, x),
       1
     )
-    val r: Reduce[Int, X, Seq[X]] = Reduce[Int, X, Seq[X]](init _)(addElement)
-    val mr: ASync[Seq[(Int, Seq[X])], Seq[X]] = s1 | r
-
-    mr((xss zipWithIndex) map { t: (Seq[X], Int) => t swap })
+    val r = Reduce[Int, X, XS]((x, y) => y +: x)
+    val mr = s1 | r
+    mr((xss zipWithIndex) map { t: (XS, Int) => t swap })
   }
-
-  private def init = Seq[X]()
-
-  private def addElement(x: Seq[X], y: X) = y +: x
 }
 
 object Matrix extends App {
 
-  def dot[X: Numeric](as: Seq[X], bs: Seq[X]): X = {
-    val xn = implicitly[Numeric[X]]
+  trait DoubleZero$ extends Zero[Double] {
+    def zero: Double = 0
+  }
 
-    def product(ab: (X, X)): X = xn.times(ab._1, ab._2)
+  implicit object DoubleZero$ extends DoubleZero$
+
+  def dot[X: Numeric](as: Seq[X], bs: Seq[X]): X = {
+    def product(ab: (X, X)): X = implicitly[Numeric[X]].times(ab._1, ab._2)
 
     ((as zip bs) map product).sum
   }
@@ -61,7 +59,8 @@ object Matrix extends App {
   val op: MatrixOperation[Double] = MatrixOperation(x => x % modulus)
 
   def row(i: Int): Seq[Double] = {
-    val r = new Random(i); (Stream.from(0) take cols) map (x => r.nextDouble())
+    val r = new Random(i)
+    (Stream.from(0) take cols) map (_ => r.nextDouble())
   }
 
   val matrix: Seq[Seq[Double]] = Stream.tabulate(rows)(row)
