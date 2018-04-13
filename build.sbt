@@ -25,7 +25,8 @@ libraryDependencies ++= Seq(
 	"ch.qos.logback" % "logback-classic" % "1.2.3" % "runtime",
 // xml and tagsoup are for WebCrawler exemplar
     "org.scala-lang.modules" %% "scala-xml" % "1.1.0",
-	"com.phasmid" %% "lascala" % "1.0.9",
+	/** This is in lib now */
+//	"com.phasmid" %% "lascala" % "1.0.9",
 	"org.ccil.cowan.tagsoup" % "tagsoup" % "1.2.1"
 	
 )
