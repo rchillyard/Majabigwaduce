@@ -27,6 +27,12 @@ class MatrixSpec extends FlatSpec with Matchers with Futures with ScalaFutures w
     Matrix.dot(Seq(1, -1), Seq(1, 1)) shouldBe 0
     Matrix.dot(Seq(1, 2), Seq(1, 2)) shouldBe 5
   }
+  behavior of "product"
+  ignore should "work for empty and unequal vectors" in {
+    Matrix.product(Seq(), Seq(Seq(0))) shouldBe Seq()
+    Matrix.product[Int](Seq(), Seq()) shouldBe Seq()
+    Matrix.product(Seq(0), Seq(Seq())) shouldBe Seq()
+  }
 }
 
 

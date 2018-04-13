@@ -48,6 +48,7 @@ class MapReduceSpec extends FlatSpec with Matchers with Futures with ScalaFuture
     val target: ASync[Seq[Int], Int] = mr terminate reduce
     val mf: Future[Int] = target(Seq(1, 2))
     whenReady(mf) { u => u should matchPattern { case 3 => } }
+
   }
 
   it should "terminate correctly with |" in {
@@ -68,6 +69,8 @@ case class MockMapReduce[T, K, V](f: Seq[T] => Map[K, V]) extends MapReduce[T, K
   def ec: ExecutionContext = implicitly[ExecutionContext]
 
   override def apply(v1: Seq[T]): Future[Map[K, V]] = Future(f(v1))
+
+  def close(): Unit = ()
 }
 
 object MapReduceSpec {

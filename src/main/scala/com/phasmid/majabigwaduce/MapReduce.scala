@@ -17,7 +17,7 @@ import scala.concurrent._
   * @tparam K2 the key type of the returned map
   * @tparam V2 the value type of the returned map
   */
-trait MapReduce[T, K2, V2] extends ASync[Seq[T], Map[K2, V2]] {
+trait MapReduce[T, K2, V2] extends ASync[Seq[T], Map[K2, V2]] with AutoCloseable {
 
   self =>
 
@@ -83,7 +83,7 @@ trait MapReduce[T, K2, V2] extends ASync[Seq[T], Map[K2, V2]] {
 case class MapReduceFirst[V1, K2, W, V2 >: W](f: V1 => (K2, W), g: (V2, W) => V2)(implicit config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_LoggingBase[V1, K2, V2](config, system)(timeout) {
   def createProps = Props(new Master_First(config, f, g))
 
-  def createName = s"""mrf-mstr"""
+  //  def createName(): Option[String] = s"""mrf-mstr"""
 }
 
 /**
@@ -104,7 +104,7 @@ case class MapReduceFirst[V1, K2, W, V2 >: W](f: V1 => (K2, W), g: (V2, W) => V2
 case class MapReducePipe[K1, V1, K2, W, V2 >: W](f: (K1, V1) => (K2, W), g: (V2, W) => V2, n: Int)(implicit config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_LoggingBase[(K1, V1), K2, V2](config, system)(timeout) {
   def createProps = Props(new Master(config, f, g))
 
-  def createName = s"""mrp-mstr-$n"""
+  //  def createName(): Option[String] = s"""mrp-mstr-$n"""
 }
 
 /**
@@ -123,7 +123,7 @@ case class MapReducePipe[K1, V1, K2, W, V2 >: W](f: (K1, V1) => (K2, W), g: (V2,
 case class MapReduceFirstFold[V1, K2, W, V2: Zero](f: V1 => (K2, W), g: (V2, W) => V2)(config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_LoggingBase[V1, K2, V2](config, system)(timeout) {
   def createProps = Props(new Master_First_Fold(config, f, g, implicitly[Zero[V2]].zero _))
 
-  def createName = s"""mrff-mstr"""
+  //  def createName(): Option[String] =  s"""mrff-mstr"""
 }
 
 /**
@@ -144,7 +144,7 @@ case class MapReduceFirstFold[V1, K2, W, V2: Zero](f: V1 => (K2, W), g: (V2, W) 
 case class MapReducePipeFold[K1, V1, K2, W, V2: Zero](f: (K1, V1) => (K2, W), g: (V2, W) => V2, n: Int)(config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_LoggingBase[(K1, V1), K2, V2](config, system)(timeout) {
   def createProps = Props(new Master_Fold(config, f, g, implicitly[Zero[V2]].zero _))
 
-  def createName = s"""mrpf-mstr-$n"""
+  //  def createName(): Option[String] = s"""mrpf-mstr-$n"""
 }
 
 /**
@@ -160,6 +160,8 @@ case class MapReducePipeFold[K1, V1, K2, W, V2: Zero](f: (K1, V1) => (K2, W), g:
   */
 case class MapReduceComposed[T, K2, V2, K3, V3](f: MapReduce[T, K2, V2], g: ASync[Seq[(K2, V2)], Map[K3, V3]])(implicit val ec: ExecutionContext) extends MapReduce[T, K3, V3] {
   def apply(ts: Seq[T]): Future[Map[K3, V3]] = for (v2K2m: Map[K2, V2] <- f(ts); v3K3m: Map[K3, V3] <- g(v2K2m.toSeq)) yield v3K3m
+
+  def close(): Unit = f.close()
 }
 
 /**
@@ -203,7 +205,10 @@ abstract class MapReduce_Base[T, K, V](system: ActorSystem)(implicit timeout: Ti
   self =>
   implicit def ec: ExecutionContextExecutor = system.dispatcher
 
-  private val master = system.actorOf(createProps, createName)
+  private val master = createName() match {
+    case Some(name) => system.actorOf(createProps, name)
+    case None => system.actorOf(createProps)
+  }
 
   def apply(ts: Seq[T]): Future[Map[K, V]] = {
     // Note: currently, we ignore the value of report but we could pass back a tuple that includes ok and the resulting map
@@ -212,7 +217,12 @@ abstract class MapReduce_Base[T, K, V](system: ActorSystem)(implicit timeout: Ti
 
   def createProps: Props
 
-  def createName: String
+  /**
+    * This probably ought to be configured according to whether or not we are debugging
+    *
+    * @return
+    */
+  def createName(): Option[String] = None
 
   def report(vKr: Response[K, V]): Boolean = {
     for ((k, x) <- vKr.left) logException(s"exception thrown (but forgiven) for key $k", x)
@@ -220,6 +230,8 @@ abstract class MapReduce_Base[T, K, V](system: ActorSystem)(implicit timeout: Ti
   }
 
   def logException(m: String, x: Throwable): Unit
+
+  def close(): Unit = system.stop(master)
 }
 
 /**
