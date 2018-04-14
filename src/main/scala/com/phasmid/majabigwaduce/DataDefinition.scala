@@ -5,8 +5,8 @@ import akka.actor.ActorSystem
 import akka.util.Timeout
 import com.typesafe.config.{Config, ConfigFactory}
 
-import scala.concurrent.Future
 import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Trait to represent a "data definition" (similar to RDD in Spark)
@@ -18,22 +18,44 @@ import scala.concurrent.duration.FiniteDuration
   */
 trait DataDefinition[K, V] extends (() => Future[Map[K, V]]) {
 
+  /**
+    * Method to form a new DataDefinition where the resulting values derive from applying the function f to the original values
+    *
+    * @param f the function to transform values
+    * @tparam W the underlying type of the values of the resulting map
+    * @return a new DataDefinition
+    */
   def map[W: Monoid](f: V => W): DataDefinition[K, W]
 
+  /**
+    * Evaluate this DataDefinition
+    *
+    * @return a map of key-value pairs wrapped in Future
+    */
   def apply(): Future[Map[K, V]]
 
+  /**
+    * Evaluate this DataDefintion but reduce the dimensionality of the result by ignoring the keys
+    * and aggregating the values according to the function f
+    *
+    * @param f the aggregation function
+    * @tparam W the underlying type of the result
+    * @return a W value, wrapped in Future.
+    */
   def aggregate[W: Zero](f: (W, V) => W): Future[W]
 
+  /**
+    * Clean up any residual resources from this DataDefinition
+    */
   def clean(): Unit
 }
 
 case class LazyDD[K, V, W: Monoid](map: Map[K, V], f: (V) => W)(partitions: Int = 2)(implicit context: DDContext) extends DataDefinition[K, W] {
 
-  import scala.concurrent.ExecutionContext.Implicits.global
-
   private implicit val cfs: Config = context.config
   private implicit val sys: ActorSystem = context.system
   private implicit val to: Timeout = context.timeout
+  private implicit val ec: ExecutionContext = context.ec
 
   def map[X: Monoid](g: W => X): LazyDD[K, V, X] = LazyDD(map, f andThen g)(partitions)
 
@@ -59,7 +81,14 @@ case class LazyDD[K, V, W: Monoid](map: Map[K, V], f: (V) => W)(partitions: Int 
   def aggregate[X: Zero](g: (X, W) => X): Future[X] = for (kWm <- apply()) yield kWm.values.foldLeft(implicitly[Zero[X]].zero)(g)
 }
 
-case class DDContext(config: Config, system: ActorSystem, timeout: Timeout) {
+/**
+  * The context in which DataDefinition instances will be evaluated
+  *
+  * @param config  the configuration
+  * @param system  the actor system
+  * @param timeout the value of timeout
+  */
+case class DDContext(config: Config, system: ActorSystem, timeout: Timeout)(implicit executor: ExecutionContext) {
   var closeables: List[AutoCloseable] = Nil
 
   def clean(): Unit = {
@@ -71,6 +100,8 @@ case class DDContext(config: Config, system: ActorSystem, timeout: Timeout) {
     closeables = closeables ++ cs
   }
 
+  def ec: ExecutionContext = executor
+
   override def toString: String = s"DDContext: system=${system.name}, timeout=$timeout"
 }
 
@@ -78,7 +109,7 @@ object DDContext {
 
   import java.util.concurrent.TimeUnit
 
-  def apply: DDContext = {
+  def apply(implicit executor: ExecutionContext): DDContext = {
     val config = ConfigFactory.load()
     val timeout = FiniteDuration(config.getDuration("timeout").getSeconds, TimeUnit.SECONDS)
     val system: ActorSystem = ActorSystem(config.getString("actorSystem"))
@@ -87,6 +118,8 @@ object DDContext {
 }
 
 object DataDefinition {
+
+  import scala.concurrent.ExecutionContext.Implicits.global
 
   implicit val context: DDContext = DDContext.apply
 

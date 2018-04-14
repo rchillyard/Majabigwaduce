@@ -6,6 +6,13 @@ package com.phasmid.majabigwaduce
   *           Created by scalaprof on 10/5/16.
   */
 trait Monoid[X] extends Zero[X] {
+  /**
+    * This is the "op" method of a Monoid, the one that associates any two instances of the monoid type.
+    *
+    * @param x the left-hand operand
+    * @param y the right-hand operand
+    * @return the result of combining x and y
+    */
   def combine(x: X, y: X): X
 }
 

@@ -14,7 +14,7 @@ import scala.util._
   *
   * The mapper is an actor whose constructor takes a function f which converts a (K1,V1) into a (K2,W).
   * The receive method recognizes an Incoming[K1,V1] as a message.
-  * It replies with a Try[Map[K2,Seq[W]]] which will be a Failure if any of the mappings fail.
+  * It replies with a Try[Map[K2,Seq[W] which will be a Failure if any of the mappings fail.
   *
   * Incoming is a convenience incoming message wrapper. It has the advantage of not suffering type erasure.
   *
@@ -22,8 +22,8 @@ import scala.util._
   * and returns an empty map (after logging an error). However, you can change this behavior in the configuration
   * file by setting forgiving=true.
   *
-  * The normal reply is in the form of: Try[Map[K2,Seq[W]]] but, if the forgiving form of the mapper is used,
-  * then the reply is in the form of a tuple: (Map[K2,Seq[W]], Seq[Throwable])
+  * The normal reply is in the form of: Try[Map[K2,Seq[W] but, if the forgiving form of the mapper is used,
+  * then the reply is in the form of a tuple: (Map[K2,Seq[W], Seq[Throwable])
   *
   * Note that logging the actual values received in the incoming message can be VERY verbose.
   * It is therefore recommended practice to log the values as they pass through the mapper function (f) which is

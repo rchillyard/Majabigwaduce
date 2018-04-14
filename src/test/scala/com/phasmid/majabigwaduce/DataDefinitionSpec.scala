@@ -52,6 +52,28 @@ class DataDefinitionSpec extends FlatSpec with Matchers with Futures with ScalaF
     target.clean()
   }
 
+  it should "map/apply correctly with single partition" in {
+    // given
+    val target = DataDefinition(Map("a" -> 1, "b" -> 2), 0)
+    // when
+    val mf: Future[Map[String, Int]] = target.map(_ * 2).apply()
+    // then
+    whenReady(mf) { m => m.toSeq should matchPattern { case Seq(("a", 2), ("b", 4)) => } }
+    target.clean()
+  }
+
+  it should "map/apply correctly with multiple partitions" in {
+    // given
+    val target = DataDefinition(Map("a" -> 1, "b" -> 2))
+    // when
+    val mf: Future[Map[String, Int]] = target.map(_ * 2).apply()
+    // then
+    import scala.concurrent.duration._
+    implicit val timeout: Timeout = Timeout(5 seconds)
+    whenReady(mf) { m => m.values.sum shouldBe 6 }
+    target.clean()
+  }
+
   behavior of "LazyDD of Seq"
   it should "apply correctly with single partition" in {
     // given
