@@ -3,7 +3,6 @@ package com.phasmid.majabigwaduce.examples.matrix
 import akka.actor.ActorSystem
 import akka.event.LoggingAdapter
 import akka.util.Timeout
-import com.phasmid.laScala.fp.Spy
 import com.phasmid.majabigwaduce._
 import com.phasmid.majabigwaduce.examples.CountWords.getTimeout
 import com.typesafe.config.{Config, ConfigFactory}
@@ -67,15 +66,13 @@ object Matrix extends App {
 
   implicit object DoubleZero$ extends DoubleZero$
 
-  implicit val spyLogger: org.slf4j.Logger = Spy.getLogger(getClass)
-
   def dot[X: Numeric](as: Seq[X], bs: Seq[X]): X = {
     def product(ab: (X, X)): X = implicitly[Numeric[X]].times(ab._1, ab._2)
 
-    Spy.spy(s"dot($as,$bs) = ", ((as zip bs) map product).sum)
+    ((as zip bs) map product).sum
   }
 
-  def product[X: Numeric](as: Seq[X], bss: Seq[Seq[X]]): Seq[X] = for (bs <- bss) yield Spy.spy(s"product $as x $bs", dot(as, bs))
+  def product[X: Numeric](as: Seq[X], bss: Seq[Seq[X]]): Seq[X] = for (bs <- bss) yield dot(as, bs)
 
   val configRoot = ConfigFactory.load
   implicit val config: Config = configRoot.getConfig("Matrix")
