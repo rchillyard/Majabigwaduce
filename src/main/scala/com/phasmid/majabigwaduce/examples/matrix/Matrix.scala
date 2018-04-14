@@ -60,6 +60,7 @@ case class MatrixOperation[X: Numeric](keyFunc: Int => Int)(implicit system: Act
 
 object Matrix extends App {
 
+  // TODO This is redundant
   trait DoubleZero$ extends Zero[Double] {
     def zero: Double = 0
   }

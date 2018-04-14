@@ -234,16 +234,3 @@ abstract class MapReduce_Base[T, K, V](system: ActorSystem)(implicit timeout: Ti
   def close(): Unit = system.stop(master)
 }
 
-/**
-  * Type-class Zero is used to add behavior of initialization (or zeroing) of X.
-  *
-  * @tparam X the type which we want to create a zero value for.
-  */
-trait Zero[X] {
-  /**
-    * Method to create a zero/empty/nothing value of X
-    *
-    * @return an X which is zero or empty
-    */
-  def zero: X
-}

@@ -3,7 +3,6 @@ package com.phasmid.majabigwaduce
 
 import akka.actor.ActorSystem
 import akka.util.Timeout
-import com.phasmid.laScala.values.Monoid
 import com.typesafe.config.{Config, ConfigFactory}
 
 import scala.concurrent.Future
@@ -18,10 +17,12 @@ import scala.concurrent.duration.FiniteDuration
   * @tparam V the value type
   */
 trait DataDefinition[K, V] extends (() => Future[Map[K, V]]) {
-  self =>
+
   def map[W: Monoid](f: V => W): DataDefinition[K, W]
 
   def apply(): Future[Map[K, V]]
+
+  def aggregate[W: Zero](f: (W, V) => W): Future[W]
 
   def clean(): Unit
 }
@@ -30,9 +31,9 @@ case class LazyDD[K, V, W: Monoid](map: Map[K, V], f: (V) => W)(partitions: Int 
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  private implicit val cfs = context.config
-  private implicit val sys = context.system
-  private implicit val to = context.timeout
+  private implicit val cfs: Config = context.config
+  private implicit val sys: ActorSystem = context.system
+  private implicit val to: Timeout = context.timeout
 
   def map[X: Monoid](g: W => X): LazyDD[K, V, X] = LazyDD(map, f andThen g)(partitions)
 
@@ -46,7 +47,16 @@ case class LazyDD[K, V, W: Monoid](map: Map[K, V], f: (V) => W)(partitions: Int 
       mr(map.toSeq)
     }
 
-  def clean(): Unit = context.clean
+  def clean(): Unit = context.clean()
+
+  /**
+    * Method to apply an aggregate (i.e. reduce) function to the result of invoking apply
+    *
+    * @param g the aggregation function
+    * @tparam X the return type
+    * @return the returned value wrapped in Future
+    */
+  def aggregate[X: Zero](g: (X, W) => X): Future[X] = for (kWm <- apply()) yield kWm.values.foldLeft(implicitly[Zero[X]].zero)(g)
 }
 
 case class DDContext(config: Config, system: ActorSystem, timeout: Timeout) {
@@ -57,8 +67,8 @@ case class DDContext(config: Config, system: ActorSystem, timeout: Timeout) {
     closeables = Nil
   }
 
-  def register(closeable: AutoCloseable): Unit = {
-    closeables = closeables :+ closeable
+  def register(cs: AutoCloseable*): Unit = {
+    closeables = closeables ++ cs
   }
 
   override def toString: String = s"DDContext: system=${system.name}, timeout=$timeout"
