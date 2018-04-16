@@ -25,17 +25,17 @@ trait Resource {
 case class CountWords(resourceFunc: String => Resource)(implicit system: ActorSystem, logger: LoggingAdapter, config: Config, timeout: Timeout, ec: ExecutionContext) extends (Seq[String] => Future[Int]) {
   type Strings = Seq[String]
 
-  trait StringsZero$ extends Zero[Strings] {
+  trait StringsZeros extends Zero[Strings] {
     def zero: Strings = Nil: Strings
   }
 
-  implicit object StringsZero$ extends StringsZero$
+  implicit object StringsZeros extends StringsZeros
 
-  trait IntZero$ extends Zero[Int] {
+  trait IntZeros extends Zero[Int] {
     def zero: Int = 0
   }
 
-  implicit object IntZero$ extends IntZero$
+  implicit object IntZeros extends IntZeros
 
   override def apply(ws: Strings): Future[Int] = {
 

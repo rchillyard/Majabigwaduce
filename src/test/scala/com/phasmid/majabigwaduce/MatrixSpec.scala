@@ -3,9 +3,14 @@ package com.phasmid.majabigwaduce
 import org.scalatest._
 import org.scalatest.concurrent._
 
+import scala.concurrent.duration
+import scala.concurrent.duration.Duration
 import scala.language.postfixOps
 
 class MatrixSpec extends FlatSpec with Matchers with Futures with Inside {
+
+  // TODO why does this not get satisfied from Matrix1 and Matrix2 objects?
+  implicit val atMost: Duration = duration.FiniteDuration(1, "second")
 
   trait IntProduct extends Product[Int] {
     def product[X: Numeric, Y: Numeric](x: X, y: Y): Int = implicitly[Numeric[X]].toInt(x) * implicitly[Numeric[Y]].toInt(y)
@@ -131,14 +136,16 @@ class MatrixSpec extends FlatSpec with Matchers with Futures with Inside {
 
   it should "implement product correctly using actors" in {
     //given
-    Matrix.cutoff = 10 // TODO reset this to 3 to invoke actors
+    val tmp = Matrix.cutoff
+    Matrix.cutoff = 3
     //given
     val target = Matrix2(Seq(Seq(8, 3, 2), Seq(1, -2, 4), Seq(6, 0, 5)))
     // when
     val multiplicand = Matrix2(Seq(Seq(4, 0, 10), Seq(6, 10, 0), Seq(10, 0, 34)))
     val matrix: Matrix[Seq[Int]] = target.product2(multiplicand)
-    val rows = matrix.rows
+    Matrix.cutoff = tmp
     // then
+    val rows = matrix.rows
     rows.length shouldBe 3
     rows.head.length shouldBe 3
     rows.head shouldBe Seq(70, 30, 148)

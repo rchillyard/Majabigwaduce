@@ -32,11 +32,11 @@ trait Zero[X] {
 
 object Monoid {
 
-  implicit object MonoidInt extends Zero.IntZero$ with Monoid[Int] {
+  implicit object MonoidInt extends Zero.IntZero with Monoid[Int] {
     def combine(x: Int, y: Int): Int = x + y
   }
 
-  implicit object MonoidString extends Zero.StringZero$ with Monoid[String] {
+  implicit object MonoidString extends Zero.StringZero with Monoid[String] {
     def empty: String = ""
 
     def combine(x: String, y: String): String = x + y
@@ -50,29 +50,29 @@ object Monoid {
 
 object Zero {
 
-  trait DoubleZero$ extends Zero[Double] {
+  trait DoubleZero extends Zero[Double] {
     def zero: Double = 0
   }
 
-  implicit object DoubleZero$ extends DoubleZero$
+  implicit object DoubleZero extends DoubleZero
 
-  trait IntZero$ extends Zero[Int] {
+  trait IntZero extends Zero[Int] {
     def zero: Int = 0
   }
 
-  implicit object IntZero$ extends IntZero$
+  implicit object IntZero extends IntZero
 
 
-  trait StringZero$ extends Zero[String] {
+  trait StringZero extends Zero[String] {
     def zero: String = ""
   }
 
-  implicit object StringZero$ extends StringZero$
+  implicit object StringZero extends StringZero
 
   trait SeqZero[X] extends Zero[Seq[X]] {
     def zero: Seq[X] = Nil
   }
 
-  implicit object IntSeqZero$$ extends SeqZero[Int]
+  implicit object IntSeqZero extends SeqZero[Int]
 
 }

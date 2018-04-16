@@ -1,5 +1,6 @@
 package com.phasmid.majabigwaduce
 
+import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, duration}
 
 /**
@@ -8,13 +9,21 @@ import scala.concurrent.{Await, duration}
   * @tparam X the underlying type of each row of the matrix (may itself be a sequence).
   */
 trait Matrix[X] {
-  def product[Y: Numeric, Z: Product : Monoid : Numeric](us: Seq[Y])(implicit ev: Monoid[X]): Matrix[Z] = build(forRows(f(_, us))(implicitly[Monoid[Z]], ev))
+  /**
+    * Determine the numbers of rows, columns, etc.
+    *
+    * @return a sequence of integers which has length of one element at least.
+    */
+  def size: Seq[Int]
+
+  def product[Y: Numeric, Z: Product : Monoid : Numeric](us: Seq[Y])(implicit ev: Monoid[X], atMost: Duration): Matrix[Z] =
+    build(forRows(f(_, us))(implicitly[Monoid[Z]], ev, atMost))
 
   def rows: Seq[X]
 
   def build[Z: Numeric](tss: Seq[Z]): Matrix[Z]
 
-  protected def forRows[Y, Z: Monoid](g: X => Z)(implicit ev: Monoid[X]): Seq[Z]
+  protected def forRows[Y, Z: Monoid](g: X => Z)(implicit ev: Monoid[X], atMost: Duration): Seq[Z]
 
   protected def g[Y: Numeric, Z: Product : Monoid](us: Seq[Y]): X => Z
 
@@ -23,28 +32,32 @@ trait Matrix[X] {
 
 abstract class BaseMatrix[X] extends Matrix[X] {
 
-  protected def forRows[Y, Z: Monoid](g: X => Z)(implicit ev: Monoid[X]): Seq[Z] =
+  def size = Seq(rows.length)
+
+  protected def forRows[Y, Z: Monoid](g: X => Z)(implicit ev: Monoid[X], atMost: Duration): Seq[Z] =
     if (rows.length < Matrix.cutoff) for (t <- rows) yield g(t)
     else {
       import scala.language.postfixOps
-      val dd: DataDefinition[Int, X] = DataDefinition.apply((for (tuple <- rows zipWithIndex) yield tuple.swap).toMap)
-      Await.result(dd.map(g).apply(), duration.FiniteDuration(1, "minute")).values.toSeq
+      val dd = DataDefinition.apply((for (tuple <- rows zipWithIndex) yield tuple.swap).toMap)
+      val z = Await.result(dd.map(g).apply(), atMost)
+      // CONSIDER doing this more efficiently?
+      for (i <- 1 to size.head) yield z(i-1)
     }
 }
 
-case class Matrix2[T: Numeric](rows: Seq[Seq[T]]) extends BaseMatrix[Seq[T]] {
+case class Matrix2[T: Numeric](rows: Seq[Seq[T]])(implicit atMost: Duration) extends BaseMatrix[Seq[T]] {
 
-  def size: (Int, Int) = (r, c)
+  override def size = Seq(r, c)
 
   def transpose: Seq[Seq[T]] = cols
 
-  def product2[Y: Numeric, Z: Product : Monoid : Numeric](other: Matrix2[Y])(implicit ev: Monoid[Seq[T]]): Matrix[Seq[Z]] = {
+  def product2[Y: Numeric, Z: Product : Monoid : Numeric](other: Matrix2[Y])(implicit ev: Monoid[Seq[T]], atMost: Duration): Matrix[Seq[Z]] = {
     implicit object MonoidSeqZ extends Monoid[Seq[Z]] {
       def combine(x: Seq[Z], y: Seq[Z]): Seq[Z] = x ++ y
 
       def zero: Seq[Z] = Nil
     }
-    if (c == other.r) Matrix2(forRows(ts => for (us <- other.cols) yield f(ts, us))(implicitly[Monoid[Seq[Z]]], ev))
+    if (c == other.r) Matrix2(forRows(ts => for (us <- other.cols) yield f(ts, us))(implicitly[Monoid[Seq[Z]]], ev, atMost))
     else throw IncompatibleDimensionsException(c, other.rows.length)
   }
 
@@ -63,12 +76,9 @@ case class Matrix2[T: Numeric](rows: Seq[Seq[T]]) extends BaseMatrix[Seq[T]] {
 
   private val r = rows.length
   private val c = rows.head.length // CONSIDER checking other rows too
-
 }
 
-case class Matrix1[T: Numeric](rows: Seq[T]) extends BaseMatrix[T] {
-
-  def size: Int = rows.length
+case class Matrix1[T: Numeric](rows: Seq[T])(implicit atMost: Duration) extends BaseMatrix[T] {
 
   def build[U: Numeric](us: Seq[U]): Matrix[U] = Matrix1(us)
 
@@ -89,6 +99,14 @@ trait Product[Z] {
 
 object Matrix {
   var cutoff = 1000
+}
+
+object Matrix1 {
+  implicit val atMost: Duration = duration.FiniteDuration(1, "second")
+}
+
+object Matrix2 {
+  implicit val atMost: Duration = duration.FiniteDuration(10, "second")
 }
 
 abstract class MatrixException(str: String) extends Exception(str, null)
