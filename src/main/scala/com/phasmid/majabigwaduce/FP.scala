@@ -124,4 +124,42 @@ object FP {
     case Failure(e) => Future.failed(e)
   }
 
+  /**
+    * Lift function to transform a function f of type T=>R into a function of type Seq[T]=>Seq[R]
+    *
+    * @param f the function we start with, of type T=>R
+    * @tparam T the type of the parameter to f
+    * @tparam R the type of the result of f
+    * @return a function of type Seq[T]=>Seq[R]
+    */
+  def lift[T, R](f: T => R): Seq[T] => Seq[R] = _ map f
+
+  /**
+    * Lift function to transform a function f of type (T1,T2)=>R into a function of type (Seq[T1],Seq[T2])=>Seq[R]
+    *
+    * @param f the function we start with, of type (T1,T2)=>R
+    * @tparam T1 the type of the first parameter to f
+    * @tparam T2 the type of the second parameter to f
+    * @tparam R  the type of the result of f
+    * @return a function of type (Seq[T1],Seq[T2])=>Seq[R]
+    */
+  def lift2[T1, T2, R](f: (T1, T2) => R): (Seq[T1], Seq[T2]) => Seq[R] = map2(_, _)(f)
+
+  /**
+    * The map2 function.
+    *
+    * @param t1y parameter 1 wrapped in Seq
+    * @param t2y parameter 2 wrapped in Seq
+    * @param f   function that takes two parameters of types T1 and T2 and returns a value of R
+    * @tparam T1 the type of parameter 1
+    * @tparam T2 the type of parameter 2
+    * @tparam R  the type of the result of function f
+    * @return a value of R, wrapped in Seq
+    */
+  def map2[T1, T2, R](t1y: Seq[T1], t2y: Seq[T2])(f: (T1, T2) => R): Seq[R] =
+    for {
+      t1 <- t1y
+      t2 <- t2y
+    } yield f(t1, t2)
+
 }

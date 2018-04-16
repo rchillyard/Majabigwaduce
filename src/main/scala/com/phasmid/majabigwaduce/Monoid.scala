@@ -42,6 +42,10 @@ object Monoid {
     def combine(x: String, y: String): String = x + y
   }
 
+  def foldLeft[X: Monoid](xs: Seq[X]): X = {
+    val xm = implicitly[Monoid[X]]
+    xs.foldLeft(xm.zero)(xm.combine)
+  }
 }
 
 object Zero {
@@ -64,5 +68,11 @@ object Zero {
   }
 
   implicit object StringZero$ extends StringZero$
+
+  trait SeqZero[X] extends Zero[Seq[X]] {
+    def zero: Seq[X] = Nil
+  }
+
+  implicit object IntSeqZero$$ extends SeqZero[Int]
 
 }

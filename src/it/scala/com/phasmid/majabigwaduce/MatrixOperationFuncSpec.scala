@@ -14,7 +14,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.language.postfixOps
 
-class MatrixFuncSpec extends FlatSpec with Matchers with Futures with ScalaFutures with Inside with MockFactory {
+class MatrixOperationFuncSpec extends FlatSpec with Matchers with Futures with ScalaFutures with Inside with MockFactory {
   "MatrixOperation" should "apply vector" in {
     val configRoot = ConfigFactory.load
     implicit val config: Config = configRoot.getConfig("Matrix")

@@ -19,11 +19,9 @@ case class MatrixOperation[X: Numeric](keyFunc: Int => Int)(implicit system: Act
   type XS = Seq[X]
 
   override def apply(xss: Seq[XS], ys: XS): Future[XS] = {
-    implicit object zeroSeqX$$ extends Zero[XS] {
-      def zero: XS = Seq[X]()
-    }
+    implicit object zeroSeqX$$ extends Zero.SeqZero[X]
     val s1: MapReduce[(Int, XS), Int, X] = MapReducePipe[Int, XS, Int, X, X](
-      (i, xs) => (keyFunc(i), Matrix.dot(xs, ys)),
+      (i, xs) => (keyFunc(i), MatrixOperation.dot(xs, ys)),
       (a, x) => implicitly[Numeric[X]].plus(a, x),
       1
     )
@@ -41,7 +39,7 @@ case class MatrixOperation[X: Numeric](keyFunc: Int => Int)(implicit system: Act
       def zero: Seq[XS] = Seq[Seq[X]]()
     }
     val s1: MapReduce[(Int, XS), Int, XS] = MapReducePipe[Int, XS, Int, XS, XS](
-      (i, xs) => (keyFunc(i), Matrix.product(xs, yss)),
+      (i, xs) => (keyFunc(i), MatrixOperation.product(xs, yss)),
       (zs: XS, xs: XS) => for ((x, y) <- zs zip xs) yield implicitly[Numeric[X]].plus(x, y),
       1
     )
@@ -57,7 +55,7 @@ case class MatrixOperation[X: Numeric](keyFunc: Int => Int)(implicit system: Act
 
 }
 
-object Matrix extends App {
+object MatrixOperation extends App {
 
   // TODO This is redundant
   trait DoubleZero$ extends Zero[Double] {

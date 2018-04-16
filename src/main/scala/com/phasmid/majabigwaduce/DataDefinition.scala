@@ -64,6 +64,7 @@ case class LazyDD[K, V, W: Monoid](map: Map[K, V], f: (V) => W)(partitions: Int 
       for ((k, v) <- map; w = f(v)) yield (k, w)
     }
     else {
+      // FIXME we are getting multiple values back in reverse order!!
       val mr = MapReducePipe[K, V, K, W, W]((k, v) => (k, f(v)), implicitly[Monoid[W]].combine, 1)
       context.register(mr)
       mr(map.toSeq)
@@ -130,4 +131,8 @@ object DataDefinition {
   def apply[K, V: Monoid](vs: Seq[V], f: V => K, partitions: Int): DataDefinition[K, V] = apply((for (v <- vs) yield (f(v), v)).toMap, partitions)
 
   def apply[K, V: Monoid](vs: Seq[V], f: V => K): DataDefinition[K, V] = apply(vs, f, 2)
+
+  def apply[K, V: Monoid](vs: Seq[(K, V)], partitions: Int): DataDefinition[K, V] = apply(vs.toMap, partitions)
+
+  def apply[K, V: Monoid](vs: Seq[(K, V)]): DataDefinition[K, V] = apply(vs.toMap)
 }
