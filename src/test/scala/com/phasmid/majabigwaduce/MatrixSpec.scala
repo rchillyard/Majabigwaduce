@@ -31,8 +31,8 @@ class MatrixSpec extends FlatSpec with Matchers with Futures with Inside {
     // when
     val size = target.size
     // then
-    size.length shouldBe 1
-    size.head shouldBe 2
+    size.size shouldBe 1
+    size.rows shouldBe 2
   }
 
   it should "implement rows correctly" in {
@@ -72,9 +72,9 @@ class MatrixSpec extends FlatSpec with Matchers with Futures with Inside {
     // when
     val size = target.size
     // then
-    size.length shouldBe 2
-    size.head shouldBe 2
-    size.last shouldBe 3
+    size.size shouldBe 2
+    size.rows shouldBe 2
+    size.cols shouldBe 3
   }
 
   it should "implement rows correctly" in {
@@ -179,14 +179,12 @@ class MatrixSpec extends FlatSpec with Matchers with Futures with Inside {
 
   it should "implement product correctly using actors" in {
     //given
-    val tmp = Matrix.cutoff
-    Matrix.cutoff = 3
+    implicit val cutoff: Dimensions = Dimensions(Seq(1, 1))
     //given
     val target = Matrix2(Seq(Seq(8, 3, 2), Seq(1, -2, 4), Seq(6, 0, 5)))
     // when
     val multiplicand = Matrix2(Seq(Seq(4, 0, 10), Seq(6, 10, 0), Seq(10, 0, 34)))
     val matrix: Matrix[Seq[Int]] = target.product2(multiplicand)
-    Matrix.cutoff = tmp
     // then
     val rows = matrix.rows
     rows.length shouldBe 3

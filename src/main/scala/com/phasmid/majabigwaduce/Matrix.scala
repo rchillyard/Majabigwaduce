@@ -12,9 +12,9 @@ trait Matrix[X] {
   /**
     * Determine the numbers of rows, columns, etc.
     *
-    * @return a sequence of integers which has length of one element at least.
+    * @return a Dimensions object (a sequence of integers which has length of one element at least).
     */
-  def size: Seq[Int]
+  def size: Dimensions
 
   /**
     * Determine the product of this Matrix with m
@@ -22,11 +22,12 @@ trait Matrix[X] {
     * @param m      the multiplicand
     * @param ev     evidence of Monoid[X]
     * @param atMost duration of total MapReduce time
+    * @param cutoff the maximum size we should implement in current thread
     * @tparam Y the underlying type of m
     * @tparam Z the underlying type of the result
     * @return a Matrix which is the product of this and m
     */
-  def product[Y: Numeric, Z: Product : Monoid : Numeric](m: Matrix[Y])(implicit ev: Monoid[X], atMost: Duration): Matrix[Z] =
+  def product[Y: Numeric, Z: Product : Monoid : Numeric](m: Matrix[Y])(implicit ev: Monoid[X], atMost: Duration, cutoff: Dimensions): Matrix[Z] =
     product(m.rows)
 
   /**
@@ -35,12 +36,13 @@ trait Matrix[X] {
     * @param ys     the rows of Y to be multiplied with this Matrix
     * @param ev     evidence of Monoid[X]
     * @param atMost duration of total MapReduce time
+    * @param cutoff the maximum size we should implement in current thread
     * @tparam Y the type of the multiplicand rows
     * @tparam Z the underlying type of the result
     * @return a Matrix which is the product of this and m
     */
-  def product[Y: Numeric, Z: Product : Monoid : Numeric](ys: Seq[Y])(implicit ev: Monoid[X], atMost: Duration): Matrix[Z] =
-    build(forRows(f(_, ys))(implicitly[Monoid[Z]], ev, atMost))
+  def product[Y: Numeric, Z: Product : Monoid : Numeric](ys: Seq[Y])(implicit ev: Monoid[X], atMost: Duration, cutoff: Dimensions): Matrix[Z] =
+    build(forRows(f(_, ys))(implicitly[Monoid[Z]], ev, atMost, cutoff))
 
   /**
     * The rows of this Matrix
@@ -60,16 +62,17 @@ trait Matrix[X] {
 
   /**
     * Method to process the rows of this Matrix.
-    * If the number of rows is less than the cutoff, then we do the operation in the current thread;
+    * If the size is less than the cutoff, then we do the operation in the current thread;
     * otherwise we do it using MapReduce.
     *
     * @param g      a function which takes an X and yields a Z
     * @param ev     evidence of Monoid[X]
     * @param atMost duration of total MapReduce time
+    * @param cutoff the maximum size we should implement in current thread
     * @tparam Z the underlying type of the result
     * @return a Matrix which is the product of this and m
     */
-  protected def forRows[Z: Monoid](g: X => Z)(implicit ev: Monoid[X], atMost: Duration): Seq[Z]
+  protected def forRows[Z: Monoid](g: X => Z)(implicit ev: Monoid[X], atMost: Duration, cutoff: Dimensions): Seq[Z]
 
   /**
     * Method to pair an X and a Seq[Y] to yield a Z.
@@ -98,17 +101,18 @@ abstract class BaseMatrix[X] extends Matrix[X] {
     *
     * @return a sequence of one integer.
     */
-  def size = Seq(rows.length)
+  def size: Dimensions = Dimensions.create(rows.length)
 
-  protected def forRows[Z: Monoid](g: X => Z)(implicit ev: Monoid[X], atMost: Duration): Seq[Z] =
-    if (rows.length < Matrix.cutoff) for (t <- rows) yield g(t)
+  protected def forRows[Z: Monoid](g: X => Z)(implicit ev: Monoid[X], atMost: Duration, cutoff: Dimensions): Seq[Z] =
+    if (size < cutoff) for (t <- rows) yield g(t)
     else {
       import scala.language.postfixOps
       val dd = DataDefinition.apply((for (tuple <- rows zipWithIndex) yield tuple.swap).toMap)
       val z = Await.result(dd.map(g).apply(), atMost)
       // CONSIDER doing this more efficiently?
-      for (i <- 1 to size.head) yield z(i - 1)
+      for (i <- 1 to size.rows) yield z(i - 1)
     }
+
 }
 
 /**
@@ -136,21 +140,22 @@ case class Matrix1[T: Numeric](rows: Seq[T])(implicit atMost: Duration) extends 
   *
   * @param rows   the rows
   * @param atMost duration of total MapReduce time
+  * @param cutoff the maximum size we should implement in current thread
   * @tparam T the underlying type of this matrix
   */
-case class Matrix2[T: Numeric](rows: Seq[Seq[T]])(implicit atMost: Duration) extends BaseMatrix[Seq[T]] {
+case class Matrix2[T: Numeric](rows: Seq[Seq[T]])(implicit atMost: Duration, cutoff: Dimensions) extends BaseMatrix[Seq[T]] {
 
-  override def size = Seq(r, c)
+  override def size: Dimensions = Dimensions.create(r, c)
 
   def transpose: Seq[Seq[T]] = cols
 
-  def product2[Y: Numeric, Z: Product : Monoid : Numeric](other: Matrix2[Y])(implicit ev: Monoid[Seq[T]], atMost: Duration): Matrix[Seq[Z]] = {
+  def product2[Y: Numeric, Z: Product : Monoid : Numeric](other: Matrix2[Y])(implicit ev: Monoid[Seq[T]], atMost: Duration, cutoff: Dimensions): Matrix[Seq[Z]] = {
     implicit object MonoidSeqZ extends Monoid[Seq[Z]] {
       def combine(x: Seq[Z], y: Seq[Z]): Seq[Z] = x ++ y
 
       def zero: Seq[Z] = Nil
     }
-    if (c == other.r) Matrix2(forRows(ts => for (us <- other.cols) yield f(ts, us))(implicitly[Monoid[Seq[Z]]], ev, atMost))
+    if (c == other.r) Matrix2(forRows(ts => for (us <- other.cols) yield f(ts, us))(implicitly[Monoid[Seq[Z]]], ev, atMost, cutoff))
     else throw IncompatibleDimensionsException(c, other.rows.length)
   }
 
@@ -187,6 +192,24 @@ trait Product[Z] {
   def product[X: Numeric, Y: Numeric](x: X, y: Y): Z
 }
 
+/**
+  * Case class to represent the dimensions of a matrix.
+  * Currently, area works only for one- or two-dimensional matrices
+  *
+  * @param xs a sequence of integers defining the numbers of rows, columns, etc.
+  */
+case class Dimensions(xs: Seq[Int]) extends Ordered[Dimensions] {
+  def size: Int = xs.length
+
+  def rows: Int = xs.head
+
+  val cols: Int = xs.tail.headOption.getOrElse(1)
+
+  def area: Int = xs.head * cols
+
+  def compare(that: Dimensions): Int = implicitly[Ordering[Int]].compare(area, that.area)
+}
+
 object Matrix {
   /**
     * The Kronecker Delta function.
@@ -195,9 +218,6 @@ object Matrix {
     * @return 1 if i==j otherwise 0
     */
   def kroneckerDelta[T: Numeric](i: Int, j: Int): T = if (i == j) implicitly[Numeric[T]].fromInt(1) else implicitly[Numeric[T]].zero
-
-  // TODO make this an implicit parameter in methods
-  var cutoff = 1000
 }
 
 object Matrix1 {
@@ -206,6 +226,7 @@ object Matrix1 {
 
 object Matrix2 {
   implicit val atMost: Duration = duration.FiniteDuration(10, "second")
+  implicit val cutoff: Dimensions = Dimensions(Seq(20, 20))
 
   def identity[T: Numeric](n: Int): Matrix2[T] = Matrix2[T](for (i <- 0 until n) yield for (j <- 0 until n) yield Matrix.kroneckerDelta(i,j))
 }
@@ -214,3 +235,9 @@ abstract class MatrixException(str: String) extends Exception(str, null)
 
 case class IncompatibleDimensionsException(cols: Int, rows: Int) extends MatrixException(s"# columns of LHS ($cols)" +
   s"does not match # rows of RHS ($rows)")
+
+object Dimensions {
+  implicit val cutoff: Dimensions = Dimensions(Seq(20, 20))
+
+  def create(xs: Int*): Dimensions = apply(xs)
+}
