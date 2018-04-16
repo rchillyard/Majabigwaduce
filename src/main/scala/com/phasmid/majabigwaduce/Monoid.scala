@@ -36,6 +36,10 @@ object Monoid {
     def combine(x: Int, y: Int): Int = x + y
   }
 
+  implicit object MonoidDouble extends Zero.DoubleZero with Monoid[Double] {
+    def combine(x: Double, y: Double): Double = x + y
+  }
+
   implicit object MonoidString extends Zero.StringZero with Monoid[String] {
     def empty: String = ""
 

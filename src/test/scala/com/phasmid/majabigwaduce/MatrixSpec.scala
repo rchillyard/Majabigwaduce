@@ -25,6 +25,16 @@ class MatrixSpec extends FlatSpec with Matchers with Futures with Inside {
   }
 
   behavior of "Matrix1"
+  it should "get size correctly" in {
+    //given
+    val target = Matrix1(Seq(1, 2))
+    // when
+    val size = target.size
+    // then
+    size.length shouldBe 1
+    size.head shouldBe 2
+  }
+
   it should "implement rows correctly" in {
     //given
     val target = Matrix1(Seq(1, 2))
@@ -56,6 +66,17 @@ class MatrixSpec extends FlatSpec with Matchers with Futures with Inside {
   }
 
   behavior of "Matrix2"
+  it should "get size correctly" in {
+    //given
+    val target = Matrix2(Seq(Seq(1, 2, -1), Seq(3, 4, 0)))
+    // when
+    val size = target.size
+    // then
+    size.length shouldBe 2
+    size.head shouldBe 2
+    size.last shouldBe 3
+  }
+
   it should "implement rows correctly" in {
     //given
     val target = Matrix2(Seq(Seq(1, 2), Seq(3, 4)))
@@ -65,6 +86,17 @@ class MatrixSpec extends FlatSpec with Matchers with Futures with Inside {
     rows.length shouldBe 2
     rows.head shouldBe Seq(1, 2)
     rows.last shouldBe Seq(3, 4)
+  }
+
+  it should "implement transpose correctly" in {
+    //given
+    val target = Matrix2(Seq(Seq(1, 2), Seq(3, 4)))
+    // when
+    val rows = target.transpose
+    // then
+    rows.length shouldBe 2
+    rows.head shouldBe Seq(1, 3)
+    rows.last shouldBe Seq(2, 4)
   }
 
   it should "implement product correctly" in {
@@ -97,6 +129,17 @@ class MatrixSpec extends FlatSpec with Matchers with Futures with Inside {
     rows.length shouldBe 2
     rows.head shouldBe Seq(4, 4)
     rows.last shouldBe Seq(10, 8)
+  }
+
+  it should "implement product by identity correctly" in {
+    val array = Seq(Seq(1, 2), Seq(3, 4))
+    //given
+    val target = Matrix2(array)
+    // when
+    val matrix: Matrix[Seq[Int]] = target.product2(Matrix2.identity[Int](2))
+    val rows = matrix.rows
+    // then
+    rows shouldBe array
   }
 
   it should "implement product2 correctly 2x3 by 3x2" in {
