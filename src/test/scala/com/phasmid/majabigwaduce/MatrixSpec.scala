@@ -10,7 +10,7 @@ import scala.language.postfixOps
 class MatrixSpec extends FlatSpec with Matchers with Futures with Inside {
 
   // TODO why does this not get satisfied from Matrix1 and Matrix2 objects?
-  implicit val atMost: Duration = duration.FiniteDuration(1, "second")
+  implicit val atMost: Duration = duration.FiniteDuration(5, "second")
 
   trait IntProduct extends Product[Int] {
     def product[X: Numeric, Y: Numeric](x: X, y: Y): Int = implicitly[Numeric[X]].toInt(x) * implicitly[Numeric[Y]].toInt(y)
