@@ -32,3 +32,6 @@ libraryDependencies ++= Seq(
 )
 
 unmanagedSourceDirectories in Test += baseDirectory.value / "src/it/scala"
+
+parallelExecution in Test := false
+
