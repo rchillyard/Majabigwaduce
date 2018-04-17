@@ -2,6 +2,7 @@ package com.phasmid.majabigwaduce
 
 import org.scalatest._
 import org.scalatest.concurrent._
+import org.scalatest.tagobjects.Slow
 
 import scala.concurrent.duration
 import scala.concurrent.duration.Duration
@@ -26,7 +27,7 @@ class MatrixFuncSpec extends FlatSpec with Matchers with Futures with Inside {
   }
 
   behavior of "Matrix2"
-  it should "implement product by identity correctly" in {
+  it should "implement product by identity correctly" taggedAs(Slow) in {
     val r = Random
     // TODO Try to understand why this cannot multiply matrices of size 1000 (perhaps because of timeout within MapReduce code?)
     val size = 500
