@@ -8,7 +8,7 @@ val akkaGroup = "com.typesafe.akka"
 val akkaVersion = "2.5.11"
 val scalaTestVersion = "3.0.1"
 
-//ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) }
+scalacOptions in (Compile,doc) ++= Seq("-groups", "-implicits")
 
 resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
 
@@ -24,9 +24,7 @@ libraryDependencies ++= Seq(
 	"org.scalamock" %% "scalamock-scalatest-support" % "3.4.2" % "test",
 	"ch.qos.logback" % "logback-classic" % "1.2.3" % "runtime",
 // xml and tagsoup are for WebCrawler exemplar
-    "org.scala-lang.modules" %% "scala-xml" % "1.1.0",
-	/** This is in lib now */
-//	"com.phasmid" %% "lascala" % "1.0.9",
+  "org.scala-lang.modules" %% "scala-xml" % "1.1.0",
 	"org.ccil.cowan.tagsoup" % "tagsoup" % "1.2.1"
 	
 )
