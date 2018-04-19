@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2018. Phasmid Software
+ */
+
 package com.phasmid.majabigwaduce.examples.webcrawler
 
 import java.net.{URI, URL}
@@ -32,6 +36,7 @@ object WebCrawler extends App {
   }
 
   implicit object StringsZero$ extends StringsZero$
+
   val configRoot = ConfigFactory.load
   implicit val config: Config = configRoot.getConfig("WebCrawler")
   implicit val system: ActorSystem = ActorSystem(config.getString("name"))

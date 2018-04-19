@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2018. Phasmid Software
+ */
+
 package com.phasmid.majabigwaduce
 
 
@@ -9,7 +13,10 @@ import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
-  * Trait to represent a "data definition" (similar to RDD in Spark)
+  * Trait to represent a "data definition" (similar to RDD in Spark).
+  * Essentially, a DataDefinition[K, V] is a function which transforms Unit into a Future[Map[K,V].
+  * Like RDD, it is lazy and can be partitioned.
+  * In order to yield a concrete value, there are two methods which may be called: apply() and aggregate(f).
   *
   * Created by scalaprof on 10/31/16.
   *
@@ -50,6 +57,19 @@ trait DataDefinition[K, V] extends (() => Future[Map[K, V]]) {
   def clean(): Unit
 }
 
+/**
+  * Case Class which implements DataDefinition[K, W] and which is based on a Map[K,V] and a function V => W.
+  *
+  * CONSIDER implementing a filter also
+  *
+  * @param map        the map of key-value pairs which serve as the input to this LazyDD
+  * @param f          a function which will transform the values the the KV pairs
+  * @param partitions the number of partitions to be used
+  * @param context    a DDContext
+  * @tparam K the key type
+  * @tparam V the input value type
+  * @tparam W the output value type
+  */
 case class LazyDD[K, V, W: Monoid](map: Map[K, V], f: (V) => W)(partitions: Int = 2)(implicit context: DDContext) extends DataDefinition[K, W] {
 
   private implicit val cfs: Config = context.config

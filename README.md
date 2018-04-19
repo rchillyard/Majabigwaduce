@@ -15,7 +15,39 @@ Of course, it turns out that it's a perfect application for actors and indeed de
 API
 ---
 
-Quick link to the [API](https://github.com/rchillyard/Majabigwaduce/tree/master/api/index.html)
+Quick link to the [API](https://github.com/rchillyard/Majabigwaduce/tree/master/api/index.html) [TODO: This needs to be fixed]
+
+High-level API
+---------------
+
+DataDefintion
+-------------
+Majabigwaduce has a high-level API, something like that used by Spark.
+It is based on the concept of _DataDefinition_, essentially a lazy, partitionable, map of key-value pairs.
+A DataDefinition is normally created with a statement such as:
+
+    val dd = DataDefinition(map, partitions)
+    
+where _map_ is either a _Map[K,V]_ or a _Seq[(K,V)]_; or
+
+    val dd = DataDefinition(list, f, partitions)
+    
+where _list_ is a _Seq[V]_ and where _f_ is a function of type _V=>K_ (the mapper function).
+
+In all cases, _partitions_ represents the desired number of partitions for the data definition,
+but can be omitted, in which case it will be defaulted to be 2.
+
+The only transformation function currently supported is _map_ which, as expected, takes a function which maps a value into a new value.
+
+There are two types of "action" function:
+ 
+* _apply()_ which yields a _Future[Map[K,V]]_
+* _aggregate(f)_ which yields a _Future[W]_ where the function _f_ is the aggregation function
+of type _(W,V)=>W_ where _W_ is constrained by a context bound: _W: Zero_.
+
+An additional type _DDContext_ is used implicitly when calling the _apply_ methods of the _DataDefintion_ object.
+
+For an example of using this higher-level API, please see the _Matrix_ class.
 
 Introduction
 ------------

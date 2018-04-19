@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2018. Phasmid Software
+ */
+
 package com.phasmid.majabigwaduce
 
 import scala.concurrent.duration.Duration
@@ -107,7 +111,7 @@ abstract class BaseMatrix[X] extends Matrix[X] {
     if (size < cutoff) for (t <- rows) yield g(t)
     else {
       import scala.language.postfixOps
-      val dd = DataDefinition.apply((for (tuple <- rows zipWithIndex) yield tuple.swap).toMap)
+      val dd = DataDefinition(for (tuple <- rows zipWithIndex) yield tuple.swap)
       val z = Await.result(dd.map(g).apply(), atMost)
       // CONSIDER doing this more efficiently?
       for (i <- 1 to size.rows) yield z(i - 1)
@@ -228,7 +232,7 @@ object Matrix2 {
   implicit val atMost: Duration = duration.FiniteDuration(10, "second")
   implicit val cutoff: Dimensions = Dimensions(Seq(20, 20))
 
-  def identity[T: Numeric](n: Int): Matrix2[T] = Matrix2[T](for (i <- 0 until n) yield for (j <- 0 until n) yield Matrix.kroneckerDelta(i,j))
+  def identity[T: Numeric](n: Int): Matrix2[T] = Matrix2[T](for (i <- 0 until n) yield for (j <- 0 until n) yield Matrix.kroneckerDelta(i, j))
 }
 
 abstract class MatrixException(str: String) extends Exception(str, null)

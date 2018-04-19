@@ -1,3 +1,7 @@
+/*
+ * Copyright (c) 2018. Phasmid Software
+ */
+
 package com.phasmid.majabigwaduce
 
 import org.scalatest._
@@ -34,7 +38,7 @@ class MapReduceSpec extends FlatSpec with Matchers with Futures with ScalaFuture
 
     def mr2(wIs: Seq[(String, Int)]): Future[Map[Int, Int]] = Future((for (wi <- wIs) yield (wi._1.toInt, wi._2)).toMap)
 
-    val target = mr1 & mr2
+    val target = mr1 :& mr2
     val mf: Future[Map[Int, Int]] = target(Seq(1, 2))
     val tf = mf map (_.unzip)
     whenReady(tf) { u => u should matchPattern { case (Seq(1, 2), Seq(1, 2)) => } }
@@ -45,7 +49,7 @@ class MapReduceSpec extends FlatSpec with Matchers with Futures with ScalaFuture
 
     def reduce(wIm: Map[String, Int]): Int = wIm.values.sum
 
-    val target: ASync[Seq[Int], Int] = mr terminate reduce
+    val target: ASync[Seq[Int], Int] = mr :| reduce
     val mf: Future[Int] = target(Seq(1, 2))
     whenReady(mf) { u => u should matchPattern { case 3 => } }
 
