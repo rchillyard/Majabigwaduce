@@ -11,6 +11,8 @@ import org.scalatest.concurrent._
 import scala.concurrent.Future
 import scala.language.postfixOps
 
+import DataDefinition._
+
 class DataDefinitionSpec extends FlatSpec with Matchers with Futures with ScalaFutures with Inside {
 
   behavior of "LazyDD of Map"
@@ -60,7 +62,7 @@ class DataDefinitionSpec extends FlatSpec with Matchers with Futures with ScalaF
     // given
     val target = DataDefinition(Map("a" -> 1, "b" -> 2), 0)
     // when
-    val mf: Future[Map[String, Int]] = target.map(_ * 2).apply()
+    val mf: Future[Map[String, Int]] = target.map(tupleLift(_ * 2)).apply()
     // then
     whenReady(mf) { m => m.toSeq should matchPattern { case Seq(("a", 2), ("b", 4)) => } }
     target.clean()
@@ -70,7 +72,7 @@ class DataDefinitionSpec extends FlatSpec with Matchers with Futures with ScalaF
     // given
     val target = DataDefinition(Map("a" -> 1, "b" -> 2))
     // when
-    val mf: Future[Map[String, Int]] = target.map(_ * 2).apply()
+    val mf: Future[Map[String, Int]] = target.map(tupleLift(_ * 2)).apply()
     // then
     import scala.concurrent.duration._
     implicit val timeout: Timeout = Timeout(5 seconds)

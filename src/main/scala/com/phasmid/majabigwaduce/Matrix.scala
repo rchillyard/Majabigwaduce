@@ -7,6 +7,8 @@ package com.phasmid.majabigwaduce
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, duration}
 
+import DataDefinition._
+
 /**
   * The Matrix[X] trait represents a sequence of X.
   *
@@ -112,11 +114,10 @@ abstract class BaseMatrix[X] extends Matrix[X] {
     else {
       import scala.language.postfixOps
       val dd = DataDefinition(for (tuple <- rows zipWithIndex) yield tuple.swap)
-      val z = Await.result(dd.map(g).apply(), atMost)
+      val z = Await.result(dd.map(tupleLift(g)).apply(), atMost)
       // CONSIDER doing this more efficiently?
       for (i <- 1 to size.rows) yield z(i - 1)
     }
-
 }
 
 /**

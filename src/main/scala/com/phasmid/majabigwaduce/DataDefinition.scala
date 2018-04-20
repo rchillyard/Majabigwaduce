@@ -28,11 +28,12 @@ trait DataDefinition[K, V] extends (() => Future[Map[K, V]]) {
   /**
     * Method to form a new DataDefinition where the resulting values derive from applying the function f to the original values
     *
-    * @param f the function to transform values
+    * @param f the function to transform key-value pairs
+    * @tparam L the underlying type of the keys of the resulting map
     * @tparam W the underlying type of the values of the resulting map
     * @return a new DataDefinition
     */
-  def map[W: Monoid](f: V => W): DataDefinition[K, W]
+  def map[L, W: Monoid](f: ((K,V)) => (L,W)): DataDefinition[L, W]
 
   /**
     * Evaluate this DataDefinition
@@ -62,33 +63,49 @@ trait DataDefinition[K, V] extends (() => Future[Map[K, V]]) {
   *
   * CONSIDER implementing a filter also
   *
-  * @param map        the map of key-value pairs which serve as the input to this LazyDD
-  * @param f          a function which will transform the values the the KV pairs
+  * @param kVm        the map of key-value pairs which serve as the input to this LazyDD
+  * @param f          a function which will transform the key-value pairs
   * @param partitions the number of partitions to be used
   * @param context    a DDContext
   * @tparam K the key type
   * @tparam V the input value type
   * @tparam W the output value type
   */
-case class LazyDD[K, V, W: Monoid](map: Map[K, V], f: (V) => W)(partitions: Int = 2)(implicit context: DDContext) extends DataDefinition[K, W] {
+case class LazyDD[K, V, L, W: Monoid](kVm: Map[K, V], f: ((K,V)) => (L,W))(partitions: Int = 2)(implicit context: DDContext) extends DataDefinition[L, W] {
 
   private implicit val cfs: Config = context.config
   private implicit val sys: ActorSystem = context.system
   private implicit val to: Timeout = context.timeout
   private implicit val ec: ExecutionContext = context.ec
 
-  def map[X: Monoid](g: W => X): LazyDD[K, V, X] = LazyDD(map, f andThen g)(partitions)
+  /**
+    * Method to form a new DataDefinition where the resulting values derive from applying the function f to the original values
+    *
+    * @param g the function to transform key-value pairs
+    * @tparam Y the underlying type of the keys of the resulting map
+    * @tparam X the underlying type of the values of the resulting map
+    * @return a new DataDefinition
+    */
+  def map[Y, X: Monoid](g: ((L, W)) => (Y, X)): DataDefinition[Y, X] = LazyDD[K,V,Y,X](kVm, f andThen g)(partitions)
 
-  def apply(): Future[Map[K, W]] =
+  /**
+    * Evaluate this LazyDD as a Future[Map[L, W]
+    *
+    * @return a map of key-value pairs wrapped in Future
+    */
+  def apply(): Future[Map[L, W]] =
     if (partitions < 2) Future {
-      for ((k, v) <- map; w = f(v)) yield (k, w)
+      for ((k, v) <- kVm) yield f(k,v)
     }
     else {
-      val mr = MapReducePipe[K, V, K, W, W]((k, v) => (k, f(v)), implicitly[Monoid[W]].combine, 1)
+      val mr = MapReducePipe[K, V, L, W, W]((k,v) => f((k,v)), implicitly[Monoid[W]].combine, 1)
       context.register(mr)
-      mr(map.toSeq)
+      mr(kVm.toSeq)
     }
 
+  /**
+    * Clean up any resources in the context of this LazyDD object
+    */
   def clean(): Unit = context.clean()
 
   /**
@@ -99,6 +116,7 @@ case class LazyDD[K, V, W: Monoid](map: Map[K, V], f: (V) => W)(partitions: Int 
     * @return the returned value wrapped in Future
     */
   def aggregate[X: Zero](g: (X, W) => X): Future[X] = for (kWm <- apply()) yield kWm.values.foldLeft(implicitly[Zero[X]].zero)(g)
+
 }
 
 /**
@@ -143,9 +161,9 @@ object DataDefinition {
 
   implicit val context: DDContext = DDContext.apply
 
-  def apply[K, V: Monoid](k_vs: Map[K, V], partitions: Int): DataDefinition[K, V] = LazyDD(k_vs, identity[V])(partitions)
+  def apply[K, V: Monoid](k_vs: Map[K, V], partitions: Int): DataDefinition[K, V] = LazyDD(k_vs, identity[(K,V)])(partitions)
 
-  def apply[K, V: Monoid](k_vs: Map[K, V]): DataDefinition[K, V] = LazyDD(k_vs, identity[V])()
+  def apply[K, V: Monoid](k_vs: Map[K, V]): DataDefinition[K, V] = LazyDD(k_vs, identity[(K,V)])()
 
   def apply[K, V: Monoid](vs: Seq[V], f: V => K, partitions: Int): DataDefinition[K, V] = apply((for (v <- vs) yield (f(v), v)).toMap, partitions)
 
@@ -154,4 +172,18 @@ object DataDefinition {
   def apply[K, V: Monoid](vs: Seq[(K, V)], partitions: Int): DataDefinition[K, V] = apply(vs.toMap, partitions)
 
   def apply[K, V: Monoid](vs: Seq[(K, V)]): DataDefinition[K, V] = apply(vs.toMap)
+
+  /**
+    * This lift method is used to lift a V=>W into a (K,V)=>(K,W) and is used in those situations where only the values
+    * of a key-value pair are to be transformed by the DataDefinition map method.
+    *
+    * @param f a V=>W function
+    * @tparam K the key type
+    * @tparam V the incoming value type
+    * @tparam W the outgoing value type
+    * @return a (K,V) => (K,W) function
+    */
+  def tupleLift[K, V, W](f: V=>W): (((K,V))=>(K, W)) = vToWToTupleToTuple(f)
+
+  private def vToWToTupleToTuple[K, V, W](f: V=>W)(t: (K,V)): (K,W) = (t._1, f(t._2))
 }
