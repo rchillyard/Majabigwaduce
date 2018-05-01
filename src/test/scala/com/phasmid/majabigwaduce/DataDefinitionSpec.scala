@@ -5,13 +5,12 @@
 package com.phasmid.majabigwaduce
 
 import akka.util.Timeout
+import com.phasmid.majabigwaduce.DataDefinition._
 import org.scalatest._
 import org.scalatest.concurrent._
 
 import scala.concurrent.Future
 import scala.language.postfixOps
-
-import DataDefinition._
 
 class DataDefinitionSpec extends FlatSpec with Matchers with Futures with ScalaFutures with Inside {
 
@@ -55,6 +54,151 @@ class DataDefinitionSpec extends FlatSpec with Matchers with Futures with ScalaF
     val xf: Future[Int] = target.aggregate[Int](_ + _)
     // then
     whenReady(xf) { x => x should matchPattern { case 3 => } }
+    target.clean()
+  }
+
+  it should "count correctly with single partition" in {
+    // given
+    val target = DataDefinition(Map("a" -> 1, "b" -> 2), 0)
+    // when
+    val xf: Future[Int] = target.count
+    // then
+    whenReady(xf) { x => x should matchPattern { case 2 => } }
+    target.clean()
+  }
+
+  it should "count correctly with multiple partition" in {
+    // given
+    val target = DataDefinition(Map("a" -> 1, "b" -> 2))
+    // when
+    val xf: Future[Int] = target.count
+    // then
+    whenReady(xf) { x => x should matchPattern { case 2 => } }
+    target.clean()
+  }
+
+  it should "filter correctly with single partition" in {
+    // given
+    val target = DataDefinition(Map("a" -> 1, "b" -> 2), 0)
+    // when
+    val xf: Future[Int] = target.filter(x => x._1 == "a").count
+    // then
+    whenReady(xf) { x => x should matchPattern { case 1 => } }
+    target.clean()
+  }
+
+  it should "filter correctly with multiple partition" in {
+    // given
+    val target = DataDefinition(Map("a" -> 1, "b" -> 2))
+    // when
+    val xf: Future[Int] = target.filter(x => x._1 == "a").count
+    // then
+    whenReady(xf) { x => x should matchPattern { case 1 => } }
+    target.clean()
+  }
+
+  it should "join/count correctly with single partition" in {
+    // given
+    val target = DataDefinition(Map("a" -> 1, "b" -> 2), 0)
+    val target2 = DataDefinition(Map("a" -> 2.1, "c" -> 3.1), 0)
+    // when
+    val xf: Future[(Int)] = target.join(target2).count
+    // then
+    whenReady(xf) { x => x should matchPattern { case 1 => } }
+    target.clean()
+  }
+
+  it should "join/count correctly with multiple partition" in {
+    // given
+    val target = DataDefinition(Map("a" -> 1, "b" -> 2))
+    val target2 = DataDefinition(Map("a" -> 2.1, "c" -> 3.1))
+    // when
+    val xf: Future[(Int)] = target.join(target2).count
+    // then
+    whenReady(xf) { x => x should matchPattern { case 1 => } }
+    target.clean()
+  }
+
+  it should "join/aggregate correctly with single partition" in {
+    // given
+    val target = DataDefinition(Map("a" -> 1, "b" -> 2, "c" -> 3), 0)
+    val target2 = DataDefinition(Map("a" -> 2.1, "b" -> 3.1), 0)
+    // when
+    val xf: Future[(Int,Double)] = target.join(target2).aggregate[(Int,Double)]((x,y) => (x._1+y._1,x._2+y._2))
+    // then
+    whenReady(xf) { x => x should matchPattern { case (3,5.2) => } }
+    target.clean()
+  }
+
+  it should "join/aggregate correctly with multiple partition" in {
+    // given
+    val target = DataDefinition(Map("a" -> 1, "b" -> 2, "c" -> 3))
+    val target2 = DataDefinition(Map("a" -> 2.1, "b" -> 3.1))
+    // when
+    val xf: Future[(Int,Double)] = target.join(target2).aggregate[(Int,Double)]((x,y) => (x._1+y._1,x._2+y._2))
+    // then
+    whenReady(xf) { x => x should matchPattern { case (3,5.2) => } }
+    target.clean()
+  }
+
+  it should "join/chain/aggregate correctly with single partition" in {
+    // given
+    val target = DataDefinition(Map("a" -> 1, "b" -> 2, "c" -> 3), 0)
+    val target2 = DataDefinition(Map("a" -> 2.1, "b" -> 3.1), 0)
+    val target3 = DataDefinition(Map("a" -> "Hello", "b" -> "World"), 0)
+    // when
+    val xf: Future[((Int,Double),String)] = target.join(target2).join(target3).aggregate[((Int,Double),String)]((x,y) => ((x._1._1 + y._1._1,x._1._2+y._1._2),x._2+","+y._2))
+    // then
+    whenReady(xf) { x => x should matchPattern { case ((3,5.2),",Hello,World") => } }
+    target.clean()
+  }
+
+  it should "join/chain/aggregate correctly with multiple partition" in {
+    // given
+    val target = DataDefinition(Map("a" -> 1, "b" -> 2, "c" -> 3))
+    val target2 = DataDefinition(Map("a" -> 2.1, "b" -> 3.1))
+    val target3 = DataDefinition(Map("a" -> "Hello", "b" -> "World"))
+    // when
+    val xf: Future[((Int,Double),String)] = target.join(target2).join(target3).aggregate[((Int,Double),String)]((x,y) => ((x._1._1 + y._1._1,x._1._2+y._1._2),x._2+","+y._2))
+    // then
+    whenReady(xf) { x => x should matchPattern { case ((3,5.2),",Hello,World") =>
+                                            case ((3,5.2),",World,Hello") => } }
+    target.clean()
+  }
+
+  it should "map/join/aggregate correctly with single partition" in {
+    // given
+    val target = DataDefinition(Map("a" -> 1, "b" -> 2, "c" -> 3), 0)
+    val target2 = DataDefinition(Map("a" -> 2.1, "b" -> 3.1), 0)
+    // when
+    val xf: Future[(Int,Double)] = target.map(tupleLift(_ * 2)).join(target2).aggregate[(Int,Double)]((x,y) => (x._1+y._1,x._2+y._2))
+    // then
+    whenReady(xf) { x => x should matchPattern { case (6,5.2) => } }
+    target.clean()
+  }
+
+  it should "map/join/aggregate correctly with multiple partition" in {
+    // given
+    val target = DataDefinition(Map("a" -> 1, "b" -> 2, "c" -> 3))
+    val target2 = DataDefinition(Map("a" -> 2.1, "b" -> 3.1))
+    // when
+    val xf: Future[(Int,Double)] = target.map(tupleLift(_ * 2)).join(target2).aggregate[(Int,Double)]((x,y) => (x._1+y._1,x._2+y._2))
+    // then
+    whenReady(xf) { x => x should matchPattern { case (6,5.2) => } }
+    target.clean()
+  }
+
+  //The join only works when key is never changed, this test won't work since key changes
+  ignore should "mapKeyAndValue/join/apply correctly with single partition" in {
+    // given
+    val target = DataDefinition(Map("a" -> 1, "b" -> 2, "c" -> 3), 0)
+    val target2 = DataDefinition(Map("a1" -> 2.1, "b1" -> 3.1), 0)
+    // when
+    val mf: Future[Map[String, Int]] = target.map(x => (x._1+"1",x._2 * 2)).apply()
+    val mjf: Future[Map[String, (Int,Double)]] = target.map(x => (x._1+"1",x._2 * 2)).join(target2).apply()
+    // then
+    whenReady(mf) { m => m.toSeq should matchPattern { case Seq(("a1", 2), ("b1", 4), ("c1", 6)) => } }
+    whenReady(mjf) { m => m.toSeq should matchPattern { case Seq(("a1", (2,2.1)), ("b1", (4,3.1))) => } }
     target.clean()
   }
 

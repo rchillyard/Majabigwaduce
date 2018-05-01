@@ -50,6 +50,16 @@ object Monoid {
     def combine(x: String, y: String): String = x + y
   }
 
+  implicit def monoidTuple[A: Monoid, B: Monoid]: Monoid[(A, B)] =
+    new Monoid[(A, B)] {
+      def combine(x: (A, B), y: (A, B)): (A, B) = {
+        val (xa, xb) = x
+        val (ya, yb) = y
+        (implicitly[Monoid[A]].combine(xa, ya), implicitly[Monoid[B]].combine(xb, yb))
+      }
+      def zero: (A, B) = Zero.zeroTuple[A,B].zero
+    }
+
   def foldLeft[X: Monoid](xs: Seq[X]): X = {
     val xm = implicitly[Monoid[X]]
     xs.foldLeft(xm.zero)(xm.combine)
@@ -83,4 +93,7 @@ object Zero {
 
   implicit object IntSeqZero extends SeqZero[Int]
 
+  implicit def zeroTuple[A: Zero, B: Zero]: Zero[(A, B)] = new Zero[(A, B)] {
+    def zero: (A, B) = (implicitly[Zero[A]].zero, implicitly[Zero[B]].zero)
+  }
 }

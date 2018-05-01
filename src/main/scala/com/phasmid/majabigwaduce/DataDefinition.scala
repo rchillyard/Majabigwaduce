@@ -56,6 +56,12 @@ trait DataDefinition[K, V] extends (() => Future[Map[K, V]]) {
     * Clean up any residual resources from this DataDefinition
     */
   def clean(): Unit
+
+  def count: Future[Int]
+
+  def filter(f: ((K,V)) => Boolean): DataDefinition[K,V]
+
+  def join[W: Monoid](o:DataDefinition[K,W]): DataDefinition[K,(V,W)]
 }
 
 /**
@@ -117,6 +123,30 @@ case class LazyDD[K, V, L, W: Monoid](kVm: Map[K, V], f: ((K,V)) => (L,W))(parti
     */
   def aggregate[X: Zero](g: (X, W) => X): Future[X] = for (kWm <- apply()) yield kWm.values.foldLeft(implicitly[Zero[X]].zero)(g)
 
+  def count: Future[Int] = for (kWm <- apply()) yield kWm.size
+
+  def filter(g: ((L, W)) => Boolean):DataDefinition[L, W] = LazyDD[K,V,L,W](kVm.filter(f andThen g), f)(partitions)
+
+  /**
+    * Join method to perform inner join.
+    *
+    * CONSIDER: (YY) Not sure why f change the type of key, or why ((K,V)) => (L,W) not ((K,V)) => (K,W), also when join two function,
+    * the value of [K,(V,X),L,(W,X)]'s L come from left side LazyDD, there will be a problem when left side and right side have different
+    * function to transform K to L.
+    *
+    * TODO: (RCH) remove the asInstanceOf calls if possible
+    *
+    * @param o
+    * @tparam X
+    * @return
+    */
+  def join[X: Monoid](o: DataDefinition[L, X]):DataDefinition[L,(W,X)] = LazyDD[K,(V,X),L,(W,X)](joinMap(kVm,o.asInstanceOf[LazyDD[K,X,L,X]].kVm), joinFunction(f,o.asInstanceOf[LazyDD[K,X,L,X]].f))(partitions)
+
+  private def joinMap[KK,VV,WW](map1: Map[KK, VV], map2: Map[KK, WW]) = (for(key <- (map1.keySet intersect map2.keySet).toIterator)
+    yield (key, (map1(key), map2(key)))).toMap
+
+  private def joinFunction[KK,VV,LL,WW,XX,YY](f:((KK,VV)) => (LL,WW),g:((KK,XX)) => (LL,YY)):((KK,(VV,XX)))=>(LL,(WW,YY)) =
+    i => (f(i._1,i._2._1)._1,(f(i._1,i._2._1)._2,g(i._1,i._2._2)._2))
 }
 
 /**
