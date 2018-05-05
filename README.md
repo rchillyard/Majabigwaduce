@@ -49,7 +49,32 @@ An additional type _DDContext_ is used implicitly when calling the _apply_ metho
 
 For an example of using this higher-level API, please see the _Matrix_ class.
 
-Introduction
+Functional Map-Reduce (mid-level API)
+=====================
+
+The set of Master classes (lowest-level API) can be used by applications exactly as described below.
+However, there is a more convenient, functional form based on the trait _MapReduce_ which is defined thus:
+
+	trait MapReduce[T,K2,V2] extends Function1[Seq[T],Future[Map[K2,V2]]] {
+	    def compose[K3,V3](mr: MapReduce[(K2,V2),K3,V3]): MapReduce[T,K3,V3] = MapReduceComposed(this,mr)
+	    def compose[S>:V2](r: Reduce[V2,S])(implicit executionContext: ExecutionContext): Function1[Seq[T],Future[S]]= { ts => for (v2K2m <- apply(ts); s = r.apply(v2K2m)) yield s }
+	    def ec: ExecutionContext
+	}
+
+This trait casts the map-reduce process as a simple function: one which takes a _Seq[T]_ and results in a (future of) _Map[K2,V2]_ where _T_ is either _V1_ in the case of the first stage of a map-reduce pipeline or _(Kn,Vn)_ in the case of the subsequent (nth) stage. There are four case classes which implement this trait (and which should be specified by the application programmer):
+
+* _MapReduceFirst_
+* _MapReducePipe_
+* _MapReduceFirstFold_
+* _MapReducePipeFold_
+
+Additionally, there is the _MapReduceComposed_ case class which is created by invoking the _compose_ method. A pipeline of map-reduce stages can thus be composed by using the _compose_ method of _MapReduce_. Such a pipeline may be (optionally) terminated by composing with a _Reduce_ instance which combines the values of the final _Map[Kn,Vn]_ into a single _S_ value (where _S_ is a super-class of _Vn_).
+
+Thus a pipeline in functional form is a closure which captures all of the functions, and their parameters which are in scope at the time of defining the pipeline.
+
+See the _CountWords_ example (below). 
+
+Lowest-level API
 ------------
 
 In order for a calculation to be performed in parallel, it is necessary that the complete calculation can be broken up into smaller parts which can each be implemented independently.
@@ -166,31 +191,6 @@ The incoming message is of the form: _Intermediate[K2,W]_ where Intermediate is 
 
 Where, in practice, _K=K2_ and _V=W_. There is an alternative form of reducer: _Reducer_Fold_  This type is designed for the situation where _V2_ is _not_ a super-type of _W_ or where there is no natural function to combine a _V2_ with a _W_. In this case, we must use the _foldLeft_ method of _Seq_ instead of the _reduceLeft_ method. This takes an additional function _z_ which is able to initialize the accumulator. 
 
-Functional Map-Reduce
-=====================
-
-The set of Master classes can of course be used by applications exactly as described above.
-However, there is a more convenient, functional form based on the trait _MapReduce_ which is defined thus:
-
-	trait MapReduce[T,K2,V2] extends Function1[Seq[T],Future[Map[K2,V2]]] {
-	    def compose[K3,V3](mr: MapReduce[(K2,V2),K3,V3]): MapReduce[T,K3,V3] = MapReduceComposed(this,mr)
-	    def compose[S>:V2](r: Reduce[V2,S])(implicit executionContext: ExecutionContext): Function1[Seq[T],Future[S]]= { ts => for (v2K2m <- apply(ts); s = r.apply(v2K2m)) yield s }
-	    def ec: ExecutionContext
-	}
-
-This trait casts the map-reduce process as a simple function: one which takes a _Seq[T]_ and results in a (future of) _Map[K2,V2]_ where _T_ is either _V1_ in the case of the first stage of a map-reduce pipeline or _(Kn,Vn)_ in the case of the subsequent (nth) stage. There are four case classes which implement this trait (and which should be specified by the application programmer):
-
-* _MapReduceFirst_
-* _MapReducePipe_
-* _MapReduceFirstFold_
-* _MapReducePipeFold_
-
-Additionally, there is the _MapReduceComposed_ case class which is created by invoking the _compose_ method. A pipeline of map-reduce stages can thus be composed by using the _compose_ method of _MapReduce_. Such a pipeline may be (optionally) terminated by composing with a _Reduce_ instance which combines the values of the final _Map[Kn,Vn]_ into a single _S_ value (where _S_ is a super-class of _Vn_).
-
-Thus a pipeline in functional form is a closure which captures all of the functions, and their parameters which are in scope at the time of defining the pipeline.
-
-See the _CountWords_ example (below). 
-
 Configuration
 ============
 
@@ -220,31 +220,52 @@ CountWords
 
 Here is the _CountWords_ app. It actually uses a "mock" URI rather than the real thing, but of course, it's simple to change it to use real URIs. I have not included the mock URI code:
 
-	object CountWords extends App {
-	  val configRoot = ConfigFactory.load
-	  implicit val config = configRoot.getConfig("CountWords")
-	  implicit val system = ActorSystem(config.getString("name"))   
-	  implicit val timeout: Timeout = getTimeout(config.getString("timeout"))
-	  import ExecutionContext.Implicits.global
-	  def init = Seq[String]()
-	  val stage1= MapReduceFirstFold(
-	      {(q,w: String) => val u = MockURI(w); (u.getServer, u.content)},
-	      {(a: Seq[String],v: String)=>a:+v},
-	      init _
-	    )
-	  val stage2 = MapReducePipe(
-	      {(w: URI, gs: Seq[String])=>(w, (for(g <- gs) yield g.split("""\s+""").length) reduce(_+_))},
-	      {(x: Int, y: Int)=>x+y},
-	      1
-	    )
-	  val stage3 = Reduce[Int,Int]({_+_})
-	  val countWords = stage1 compose stage2 compose stage3
-	  val ws = if (args.length>0) args.toSeq else Seq("http://www.bbc.com/doc1", "http://www.cnn.com/doc2", "http://default/doc3", "http://www.bbc.com/doc2", "http://www.bbc.com/doc3")  
-	  countWords.apply(ws).onComplete {
-	    case Success(n) => println(s"total words: $n"); system.terminate
-	    case Failure(x) => Console.err.println(s"Map/reduce error: ${x.getLocalizedMessage}"); system.terminate
-	  }
-	}
+    object CountWords {
+      def apply(hc: HttpClient, args: Array[String]): Future[Int] = {
+        val configRoot = ConfigFactory.load
+        implicit val config: Config = configRoot.getConfig("CountWords")
+        implicit val system: ActorSystem = ActorSystem(config.getString("name"))
+        implicit val timeout: Timeout = getTimeout(config.getString("timeout"))
+        implicit val logger: LoggingAdapter = system.log
+        import ExecutionContext.Implicits.global    
+        val ws = if (args.length > 0) args.toSeq else Seq("http://www.bbc.com/doc1", "http://www.cnn.com/doc2", "http://default/doc3", "http://www.bbc.com/doc2", "http://www.bbc.com/doc3")
+        CountWords(hc.getResource).apply(ws)
+      }
+
+      def getTimeout(t: String): Timeout = {
+        val durationR = """(\d+)\s*(\w+)""".r
+        t match {
+          case durationR(n, s) => new Timeout(FiniteDuration(n.toLong, s))
+          case _ => Timeout(10 seconds)
+        }
+      }
+    }
+
+    case class CountWords(resourceFunc: String => Resource)(implicit system: ActorSystem, logger: LoggingAdapter, config: Config, timeout: Timeout, ec: ExecutionContext) extends (Seq[String] => Future[Int]) {
+      type Strings = Seq[String]
+      trait StringsZeros extends Zero[Strings] {
+        def zero: Strings = Nil: Strings
+      }
+      implicit object StringsZeros extends StringsZeros
+      trait IntZeros extends Zero[Int] {
+        def zero: Int = 0
+      }
+      implicit object IntZeros extends IntZeros
+      override def apply(ws: Strings): Future[Int] = {
+        val stage1 = MapReduceFirstFold({ w: String => val u = resourceFunc(w); logger.debug(s"stage1 map: $w"); (u.getServer, u.getContent) }, appendString)(config, system, timeout)
+        val stage2 = MapReducePipe[URI, Strings, URI, Int, Int](
+          (w, gs) => w -> (countFields(gs) reduce addInts),
+          addInts,
+          1
+        )
+        val stage3 = Reduce[URI, Int, Int](addInts)
+        val mr = stage1 & stage2 | stage3
+        mr(ws)
+      }
+      private def countFields(gs: Strings) = for (g <- gs) yield g.split("""\s+""").length
+      private def addInts(x: Int, y: Int) = x + y
+      private def appendString(a: Strings, v: String) = a :+ v
+    }
 	
 It is a three-stage map-reduce problem, including a final reduce stage.
 

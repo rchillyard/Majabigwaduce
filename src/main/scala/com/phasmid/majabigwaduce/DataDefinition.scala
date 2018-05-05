@@ -4,7 +4,6 @@
 
 package com.phasmid.majabigwaduce
 
-
 import akka.actor.ActorSystem
 import akka.util.Timeout
 import com.typesafe.config.{Config, ConfigFactory}
@@ -33,7 +32,7 @@ trait DataDefinition[K, V] extends (() => Future[Map[K, V]]) {
     * @tparam W the underlying type of the values of the resulting map
     * @return a new DataDefinition
     */
-  def map[L, W: Monoid](f: ((K,V)) => (L,W)): DataDefinition[L, W]
+  def map[L, W: Monoid](f: ((K, V)) => (L, W)): DataDefinition[L, W]
 
   /**
     * Evaluate this DataDefinition
@@ -59,9 +58,17 @@ trait DataDefinition[K, V] extends (() => Future[Map[K, V]]) {
 
   def count: Future[Int]
 
-  def filter(f: ((K,V)) => Boolean): DataDefinition[K,V]
+  def filter(f: ((K, V)) => Boolean): DataDefinition[K, V]
 
-  def join[W: Monoid](o:DataDefinition[K,W]): DataDefinition[K,(V,W)]
+  /**
+    * Join method to perform inner join.
+    *
+    * @param other the DataDefinition with which to join this
+    * @tparam M key type of other and also of the result
+    * @tparam X value type of other
+    * @return the inner join of this and other
+    */
+  def join[M >: K, X: Monoid](other: DataDefinition[M, X]): DataDefinition[M, (V, X)]
 }
 
 /**
@@ -77,7 +84,7 @@ trait DataDefinition[K, V] extends (() => Future[Map[K, V]]) {
   * @tparam V the input value type
   * @tparam W the output value type
   */
-case class LazyDD[K, V, L, W: Monoid](kVm: Map[K, V], f: ((K,V)) => (L,W))(partitions: Int = 2)(implicit context: DDContext) extends DataDefinition[L, W] {
+case class LazyDD[K, V, L, W: Monoid](kVm: Map[K, V], f: ((K, V)) => (L, W))(partitions: Int = 2)(implicit context: DDContext) extends DataDefinition[L, W] {
 
   private implicit val cfs: Config = context.config
   private implicit val sys: ActorSystem = context.system
@@ -92,7 +99,7 @@ case class LazyDD[K, V, L, W: Monoid](kVm: Map[K, V], f: ((K,V)) => (L,W))(parti
     * @tparam X the underlying type of the values of the resulting map
     * @return a new DataDefinition
     */
-  def map[Y, X: Monoid](g: ((L, W)) => (Y, X)): DataDefinition[Y, X] = LazyDD[K,V,Y,X](kVm, f andThen g)(partitions)
+  def map[Y, X: Monoid](g: ((L, W)) => (Y, X)): DataDefinition[Y, X] = LazyDD[K, V, Y, X](kVm, f andThen g)(partitions)
 
   /**
     * Evaluate this LazyDD as a Future[Map[L, W]
@@ -101,10 +108,10 @@ case class LazyDD[K, V, L, W: Monoid](kVm: Map[K, V], f: ((K,V)) => (L,W))(parti
     */
   def apply(): Future[Map[L, W]] =
     if (partitions < 2) Future {
-      for ((k, v) <- kVm) yield f(k,v)
+      for ((k, v) <- kVm) yield f(k, v)
     }
     else {
-      val mr = MapReducePipe[K, V, L, W, W]((k,v) => f((k,v)), implicitly[Monoid[W]].combine, 1)
+      val mr = MapReducePipe[K, V, L, W, W]((k, v) => f((k, v)), implicitly[Monoid[W]].combine, 1)
       context.register(mr)
       mr(kVm.toSeq)
     }
@@ -125,28 +132,21 @@ case class LazyDD[K, V, L, W: Monoid](kVm: Map[K, V], f: ((K,V)) => (L,W))(parti
 
   def count: Future[Int] = for (kWm <- apply()) yield kWm.size
 
-  def filter(g: ((L, W)) => Boolean):DataDefinition[L, W] = LazyDD[K,V,L,W](kVm.filter(f andThen g), f)(partitions)
+  def filter(g: ((L, W)) => Boolean): DataDefinition[L, W] = LazyDD[K, V, L, W](kVm.filter(f andThen g), f)(partitions)
 
   /**
     * Join method to perform inner join.
     *
-    * CONSIDER: (YY) Not sure why f change the type of key, or why ((K,V)) => (L,W) not ((K,V)) => (K,W), also when join two function,
-    * the value of [K,(V,X),L,(W,X)]'s L come from left side LazyDD, there will be a problem when left side and right side have different
-    * function to transform K to L.
-    *
-    * TODO: (RCH) remove the asInstanceOf calls if possible
-    *
-    * @param o
-    * @tparam X
-    * @return
+    * @param other the DataDefinition with which to join this
+    * @tparam M key type of other and also of the result
+    * @tparam X value type of other
+    * @return the inner join of this and other
     */
-  def join[X: Monoid](o: DataDefinition[L, X]):DataDefinition[L,(W,X)] = LazyDD[K,(V,X),L,(W,X)](joinMap(kVm,o.asInstanceOf[LazyDD[K,X,L,X]].kVm), joinFunction(f,o.asInstanceOf[LazyDD[K,X,L,X]].f))(partitions)
-
-  private def joinMap[KK,VV,WW](map1: Map[KK, VV], map2: Map[KK, WW]) = (for(key <- (map1.keySet intersect map2.keySet).toIterator)
-    yield (key, (map1(key), map2(key)))).toMap
-
-  private def joinFunction[KK,VV,LL,WW,XX,YY](f:((KK,VV)) => (LL,WW),g:((KK,XX)) => (LL,YY)):((KK,(VV,XX)))=>(LL,(WW,YY)) =
-    i => (f(i._1,i._2._1)._1,(f(i._1,i._2._1)._2,g(i._1,i._2._2)._2))
+  def join[M >: L, X: Monoid](other: DataDefinition[M, X]): DataDefinition[M, (W, X)] = other match {
+    case ldd: LazyDD[K, X, M, X]@unchecked =>
+      import LazyDD._
+      LazyDD[K, (V, X), M, (W, X)](joinMap(kVm, ldd.kVm), joinFunction(f, ldd.f))(partitions)
+  }
 }
 
 /**
@@ -191,9 +191,9 @@ object DataDefinition {
 
   implicit val context: DDContext = DDContext.apply
 
-  def apply[K, V: Monoid](k_vs: Map[K, V], partitions: Int): DataDefinition[K, V] = LazyDD(k_vs, identity[(K,V)])(partitions)
+  def apply[K, V: Monoid](k_vs: Map[K, V], partitions: Int): DataDefinition[K, V] = LazyDD(k_vs, identity[(K, V)])(partitions)
 
-  def apply[K, V: Monoid](k_vs: Map[K, V]): DataDefinition[K, V] = LazyDD(k_vs, identity[(K,V)])()
+  def apply[K, V: Monoid](k_vs: Map[K, V]): DataDefinition[K, V] = LazyDD(k_vs, identity[(K, V)])()
 
   def apply[K, V: Monoid](vs: Seq[V], f: V => K, partitions: Int): DataDefinition[K, V] = apply((for (v <- vs) yield (f(v), v)).toMap, partitions)
 
@@ -213,7 +213,17 @@ object DataDefinition {
     * @tparam W the outgoing value type
     * @return a (K,V) => (K,W) function
     */
-  def tupleLift[K, V, W](f: V=>W): (((K,V))=>(K, W)) = vToWToTupleToTuple(f)
+  def tupleLift[K, V, W](f: V => W): (((K, V)) => (K, W)) = vToWToTupleToTuple(f)
 
-  private def vToWToTupleToTuple[K, V, W](f: V=>W)(t: (K,V)): (K,W) = (t._1, f(t._2))
+  private def vToWToTupleToTuple[K, V, W](f: V => W)(t: (K, V)): (K, W) = (t._1, f(t._2))
+}
+
+object LazyDD {
+  private def joinMap[K, V, W](map1: Map[K, V], map2: Map[K, W]): Map[K, (V, W)] = (for (key <- map1.keySet intersect map2.keySet) yield (key, (map1(key), map2(key)))).toMap
+
+  private def joinFunction[K, V, L, W, X, Y](f: ((K, V)) => (L, W), g: ((K, X)) => (L, Y)): ((K, (V, X))) => (L, (W, Y)) = {
+    case (k, (v, x)) =>
+      val vKf = f(k, v)
+      vKf._1 -> (vKf._2, g(k, x)._2)
+  }
 }
