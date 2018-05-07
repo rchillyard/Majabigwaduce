@@ -11,6 +11,7 @@ import org.scalatest.concurrent._
 
 import scala.concurrent.Future
 import scala.language.postfixOps
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class DataDefinitionSpec extends FlatSpec with Matchers with Futures with ScalaFutures with Inside {
 
@@ -471,6 +472,5 @@ class DataDefinitionSpec extends FlatSpec with Matchers with Futures with ScalaF
     whenReady(mf) { m => m.values.sum shouldBe 6 }
     target.clean()
   }
-
 
 }

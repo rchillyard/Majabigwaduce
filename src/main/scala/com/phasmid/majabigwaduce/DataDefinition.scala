@@ -23,7 +23,7 @@ import scala.concurrent.{ExecutionContext, Future}
   * @tparam K the key type
   * @tparam V the value type
   */
-trait DataDefinition[K, V] extends (() => Future[Map[K, V]]) {
+sealed trait DataDefinition[K, V] extends (() => Future[Map[K, V]]) {
 
   /**
     * Method to form a new DataDefinition where the resulting values derive from applying the function f to the original values
@@ -76,16 +76,16 @@ trait DataDefinition[K, V] extends (() => Future[Map[K, V]]) {
   def clean(): Unit
 }
 
-case class EagerDD[K, V](kVm: Map[K, V])(implicit context: DDContext) extends BaseDD[K, V] {
-
-  private implicit val ec: ExecutionContext = context.ec
-
-  /**
-    * Evaluate this DataDefinition
-    *
-    * @return a map of key-value pairs wrapped in Future
-    */
-  override def apply(): Future[Map[K, V]] = Future(kVm)
+/**
+  * Case Class which implements DataDefinition[K, V] eagerly and which is based on a Map[K,V].
+  * NOTE: there is no very practical usage for this type, but it serves as an alternative subclass of DataDefinition.
+  *
+  * @param kVm the actual data definition represented as a Map
+  * @param ec  the (implicit) execution context
+  * @tparam K the key type
+  * @tparam V the input value type
+  */
+case class EagerDD[K, V](kVm: Map[K, V])(implicit ec: ExecutionContext) extends BaseDD[K, V] with HasEvaluatedMap[K, V] {
 
   /**
     * Method to form a new DataDefinition where the resulting values derive from applying the function f to the original values
@@ -117,6 +117,26 @@ case class EagerDD[K, V](kVm: Map[K, V])(implicit context: DDContext) extends Ba
     case edd: EagerDD[L, W]@unchecked => EagerDD[L, (V, W)](joinMap(kVm.asInstanceOf[Map[L, V]], edd.kVm))
     case _ => throw DataDefinitionException("join not supported for Eager and non-Eager DataDefinition objects")
   }
+
+  /**
+    * Return the evaluated map as is
+    *
+    * @return a Map[K,V]
+    */
+  def evalMap: Map[K, V] = kVm
+
+  /**
+    * Evaluate this LazyDD as a Future[Map[L, W]
+    *
+    * @return a map of key-value pairs wrapped in Future
+    */
+  protected def evaluate: Future[HasEvaluatedMap[K, V]] = Future(this)
+
+  /**
+    * Clean up any residual resources from this DataDefinition.
+    * For an EagerDD, this is a no-op.
+    */
+  def clean(): Unit = ()
 }
 
 /**
@@ -130,7 +150,7 @@ case class EagerDD[K, V](kVm: Map[K, V])(implicit context: DDContext) extends Ba
   * @tparam V the input value type
   * @tparam W the output value type
   */
-case class LazyDD[K, V, L, W: Monoid](kVm: Map[K, V], f: ((K, V)) => (L, W))(partitions: Int = 2)(implicit context: DDContext) extends BaseDD[L, W] {
+case class LazyDD[K, V, L, W: Monoid](kVm: Map[K, V], f: ((K, V)) => (L, W))(partitions: Int = 2)(implicit context: DDContext) extends BaseDD[L, W]()(context.ec) {
 
   private implicit val cfs: Config = context.config
   private implicit val sys: ActorSystem = context.system
@@ -146,21 +166,6 @@ case class LazyDD[K, V, L, W: Monoid](kVm: Map[K, V], f: ((K, V)) => (L, W))(par
     * @return a new DataDefinition
     */
   def map[Y, X: Monoid](g: ((L, W)) => (Y, X)): DataDefinition[Y, X] = LazyDD[K, V, Y, X](kVm, f andThen g)(partitions)
-
-  /**
-    * Evaluate this LazyDD as a Future[Map[L, W]
-    *
-    * @return a map of key-value pairs wrapped in Future
-    */
-  def apply(): Future[Map[L, W]] =
-    if (partitions < 2) Future {
-      for ((k, v) <- kVm) yield f(k, v)
-    }
-    else {
-      val mr = MapReducePipe[K, V, L, W, W]((k, v) => f((k, v)), implicitly[Monoid[W]].combine, 1)
-      context.register(mr)
-      mr(kVm.toSeq)
-    }
 
   /**
     * Method to filter this DataDefinition according to a predicate which takes a l-w tuple.
@@ -183,24 +188,60 @@ case class LazyDD[K, V, L, W: Monoid](kVm: Map[K, V], f: ((K, V)) => (L, W))(par
       import LazyDD._
       LazyDD[K, (V, X), M, (W, X)](joinMap(kVm, ldd.kVm), joinFunction(f, ldd.f))(partitions)
     case edd: EagerDD[M, X] => join(LazyDD[M, X, M, X](edd.kVm, identity)(partitions))
+    case _ => throw DataDefinitionException("join not supported for Lazy and Base DataDefinition objects")
   }
-}
 
-/**
-  * Abstract base class which implements the generic DataDefinition[K, V].
-  *
-  * @param context a DDContext
-  * @tparam K the key type
-  * @tparam V the input value type
-  */
-abstract class BaseDD[K, V](implicit context: DDContext) extends DataDefinition[K, V] {
-
-  private implicit val ec: ExecutionContext = context.ec
+  /**
+    * Evaluate this LazyDD as a Future[HasEvaluatedMap[L, W]
+    *
+    * @return a map of key-value pairs wrapped in Future
+    */
+  protected def evaluate: Future[HasEvaluatedMap[L, W]] =
+    if (partitions < 2) Future(EagerDD(for ((k, v) <- kVm) yield f(k, v)))(scala.concurrent.ExecutionContext.Implicits.global)
+    else {
+      val mr = MapReducePipe[K, V, L, W, W]((k, v) => f((k, v)), implicitly[Monoid[W]].combine, 1)
+      context.register(mr)
+      for (x: Map[L, W] <- mr(kVm.toSeq)) yield EagerDD(x)
+    }
 
   /**
     * Clean up any resources in the context of this LazyDD object
     */
   def clean(): Unit = context.clean()
+}
+
+/**
+  * This trait is essentially a private trait: only to be used by this module.
+  *
+  * @tparam K the key type
+  * @tparam V the value type
+  */
+sealed trait HasEvaluatedMap[K, V] {
+  def evalMap: Map[K, V]
+}
+
+/**
+  * Abstract base class which implements the generic DataDefinition[K, V].
+  *
+  * @param ec an ExecutionContext
+  * @tparam K the key type
+  * @tparam V the input value type
+  */
+abstract class BaseDD[K, V](implicit ec: ExecutionContext) extends DataDefinition[K, V] {
+
+  /**
+    * Evaluate this DataDefinition
+    *
+    * @return a map of key-value pairs wrapped in Future
+    */
+  override def apply(): Future[Map[K, V]] = evaluate map (_.evalMap)
+
+  /**
+    * Evaluate this BaseDD as a Future[HasEvaluatedMap[K, V]
+    *
+    * @return an HasEvaluatedMap (in practice, this will be an EagerDD) wrapped in Future
+    */
+  protected def evaluate: Future[HasEvaluatedMap[K, V]]
 
   /**
     * Method to evaluate this DataDefintion and reduce the dimensionality of the result by ignoring the keys
