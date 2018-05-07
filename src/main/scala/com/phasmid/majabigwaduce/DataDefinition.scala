@@ -10,7 +10,7 @@ import com.phasmid.majabigwaduce.LazyDD.joinMap
 import com.typesafe.config.{Config, ConfigFactory}
 
 import scala.concurrent.duration.FiniteDuration
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
 
 /**
   * Trait to represent a "data definition" (similar to RDD in Spark).
@@ -115,6 +115,10 @@ case class EagerDD[K, V](kVm: Map[K, V])(implicit ec: ExecutionContext) extends 
     */
   def join[L >: K, W: Monoid](other: DataDefinition[L, W]): DataDefinition[L, (V, W)] = other match {
     case edd: EagerDD[L, W]@unchecked => EagerDD[L, (V, W)](joinMap(kVm.asInstanceOf[Map[L, V]], edd.kVm))
+    case bdd: BaseDD[L, W]@unchecked =>
+      import scala.concurrent.duration._
+      implicit val timeout: Timeout = Timeout(5.seconds)
+      join(Await.result(bdd.evaluate, timeout.duration))
     case _ => throw DataDefinitionException("join not supported for Eager and non-Eager DataDefinition objects")
   }
 
@@ -126,11 +130,11 @@ case class EagerDD[K, V](kVm: Map[K, V])(implicit ec: ExecutionContext) extends 
   def evalMap: Map[K, V] = kVm
 
   /**
-    * Evaluate this LazyDD as a Future[Map[L, W]
+    * Evaluate this EagerDD as a Future of DataDefinition[K,V] with HasEvaluatedMap[K, V]
     *
-    * @return a map of key-value pairs wrapped in Future
+    * @return this wrapped in Future
     */
-  protected def evaluate: Future[HasEvaluatedMap[K, V]] = Future(this)
+  def evaluate: Future[DataDefinition[K, V] with HasEvaluatedMap[K, V]] = Future(this)
 
   /**
     * Clean up any residual resources from this DataDefinition.
@@ -192,11 +196,11 @@ case class LazyDD[K, V, L, W: Monoid](kVm: Map[K, V], f: ((K, V)) => (L, W))(par
   }
 
   /**
-    * Evaluate this LazyDD as a Future[HasEvaluatedMap[L, W]
+    * Evaluate this LazyDD as a Future of DataDefinition[L,W] with HasEvaluatedMap[L,W]
     *
-    * @return a map of key-value pairs wrapped in Future
+    * @return an EagerDD[L,W] wrapped in Future
     */
-  protected def evaluate: Future[HasEvaluatedMap[L, W]] =
+  def evaluate: Future[DataDefinition[L, W] with HasEvaluatedMap[L, W]] =
     if (partitions < 2) Future(EagerDD(for ((k, v) <- kVm) yield f(k, v)))(scala.concurrent.ExecutionContext.Implicits.global)
     else {
       val mr = MapReducePipe[K, V, L, W, W]((k, v) => f((k, v)), implicitly[Monoid[W]].combine, 1)
@@ -241,7 +245,7 @@ abstract class BaseDD[K, V](implicit ec: ExecutionContext) extends DataDefinitio
     *
     * @return an HasEvaluatedMap (in practice, this will be an EagerDD) wrapped in Future
     */
-  protected def evaluate: Future[HasEvaluatedMap[K, V]]
+  def evaluate: Future[DataDefinition[K, V] with HasEvaluatedMap[K, V]]
 
   /**
     * Method to evaluate this DataDefintion and reduce the dimensionality of the result by ignoring the keys

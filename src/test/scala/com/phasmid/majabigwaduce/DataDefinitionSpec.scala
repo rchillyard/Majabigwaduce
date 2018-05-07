@@ -368,6 +368,17 @@ class DataDefinitionSpec extends FlatSpec with Matchers with Futures with ScalaF
     target.clean()
   }
 
+  it should "join/count correctly with LazyDD" in {
+    // given
+    val target = EagerDD(Map("a" -> 1, "b" -> 2))
+    val target2 = DataDefinition(Map("a" -> 2.1, "c" -> 3.1))
+    // when
+    val xf: Future[(Int)] = target.join(target2).count
+    // then
+    whenReady(xf) { x => x should matchPattern { case 1 => } }
+    target.clean()
+  }
+
   it should "join/aggregate correctly with single partition" in {
     // given
     val target = EagerDD(Map("a" -> 1, "b" -> 2, "c" -> 3))
