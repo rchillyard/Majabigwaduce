@@ -110,6 +110,8 @@ class MapReduceFuncSpec extends FlatSpec with Matchers with Futures with ScalaFu
     iUrf.onComplete {
       case Failure(x: AskTimeoutException) => fail(s"should throw MapReduceException, not $x")
       case Failure(x) =>
+        // TODO understand why this fails when this test is run as part of a suite, but it works fine when alone.
+        // TODO also why does it actually pass the unit test, even though the exception is a NullPointerException?
         x shouldBe a[MapReduceException]
         x.getCause shouldBe a[ClassCastException]
       case Success(_) => fail("should fail")
