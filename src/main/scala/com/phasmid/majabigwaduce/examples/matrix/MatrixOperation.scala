@@ -76,8 +76,7 @@ object MatrixOperation extends App {
 
   def product[X: Numeric](as: Seq[X], bss: Seq[Seq[X]]): Seq[X] = for (bs <- bss) yield dot(as, bs)
 
-  val configRoot = ConfigFactory.load
-  implicit val config: Config = configRoot.getConfig("Matrix")
+  implicit val config: Config = ConfigFactory.load.getConfig("Matrix")
   implicit val system: ActorSystem = ActorSystem(config.getString("name"))
   implicit val timeout: Timeout = getTimeout(config.getString("timeout"))
   val rows = config.getInt("rows")

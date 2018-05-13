@@ -24,13 +24,12 @@ class WebCrawlerSpec extends FlatSpec with Matchers with Futures with ScalaFutur
   // CONSIDER when run alone, this works just fine.
   // But sometimes when run with all the specs in Majabigwaduce, this runs -- but in the logs we see exceptions thrown
   "crawl" should "work" in {
-    val configRoot = ConfigFactory.load
-    implicit val config: Config = configRoot.getConfig("WebCrawler")
+    implicit val config: Config = ConfigFactory.load.getConfig("WebCrawler")
     implicit val system: ActorSystem = ActorSystem(config.getString("name"))
     implicit val to: Timeout = WebCrawler.getTimeout(config.getString("timeout"))
     val ws = Seq(config.getString("start"))
     val eventualInt = WebCrawler.runWebCrawler(ws, config.getInt("depth"))
     whenReady(eventualInt, timeout(Span(300, Seconds)))(// The actual number is approximate and will vary (currently 9)
-      i => assert(i > 5 && i < 45))
+      i => assert(i > 5 && i < 200))
   }
 }

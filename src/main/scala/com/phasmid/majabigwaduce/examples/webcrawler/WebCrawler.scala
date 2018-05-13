@@ -37,8 +37,7 @@ object WebCrawler extends App {
 
   implicit object StringsZero$ extends StringsZero$
 
-  val configRoot = ConfigFactory.load
-  implicit val config: Config = configRoot.getConfig("WebCrawler")
+  implicit val config: Config = ConfigFactory.load.getConfig("WebCrawler")
   implicit val system: ActorSystem = ActorSystem(config.getString("name"))
   implicit val timeout: Timeout = getTimeout(config.getString("timeout"))
 

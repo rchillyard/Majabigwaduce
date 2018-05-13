@@ -75,8 +75,7 @@ case class CountWords(resourceFunc: String => Resource)(implicit system: ActorSy
   */
 object CountWords {
   def apply(hc: HttpClient, args: Array[String]): Future[Int] = {
-    val configRoot = ConfigFactory.load
-    implicit val config: Config = configRoot.getConfig("CountWords")
+    implicit val config: Config = ConfigFactory.load.getConfig("CountWords")
     implicit val system: ActorSystem = ActorSystem(config.getString("name"))
     implicit val timeout: Timeout = getTimeout(config.getString("timeout"))
     implicit val logger: LoggingAdapter = system.log

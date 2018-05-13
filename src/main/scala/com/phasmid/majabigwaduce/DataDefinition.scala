@@ -294,7 +294,7 @@ object DDContext {
   import java.util.concurrent.TimeUnit
 
   def apply(implicit executor: ExecutionContext): DDContext = {
-    val config = ConfigFactory.load()
+    val config = ConfigFactory.load().getConfig("DataDefinition")
     val timeout = FiniteDuration(config.getDuration("timeout").getSeconds, TimeUnit.SECONDS)
     val system: ActorSystem = ActorSystem(config.getString("actorSystem"))
     apply(config, system, timeout)

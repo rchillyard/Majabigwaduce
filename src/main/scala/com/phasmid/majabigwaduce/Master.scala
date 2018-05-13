@@ -117,7 +117,7 @@ abstract class MasterBaseFirst[V1, K2, W, V2](config: Config, f: V1 => (K2, W), 
 
   override def receive: PartialFunction[Any, Unit] = {
     case v1s: Seq[V1] =>
-      log.info(s"received Seq[V1]: with ${v1s.length} elements")
+      log.info(s"Master received Seq[V1]: with ${v1s.length} elements")
       val caller = sender // XXX: this looks strange but it is required
       doMapReduce(Incoming.sequence[Unit, V1](v1s)).onComplete {
         case Success(wXeK2m) => caller ! Response(wXeK2m)
@@ -147,6 +147,8 @@ abstract class MasterBaseFirst[V1, K2, W, V2](config: Config, f: V1 => (K2, W), 
 abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => (K2, W), g: (V2, W) => V2, z: () => V2) extends MapReduceActor {
   implicit val timeout: Timeout = getTimeout(config.getString("timeout"))
 
+  log.debug(s"MasterBase: timeout=$timeout")
+
   import context.dispatcher
 
   private val mapper = context.actorOf(mapperProps, "mpr")
@@ -173,7 +175,7 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => (K2,
   // either in Map[] form of Seq[()] form. I don't really like having both
   override def receive: PartialFunction[Any, Unit] = {
     case v1K1m: Map[K1, V1] =>
-      log.info(s"received Map[K1,V1]: with ${v1K1m.size} elements")
+      log.info(s"Master received Map[K1,V1]: with ${v1K1m.size} elements")
       //      maybeLog("received: {}",v1K1m)
       val caller = sender
       doMapReduce(Incoming.map[K1, V1](v1K1m)).onComplete {
@@ -185,7 +187,7 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => (K2,
           caller ! akka.actor.Status.Failure(x)
       }
     case v1s: Seq[(K1, V1)]@unchecked =>
-      log.info(s"received Seq[(K1,V1)]: with ${v1s.length} elements")
+      log.info(s"Master received Seq[(K1,V1)]: with ${v1s.length} elements")
       //      maybeLog("received: {}",v1s)
       val caller = sender
       doMapReduce(Incoming[K1, V1](v1s)).onComplete {

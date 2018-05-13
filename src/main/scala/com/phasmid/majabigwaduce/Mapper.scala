@@ -45,7 +45,7 @@ class Mapper[K1, V1, K2, W](f: (K1, V1) => (K2, W)) extends MapReduceActor {
 
   override def receive: PartialFunction[Any, Unit] = {
     case i: Incoming[K1, V1] =>
-      log.info(s"received $i")
+      log.info(s"Mapper received $i")
       // CONSIDER using a form of groupBy to perform this operation
       val wk2ts = for ((k1, v1) <- i.m) yield Try(f(k1, v1))
       sender ! prepareReply(wk2ts)

@@ -20,8 +20,7 @@ import scala.language.postfixOps
 
 class MatrixOperationFuncSpec extends FlatSpec with Matchers with Futures with ScalaFutures with Inside with MockFactory {
   "MatrixOperation" should "apply vector" in {
-    val configRoot = ConfigFactory.load
-    implicit val config: Config = configRoot.getConfig("Matrix")
+    implicit val config: Config = ConfigFactory.load.getConfig("Matrix")
     implicit val system: ActorSystem = ActorSystem(config.getString("name"))
     implicit val to: Timeout = getTimeout(config.getString("timeout"))
     implicit val logger: LoggingAdapter = system.log
@@ -40,8 +39,7 @@ class MatrixOperationFuncSpec extends FlatSpec with Matchers with Futures with S
   }
 
   ignore should "product matrix" in {
-    val configRoot = ConfigFactory.load
-    implicit val config: Config = configRoot.getConfig("Matrix")
+    implicit val config: Config = ConfigFactory.load.getConfig("Matrix")
     implicit val system: ActorSystem = ActorSystem(config.getString("name"))
     implicit val to: Timeout = getTimeout(config.getString("timeout"))
     implicit val logger: LoggingAdapter = system.log
