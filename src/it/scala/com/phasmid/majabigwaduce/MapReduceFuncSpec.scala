@@ -32,7 +32,7 @@ class MapReduceFuncSpec extends FlatSpec with Matchers with Futures with ScalaFu
 
   import system.dispatcher
 
-  private val config = ConfigFactory.load().getConfig("MapReduceFuncSpec")
+  private val config = ConfigFactory.load()
   val spec0 = "WC"
   val spec1 = "WC-1"
   val spec2 = "WC-2"
