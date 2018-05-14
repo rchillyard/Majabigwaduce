@@ -12,6 +12,7 @@ import org.scalatest.concurrent.{Futures, ScalaFutures}
 import org.scalatest.time.{Seconds, Span}
 import org.scalatest.{FlatSpec, Inside, Matchers}
 
+import scala.concurrent.ExecutionContext
 import scala.language.postfixOps
 
 /**
@@ -27,9 +28,11 @@ class WebCrawlerSpec extends FlatSpec with Matchers with Futures with ScalaFutur
     implicit val config: Config = ConfigFactory.load.getConfig("WebCrawler")
     implicit val system: ActorSystem = ActorSystem(config.getString("name"))
     implicit val to: Timeout = WebCrawler.getTimeout(config.getString("timeout"))
+    import ExecutionContext.Implicits.global
     val ws = Seq(config.getString("start"))
-    val eventualInt = WebCrawler.runWebCrawler(ws, config.getInt("depth"))
-    whenReady(eventualInt, timeout(Span(300, Seconds)))(// The actual number is approximate and will vary (currently 9)
+    val crawler = WebCrawler(config.getInt("depth"))
+    val xf = crawler(ws)
+    whenReady(xf, timeout(Span(300, Seconds)))(// The actual number is approximate and will vary (currently 9)
       i => assert(i > 5 && i < 200))
   }
 }

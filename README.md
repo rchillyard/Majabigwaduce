@@ -24,7 +24,13 @@ DataDefintion
 -------------
 Majabigwaduce has a high-level API, something like that used by Spark.
 It is based on the concept of _DataDefinition_, essentially a lazy, partitionable, map of key-value pairs.
-A DataDefinition is normally created with a statement such as:
+_DataDefinition_ is a trait with two concrete sub-classes:
+
+* _LazyDD_ is a lazily-evaluated DataDefinition and which is the normal implementation of DataDefinition to be used.
+* _EagerDD_ is an eagerly (i.e. fully) evaluated DataDefinition which also implements _HasEvaluatedMap_ which provides a method to yield directly the wrapped key-value map.
+In practice, a _LazyDD_ creates an _EagerDD_ when implementing its _apply()_ method.
+
+A DataDefinition (in these cases a _LazyDD_) is normally created with a statement such as:
 
     val dd = DataDefinition(map, partitions)
     
@@ -37,13 +43,18 @@ where _list_ is a _Seq[V]_ and where _f_ is a function of type _V=>K_ (the mappe
 In all cases, _partitions_ represents the desired number of partitions for the data definition,
 but can be omitted, in which case it will be defaulted to be 2.
 
-The only transformation function currently supported is _map_ which, as expected, takes a function which maps a value into a new value.
+There are three types of transformation function currently supported:
+ 
+* _map_ which, as expected, takes a function which maps a key-value pair into a new key-value pair.
+* _filter_ which, as expected, takes a predicate (i.e. a boolean function) which tests each key-value pair.
+* _join_ which implements an inner join of two DataDefinitions.
 
-There are two types of "action" function:
+There are three types of "action" function:
  
 * _apply()_ which yields a _Future[Map[K,V]]_
-* _aggregate(f)_ which yields a _Future[W]_ where the function _f_ is the aggregation function
+* _reduce(f)_ which yields a _Future[W]_ where the function _f_ is the aggregation function
 of type _(W,V)=>W_ where _W_ is constrained by a context bound: _W: Zero_.
+* _count_ which yields the number of key-value pairs in the DataDefinition, wrapped in _Future_.
 
 An additional type _DDContext_ is used implicitly when calling the _apply_ methods of the _DataDefintion_ object.
 
@@ -127,7 +138,7 @@ And, again generally, the constructor for the _Master_ takes the following param
 * _config: Config_
 * _f: (K1,V1)=>(K2,W)_
 * _g: (V2,W)=>V2_
-* _z: ()=>V2_
+* (optionally) _z: ()=>V2_
 
 where
 
@@ -202,9 +213,9 @@ Dependencies
 
 The components that are used by this project are:
 
-* Scala (2.11.7)
-* Akka (2.4.1) although it was developed using 2.3.12 and the only difference in source code is terminate instead of shutdown.
-* Typesafe Configuration (1.3.0)
+* Scala (2.12.x)
+* Akka (2.5.11)
+* Typesafe Configuration (1.3.1)
 * and dependencies thereof
 
 Examples
@@ -214,6 +225,8 @@ There are several examples provided (in the examples directory):
 
 * CountWords: a simple example which counts the words in documents and can provide a total word count of all documents.
 * WebCrawler: a more complex version of the same sort of thing.
+* Matrix: uses the high-level API
+* MatrixOperation: obsolete
 
 CountWords
 ----------
@@ -293,38 +306,72 @@ WebCrawler
 
 Here is the web crawler example app:
 
-	object WebCrawler extends App {
-	  val configRoot = ConfigFactory.load
-	  implicit val config = configRoot.getConfig("WebCrawler")
-	  implicit val system = ActorSystem(config.getString("name"))   
-	  implicit val timeout: Timeout = getTimeout(config.getString("timeout"))
-	  import ExecutionContext.Implicits.global
-	  val ws = if (args.length>0) args.toSeq else Seq("http://www.htmldog.com/examples/")
-	  def init = Seq[String]()
-	  val stage1: MapReduce[String,URI,Seq[String]] = MapReduceFirstFold(
-	      {(q, w: String) => val u = new URI(w); (getHostURI(u), u)},
-	      {(a: Seq[String],v: URI)=> val s = Source.fromURL(v.toURL).mkString; a:+s},
-	      init _
-	    )
-	  val stage2 = MapReducePipeFold(
-	      {(w: URI, gs: Seq[String])=>(w, (for(g <- gs) yield getLinks(w,g)) reduce(_++_))},
-	      {(a: Seq[String],v: Seq[String])=>a++v},
-	      init _,
-	      1
-	    )
-	  val stage3 = Reduce[Seq[String],Seq[String]]({_++_})
-	  val crawler = stage1 compose stage2 compose stage3  
-	  val f = doCrawl(ws,Seq[String](),2) transform ({n: Seq[String] => println(s"total links: ${n.length}"); system.terminate}, {x: Throwable=>system.log.error(x,"Map/reduce error (typically in map function)"); x})
-	  Await.result(f,10.minutes)
-	  private def doCrawl(us: Seq[String], all: Seq[String], depth: Int): Future[Seq[String]] =
-	    if (depth<0) Future(all)
-	    else {
-	      val (in, out) = us.partition { u => all.contains(u) }
-	      for (ws <- crawler(cleanup(out)); gs <- doCrawl(ws.distinct, (all++us).distinct, depth-1)) yield gs
-	    }
-	  // For the other methods required, please see the project source code on github.
-	}
-  
+    case class WebCrawler(depth: Int)(implicit system: ActorSystem, config: Config, timeout: Timeout, ec: ExecutionContext) extends (Strings => Future[Int]) {
+    
+      trait StringsZero$ extends Zero[Strings] {
+        def zero: Strings = Nil: Strings
+      }
+      implicit object StringsZero$ extends StringsZero$
+    
+      val stage1: MapReduce[String, URI, Strings] = MapReduceFirstFold(getHostAndURI, appendContent)(config, system, timeout)
+      val stage2: MapReduce[(URI, Strings), URI, Strings] = MapReducePipeFold(getLinkStrings, joinWordLists, 1)(config, system, timeout)
+      val stage3: Reduce[URI, Strings, Strings] = Reduce[URI, Strings, Strings](_ ++ _)
+      val crawler: Strings => Future[Strings] = stage1 & stage2 | stage3
+    
+      override def apply(ws: Strings): Future[Int] = doCrawl(ws, Nil, depth) transform( { n => val z = n.length; system.terminate; z }, { x => system.log.error(x, "Map/reduce error (typically in map function)"); x })
+    
+      private def doCrawl(ws: Strings, all: Strings, depth: Int): Future[Strings] =
+        if (depth < 0) Future((all ++ ws).distinct)
+        else {
+          def cleanup(ws: Strings): Strings = ???
+    
+          def trim(s: String, p: Char): String = ???
+    
+          val (_, out) = ws.partition { u => all.contains(u) }
+          for (ws <- crawler(cleanup(out)); gs <- doCrawl(ws.distinct, (all ++ out).distinct, depth - 1)) yield gs
+        }
+    
+      private def getHostAndURI(w: String): (URI, URI) = ???
+    
+      private def appendContent(a: Strings, v: URI): Strings = ???
+    
+      private def getLinkStrings(u: URI, gs: Strings): (URI, Strings) = {
+        def normalizeURL(w: URI, w2: String) = ???
+    
+        def getLinks(u: URI, g: String): Strings = for (
+          nsA <- HTMLParser.parse(g) \\ "a";
+          nsH <- nsA \ "@href";
+          nH <- nsH.head
+        ) yield normalizeURL(u, nH.toString)
+    
+        (u, (for (g <- gs) yield getLinks(u, g)) reduce (_ ++ _))
+      }
+    
+      private def joinWordLists(a: Strings, v: Strings) = a ++ v
+    }
+    
+    object WebCrawler extends App {
+          implicit val config: Config = ConfigFactory.load.getConfig("WebCrawler")
+          implicit val system: ActorSystem = ActorSystem(config.getString("name"))
+          implicit val timeout: Timeout = getTimeout(config.getString("timeout"))        
+          import ExecutionContext.Implicits.global
+        
+          val crawler = WebCrawler(config.getInt("depth"))
+        
+          val ws = if (args.length > 0) args.toSeq else Seq(config.getString("start"))
+          private val xf = crawler(ws)
+          Await.result(xf, 10.minutes)
+          xf foreach (x => println(s"total links: $x"))
+          
+          def getTimeout(t: String) = {
+            val durationR = """(\d+)\s*(\w+)""".r
+            t match {
+              case durationR(n, s) => new Timeout(FiniteDuration(n.toLong, s))
+              case _ => Timeout(10 seconds)
+            }
+          }
+        }
+          
 The application is somewhat similar to the _CountWords_ app, but because of the much greater load in reading all of the documents at any level of recursion, the first stage
 performs the actual document reading during its reduce phase. However, it also has three stages.
 
