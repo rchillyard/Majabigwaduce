@@ -351,26 +351,25 @@ Here is the web crawler example app:
     }
     
     object WebCrawler extends App {
-          implicit val config: Config = ConfigFactory.load.getConfig("WebCrawler")
-          implicit val system: ActorSystem = ActorSystem(config.getString("name"))
-          implicit val timeout: Timeout = getTimeout(config.getString("timeout"))        
-          import ExecutionContext.Implicits.global
+      implicit val config: Config = ConfigFactory.load.getConfig("WebCrawler")
+      implicit val system: ActorSystem = ActorSystem(config.getString("name"))
+      implicit val timeout: Timeout = getTimeout(config.getString("timeout"))        
+      import ExecutionContext.Implicits.global  
         
-          val crawler = WebCrawler(config.getInt("depth"))
-        
-          val ws = if (args.length > 0) args.toSeq else Seq(config.getString("start"))
-          private val xf = crawler(ws)
-          Await.result(xf, 10.minutes)
-          xf foreach (x => println(s"total links: $x"))
+      val ws = if (args.length > 0) args.toSeq else Seq(config.getString("start"))
+      val crawler = WebCrawler(config.getInt("depth"))
+      private val xf = crawler(ws)
+      xf foreach (x => println(s"total links: $x"))
+      Await.ready(xf, 10.minutes)
           
-          def getTimeout(t: String) = {
-            val durationR = """(\d+)\s*(\w+)""".r
-            t match {
-              case durationR(n, s) => new Timeout(FiniteDuration(n.toLong, s))
-              case _ => Timeout(10 seconds)
-            }
-          }
+      def getTimeout(t: String) = {
+        val durationR = """(\d+)\s*(\w+)""".r
+        t match {
+          case durationR(n, s) => new Timeout(FiniteDuration(n.toLong, s))
+          case _ => Timeout(10 seconds)
         }
+      }
+    }
           
 The application is somewhat similar to the _CountWords_ app, but because of the much greater load in reading all of the documents at any level of recursion, the first stage
 performs the actual document reading during its reduce phase. However, it also has three stages.
