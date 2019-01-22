@@ -9,9 +9,9 @@ import com.phasmid.majabigwaduce.DataDefinition._
 import org.scalatest._
 import org.scalatest.concurrent._
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.language.postfixOps
-import scala.concurrent.ExecutionContext.Implicits.global
 
 class DataDefinitionSpec extends FlatSpec with Matchers with Futures with ScalaFutures with Inside {
 
@@ -103,7 +103,7 @@ class DataDefinitionSpec extends FlatSpec with Matchers with Futures with ScalaF
     val target = DataDefinition(Map("a" -> 1, "b" -> 2), 0)
     val target2 = DataDefinition(Map("a" -> 2.1, "c" -> 3.1), 0)
     // when
-    val xf: Future[(Int)] = target.join(target2).count
+    val xf: Future[Int] = target.join(target2).count
     // then
     whenReady(xf) { x => x should matchPattern { case 1 => } }
     target.clean()
@@ -114,7 +114,7 @@ class DataDefinitionSpec extends FlatSpec with Matchers with Futures with ScalaF
     val target = DataDefinition(Map("a" -> 1, "b" -> 2))
     val target2 = DataDefinition(Map("a" -> 2.1, "c" -> 3.1))
     // when
-    val xf: Future[(Int)] = target.join(target2).count
+    val xf: Future[Int] = target.join(target2).count
     // then
     whenReady(xf) { x => x should matchPattern { case 1 => } }
     target.clean()
@@ -351,7 +351,7 @@ class DataDefinitionSpec extends FlatSpec with Matchers with Futures with ScalaF
     val target = EagerDD(Map("a" -> 1, "b" -> 2))
     val target2 = EagerDD(Map("a" -> 2.1, "c" -> 3.1))
     // when
-    val xf: Future[(Int)] = target.join(target2).count
+    val xf: Future[Int] = target.join(target2).count
     // then
     whenReady(xf) { x => x should matchPattern { case 1 => } }
     target.clean()
@@ -362,7 +362,7 @@ class DataDefinitionSpec extends FlatSpec with Matchers with Futures with ScalaF
     val target = EagerDD(Map("a" -> 1, "b" -> 2))
     val target2 = EagerDD(Map("a" -> 2.1, "c" -> 3.1))
     // when
-    val xf: Future[(Int)] = target.join(target2).count
+    val xf: Future[Int] = target.join(target2).count
     // then
     whenReady(xf) { x => x should matchPattern { case 1 => } }
     target.clean()
@@ -373,7 +373,7 @@ class DataDefinitionSpec extends FlatSpec with Matchers with Futures with ScalaF
     val target = EagerDD(Map("a" -> 1, "b" -> 2))
     val target2 = DataDefinition(Map("a" -> 2.1, "c" -> 3.1))
     // when
-    val xf: Future[(Int)] = target.join(target2).count
+    val xf: Future[Int] = target.join(target2).count
     // then
     whenReady(xf) { x => x should matchPattern { case 1 => } }
     target.clean()

@@ -38,10 +38,13 @@ class MapReduceFuncSpec extends FlatSpec with Matchers with Futures with ScalaFu
   val spec2 = "WC-2"
   val spec3 = "TF-2"
 
-  `spec1` should "work for http://www.bbc.com/ http://www.cnn.com/ http://default/" in {
+  behavior of spec1
+
+  it should "work for http://www.bbc.com/ http://www.cnn.com/ http://default/" in {
     def mapper(w: String): (URL, String) = MockURL(w).asTuple
 
     val props = Props.create(classOf[Master_First_Fold[String, URL, String, Seq[String]]], config, mapper _, reducer _, init _)
+    //noinspection SpellCheckingInspection
     val master = system.actorOf(props, s"""mstr-$spec1""")
     val wsUrf = master.ask(Seq("http://www.bbc.com/", "http://www.cnn.com/", "http://default/")).mapTo[Response[URL, Seq[String]]]
     whenReady(wsUrf, timeout(Span(6, Seconds))) {
@@ -53,7 +56,9 @@ class MapReduceFuncSpec extends FlatSpec with Matchers with Futures with ScalaFu
     system.stop(master)
   }
 
-  `spec2` should "yield 556" in {
+  behavior of spec2
+
+  it should "yield 556" in {
     def mapper(w: String, gs: Seq[String]): (String, Int) = (w, (for (g <- gs) yield g.split("""\s+""").length) reduce (_ + _))
 
     val props = Props.create(classOf[Master[String, Seq[String], String, Int, Int]], config, mapper _, adder _)
@@ -120,7 +125,9 @@ class MapReduceFuncSpec extends FlatSpec with Matchers with Futures with ScalaFu
     system.stop(master2)
   }
 
-  `spec3` should "work for word map" in {
+  behavior of spec3
+
+  it should "work for word map" in {
     def mapper(w: String, us: Seq[URL]): (String, Int) = (w, us.length)
 
     val props = Props.create(classOf[Master[String, Seq[URL], String, Int, Int]], config, mapper _, adder _)
@@ -144,6 +151,7 @@ class MapReduceFuncSpec extends FlatSpec with Matchers with Futures with ScalaFu
 }
 
 object MapReduceFuncSpec {
+  //noinspection SpellCheckingInspection,SpellCheckingInspection
   // there are 556 words in total between the three extracts
   val bbcText =
     """The US military has delivered more than 45 tonnes of ammunition to rebels fighting the jihadist group Islamic State (IS) in north-eastern Syria.
@@ -151,12 +159,14 @@ C-17 transport aircraft, accompanied by fighter escorts, dropped pallets of supp
 The consignment reportedly comprised small arms, ammunition and grenades.
 It comes days after the US abandoned a $500m (£326m) plan to train thousands of "moderate" rebels to fight IS.
 The money will instead be used to provide much-needed ammunition and some weapons to commanders of rebel groups already established on the ground."""
+  //noinspection SpellCheckingInspection,SpellCheckingInspection,SpellCheckingInspection
   val cnnText =
     """(CNN) Vladimir Putin just confirmed what many suspected -- that Russian airstrikes in Syria are meant to bolster President Bashar al-Assad's regime.
 But exactly how they're doing that remains a point of contention: Are Russians really focused on pummeling ISIS, or are they targeting Syrian rebels demanding an end to the Assad dynasty?
 "Our task is to stabilize the legitimate government and to create conditions for a political compromise ... by military means, of course," Putin told the state-run Russia 24 TV.
 "The units of international terrorists and their ilk have no desire to negotiate with the Syrian government, who is almost sieged in its own capital."
 Russia has said it's coordinating with the Syrian regime to target ISIS and other terrorists. Al-Assad has used the term "terrorists" to describe Syrians who seek his ouster."""
+  //noinspection SpellCheckingInspection,SpellCheckingInspection,SpellCheckingInspection,SpellCheckingInspection,SpellCheckingInspection,SpellCheckingInspection
   val defaultText =
     """U.S. forces airdropped small arms ammunition and other supplies to Syrian Arab rebels, barely two weeks after Russia raised the stakes in the long-running civil war by intervening on the side of President Bashar al-Assad.
 One military official said the drop, by Air Force C-17 cargo planes in northern Syria on Sunday, was part of a revamped U.S. strategy announced last week to help rebels in Syria battling Islamic State militants.
