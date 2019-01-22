@@ -6,6 +6,7 @@ package com.phasmid.majabigwaduce
 
 import akka.actor.ActorSystem
 import akka.util.Timeout
+import com.phasmid.majabigwaduce.DataDefinition.IterableMonoid
 import com.phasmid.majabigwaduce.LazyDD.joinMap
 import com.typesafe.config.{Config, ConfigFactory}
 
@@ -59,6 +60,14 @@ sealed trait DataDefinition[K, V] extends (() => Future[Map[K, V]]) {
     * @return a new DataDefinition containing only those k-v pairs which satisfy the predicate p.
     */
   def filter(p: ((K, V)) => Boolean): DataDefinition[K, V]
+
+  /**
+    * Method to group values by a new key type generated from the values, ignoring the current keys.
+    *
+    * @tparam L the new key type, whose values are derived from the values of this DataDefinition
+    * @return a DataDefinition based on L and Iterable[V]
+    */
+  def groupBy[L](f: V => L): DataDefinition[L, Iterable[V]]
 
   /**
     * Join method to perform inner join.
@@ -141,6 +150,14 @@ case class EagerDD[K, V](kVm: Map[K, V])(implicit ec: ExecutionContext) extends 
     * For an EagerDD, this is a no-op.
     */
   def clean(): Unit = ()
+
+  /**
+    * Method to group values by a new key type generated from the values, ignoring the current keys.
+    *
+    * @tparam L the new key type, whose values are derived from the values of this DataDefinition
+    * @return a DataDefinition based on L and Iterable[V]
+    */
+  def groupBy[L](f: V => L): DataDefinition[L, Iterable[V]] = EagerDD(kVm.values.groupBy(f))
 }
 
 /**
@@ -196,22 +213,36 @@ case class LazyDD[K, V, L, W: Monoid](kVm: Map[K, V], f: ((K, V)) => (L, W))(par
   }
 
   /**
+    * Method to group values by a new key type generated from the values, ignoring the current keys.
+    *
+    * @tparam M the new key type, whose values are derived from the values of this DataDefinition
+    * @return a DataDefinition based on M and Iterable[V]
+    */
+  def groupBy[M](f: W => M): DataDefinition[M, Iterable[W]] = {
+    implicit object IterableMonoidW extends IterableMonoid[W]
+    DataDefinition(applyFunction.values.groupBy(f))
+  }
+
+  /**
     * Evaluate this LazyDD as a Future of DataDefinition[L,W] with HasEvaluatedMap[L,W]
     *
     * @return an EagerDD[L,W] wrapped in Future
     */
   def evaluate: Future[DataDefinition[L, W] with HasEvaluatedMap[L, W]] =
-    if (partitions < 2) Future(EagerDD(for ((k, v) <- kVm) yield f(k, v)))(scala.concurrent.ExecutionContext.Implicits.global)
+    if (partitions < 2) Future(EagerDD(applyFunction))(scala.concurrent.ExecutionContext.Implicits.global)
     else {
       val mr = MapReducePipe[K, V, L, W, W]((k, v) => f((k, v)), implicitly[Monoid[W]].combine, 1)
       context.register(mr)
       for (x: Map[L, W] <- mr(kVm.toSeq)) yield EagerDD(x)
     }
 
+  private def applyFunction: Map[L, W] = for ((k, v) <- kVm) yield f(k, v)
+
   /**
     * Clean up any resources in the context of this LazyDD object
     */
   def clean(): Unit = context.clean()
+
 }
 
 /**
@@ -331,6 +362,12 @@ object DataDefinition {
     */
   def tupleLift[K, V, W](f: V => W): (((K, V)) => (K, W)) = vToWToTupleToTuple(f)
 
+  trait IterableMonoid[T] extends Monoid[Iterable[T]] {
+    def zero: Iterable[T] = Seq[T]()
+
+    def combine(x: Iterable[T], y: Iterable[T]): Iterable[T] = x ++ y
+  }
+
   private def vToWToTupleToTuple[K, V, W](f: V => W)(t: (K, V)): (K, W) = (t._1, f(t._2))
 }
 
@@ -345,3 +382,14 @@ object LazyDD {
 }
 
 case class DataDefinitionException(str: String) extends Exception(str)
+
+//case object IterableMonoid[T] extends Iterable[T] with Monoid[Iterable[T]] {
+//
+//  val mt = implicitly[Monoid[T]]
+//
+//  def iterator: Iterator[T] = iterable.toIterator
+//
+//  def zero: Iterable[T] = Seq[T]()
+//
+//  def combine(x: Iterable[T], y: Iterable[T]): Iterable[T] = x ++ y
+//}

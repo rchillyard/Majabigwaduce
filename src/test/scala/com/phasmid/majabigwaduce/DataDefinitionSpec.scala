@@ -98,6 +98,26 @@ class DataDefinitionSpec extends FlatSpec with Matchers with Futures with ScalaF
     target.clean()
   }
 
+  it should "filter by value correctly with single partition" in {
+    // given
+    val target = DataDefinition(Map("a" -> 1, "b" -> 2, "c" -> 3), 0)
+    // when
+    val xf: Future[Int] = target.filter(x => x._2 % 2 == 0).count
+    // then
+    whenReady(xf) { x => x should matchPattern { case 1 => } }
+    target.clean()
+  }
+
+  it should "groupBy correctly with single partition" in {
+    // given
+    val target = DataDefinition(Map(1 -> 1, 2 -> 2, 3 -> -1), 0)
+    // when
+    val xf: Future[Map[Boolean, Iterable[Int]]] = target.groupBy(x => x > 0)()
+    // then
+    whenReady(xf) { x => x(true) should matchPattern { case _ :: _ :: Nil => } }
+    target.clean()
+  }
+
   it should "join/count correctly with single partition" in {
     // given
     val target = DataDefinition(Map("a" -> 1, "b" -> 2), 0)
@@ -343,6 +363,16 @@ class DataDefinitionSpec extends FlatSpec with Matchers with Futures with ScalaF
     val xf: Future[Int] = target.filter(x => x._1 == "a").count
     // then
     whenReady(xf) { x => x should matchPattern { case 1 => } }
+    target.clean()
+  }
+
+  it should "groupBy correctly with single partition" in {
+    // given
+    val target = EagerDD(Map(1 -> 1, 2 -> 2, 3 -> -1))
+    // when
+    val xf: Future[Map[Boolean, Iterable[Int]]] = target.groupBy(x => x > 0)()
+    // then
+    whenReady(xf) { x => x(true) should matchPattern { case _ :: _ :: Nil => } }
     target.clean()
   }
 
