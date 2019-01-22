@@ -31,18 +31,22 @@ class MatrixFuncSpec extends FlatSpec with Matchers with Futures with Inside {
   }
 
   behavior of "Matrix2"
-  it should "implement product by identity correctly" taggedAs Slow in {
+  ignore should "implement product by identity correctly" taggedAs Slow in {
     val r = Random
-    // TODO Try to understand why this cannot multiply matrices of size 1000 (perhaps because of timeout within MapReduce code?)
+    // FIXME Try to understand why this cannot multiply matrices of size 1000 (perhaps because of timeout within MapReduce code?)
     val size = 500
-    val array = for (_ <- 1 to size) yield for (_ <- 1 to size) yield r.nextDouble()
+    // CONSIDER removing the toVector as it doesn't really seem to make any difference
+    val array = for (_ <- (1 to size).toVector) yield for (_ <- (1 to size).toVector) yield r.nextDouble()
     //given
     val target = Matrix2(array)
     // when
+    val start = System.currentTimeMillis()
     val matrix: Matrix[Seq[Double]] = target.product2(Matrix2.identity[Double](size))
+    val end = System.currentTimeMillis()
     val rows = matrix.rows
     // then
     rows shouldBe array
+    println(s"time to multiply matrix of size $size by $size by the identity matrix is: ${end-start} mSecs")
   }
 
 }
