@@ -1,5 +1,6 @@
 /bin/
 /project/
 /target/
+/.idea/
 *.iml
 metastore_db
