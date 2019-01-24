@@ -4,7 +4,7 @@ Majabigwaduce
 =============
 
 Majabigwaduce\* (aka _Akka/MapReduce_) is a framework for implementing map-reduce using [Scala](http://www.scala-lang.org) and [Akka](http://akka.io) actors.
-I tried to use only the intrinsic notion of map and reduce. Thus is is not exactly like Hadoop's map-reduce (although it is similar).
+I tried to use only the intrinsic notion of map and reduce. This is not exactly like Hadoop's map-reduce (although it is similar).
 
 __Why__ would anyone want to do map-reduce using actors? It's a good question. For me, it arose initially because I needed an example of using actors for the class I was teaching on Scala and Big Data.
 I also wanted to ensure that the students understood the essence of map-reduce rather than some derived version of it.
