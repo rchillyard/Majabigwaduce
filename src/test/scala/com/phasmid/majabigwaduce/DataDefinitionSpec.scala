@@ -221,6 +221,7 @@ class DataDefinitionSpec extends FlatSpec with Matchers with Futures with ScalaF
   }
 
   //The join only works when key is never changed, this test won't work since key changes
+  // FIXME Issue #7
   ignore should "mapKeyAndValue/join/apply correctly with single partition" in {
     // given
     val target = DataDefinition(Map("a" -> 1, "b" -> 2, "c" -> 3), 0)
@@ -479,6 +480,7 @@ class DataDefinitionSpec extends FlatSpec with Matchers with Futures with ScalaF
   }
 
   //The join only works when key is never changed, this test won't work since key changes
+  // FIXME Issue 7 Join works only when key never changed
   ignore should "mapKeyAndValue/join/apply correctly with single partition" in {
     // given
     val target = EagerDD(Map("a" -> 1, "b" -> 2, "c" -> 3))

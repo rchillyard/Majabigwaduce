@@ -32,6 +32,7 @@ class MatrixOperationSpec extends FlatSpec with Matchers with Futures with Scala
     MatrixOperation.dot(Seq(1, 2), Seq(1, 2)) shouldBe 5
   }
   behavior of "product"
+  // FIXME Issue #6
   ignore should "work for empty and unequal vectors" in {
     MatrixOperation.product(Seq(), Seq(Seq(0))) shouldBe Seq()
     MatrixOperation.product[Int](Seq(), Seq()) shouldBe Seq()
