@@ -31,7 +31,7 @@ class MatrixFuncSpec extends FlatSpec with Matchers with Futures with Inside {
   }
 
   behavior of "Matrix2"
-  ignore should "implement product by identity correctly" taggedAs Slow in {
+  it should "implement product by identity correctly" taggedAs Slow in {
     val r = Random
     // FIXME Try to understand why this cannot multiply matrices of size 1000 (perhaps because of timeout within MapReduce code?)
     val size = 500
