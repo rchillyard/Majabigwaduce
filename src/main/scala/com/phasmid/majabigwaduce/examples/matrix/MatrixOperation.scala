@@ -10,11 +10,10 @@ import akka.util.Timeout
 import com.phasmid.majabigwaduce._
 import com.phasmid.majabigwaduce.examples.CountWords.getTimeout
 import com.typesafe.config.{Config, ConfigFactory}
-
+import scala.util._
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.language.postfixOps
-import scala.util.Random
 
 case class MatrixOperation[X: Numeric](keyFunc: Int => Int)(implicit system: ActorSystem, logger: LoggingAdapter, config: Config, timeout: Timeout, ec: ExecutionContext) extends ((Seq[Seq[X]], Seq[X]) => Future[Seq[X]]) {
 
@@ -69,12 +68,18 @@ object MatrixOperation extends App {
   implicit object DoubleZero$ extends DoubleZero$
 
   def dot[X: Numeric](as: Seq[X], bs: Seq[X]): X = {
-    def product(ab: (X, X)): X = implicitly[Numeric[X]].times(ab._1, ab._2)
-
+    def product(ab: (X, X)): X =  implicitly[Numeric[X]].times(ab._1, ab._2)
     ((as zip bs) map product).sum
   }
 
-  def product[X: Numeric](as: Seq[X], bss: Seq[Seq[X]]): Seq[X] = for (bs <- bss.transpose) yield dot(as, bs)
+  def product[X: Numeric](as: Seq[X], bss: Seq[Seq[X]]): Seq[X] = {
+    if((as.size!=0 && bss.size!=0) || as.size == bss.size) {
+      for (bs <- bss.transpose) yield dot(as, bs)
+    }
+    else { Seq() }
+  }
+
+
 
   implicit val config: Config = ConfigFactory.load.getConfig("Matrix")
   implicit val system: ActorSystem = ActorSystem(config.getString("name"))
