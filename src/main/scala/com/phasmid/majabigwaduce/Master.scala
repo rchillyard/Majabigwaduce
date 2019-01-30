@@ -21,10 +21,10 @@ import scala.util._
   * @tparam W  transitional type -- used internally
   * @tparam V2 output type: the message which is sent on completion to the sender is of type Response[K2,V2]
   * @param config an instance of Config which defines a suitable configuration
-  * @param f      the mapper function which takes a V1 and creates a key-value tuple of type (K2,W)
+  * @param f      the mapper function which takes a V1 and creates a key-value tuple of type (K2,W), wrapped in Try
   * @param g      the reducer function which combines two values (an V2 and a W) into one V2
   */
-class Master[K1, V1, K2, W, V2 >: W](config: Config, f: (K1, V1) => (K2, W), g: (V2, W) => V2) extends MasterBase[K1, V1, K2, W, V2](config, f, g, Master.zero) with ByReduce[K1, V1, K2, W, V2]
+class Master[K1, V1, K2, W, V2 >: W](config: Config, f: (K1, V1) => Try[(K2, W)], g: (V2, W) => V2) extends MasterBase[K1, V1, K2, W, V2](config, f, g, Master.zero) with ByReduce[K1, V1, K2, W, V2]
 
 /**
   * @tparam K1 key type: the message which this actor responds to is of type Map[K1,V1].
@@ -33,11 +33,11 @@ class Master[K1, V1, K2, W, V2 >: W](config: Config, f: (K1, V1) => (K2, W), g: 
   * @tparam W  transitional type -- used internally
   * @tparam V2 output type: the message which is sent on completion to the sender is of type Response[K2,V2]
   * @param config an instance of Config which defines a suitable configuration
-  * @param f      the mapper function which takes a V1 and creates a key-value tuple of type (K2,W)
+  * @param f      the mapper function which takes a V1 and creates a key-value tuple of type (K2,W), wrapped in Try
   * @param g      the reducer function which combines two values (an V2 and a W) into one V2
   * @param z      the "zero" or "unit" (i.e. initializer) function which creates an "empty" V2.
   */
-class Master_Fold[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => (K2, W), g: (V2, W) => V2, z: () => V2) extends MasterBase[K1, V1, K2, W, V2](config, f, g, z) with ByFold[K1, V1, K2, W, V2]
+class Master_Fold[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => Try[(K2, W)], g: (V2, W) => V2, z: () => V2) extends MasterBase[K1, V1, K2, W, V2](config, f, g, z) with ByFold[K1, V1, K2, W, V2]
 
 /**
   * @tparam V1 input type: the message which this actor responds to is of type Seq[V1].
@@ -45,10 +45,10 @@ class Master_Fold[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => (K2, W), g: 
   * @tparam W  transitional type -- used internally
   * @tparam V2 output type: the message which is sent on completion to the sender is of type Response[K2,V2]
   * @param config an instance of Config which defines a suitable configuration
-  * @param f      the mapper function which takes a V1 and creates a key-value tuple of type (K2,W)
+  * @param f      the mapper function which takes a V1 and creates a key-value tuple of type (K2,W), wrapped in Try
   * @param g      the reducer function which combines two values (an V2 and a W) into one V2
   */
-class Master_First[V1, K2, W, V2 >: W](config: Config, f: V1 => (K2, W), g: (V2, W) => V2) extends MasterBaseFirst[V1, K2, W, V2](config, f, g, Master.zero) with ByReduce[Unit, V1, K2, W, V2]
+class Master_First[V1, K2, W, V2 >: W](config: Config, f: V1 => Try[(K2, W)], g: (V2, W) => V2) extends MasterBaseFirst[V1, K2, W, V2](config, f, g, Master.zero) with ByReduce[Unit, V1, K2, W, V2]
 
 /**
   * @tparam V1 input type: the message which this actor responds to is of type Seq[V1].
@@ -56,11 +56,11 @@ class Master_First[V1, K2, W, V2 >: W](config: Config, f: V1 => (K2, W), g: (V2,
   * @tparam W  transitional type -- used internally
   * @tparam V2 output type: the message which is sent on completion to the sender is of type Response[K2,V2]
   * @param config an instance of Config which defines a suitable configuration
-  * @param f      the mapper function which takes a V1 and creates a key-value tuple of type (K2,W)
+  * @param f      the mapper function which takes a V1 and creates a key-value tuple of type (K2,W), wrapped in Try
   * @param g      the reducer function which combines two values (an V2 and a W) into one V2
   * @param z      the "zero" or "unit" (i.e. initializer) function which creates an "empty" V2.
   */
-class Master_First_Fold[V1, K2, W, V2](config: Config, f: V1 => (K2, W), g: (V2, W) => V2, z: () => V2) extends MasterBaseFirst[V1, K2, W, V2](config, f, g, z) with ByFold[Unit, V1, K2, W, V2]
+class Master_First_Fold[V1, K2, W, V2](config: Config, f: V1 => Try[(K2, W)], g: (V2, W) => V2, z: () => V2) extends MasterBaseFirst[V1, K2, W, V2](config, f, g, z) with ByFold[Unit, V1, K2, W, V2]
 
 /**
   * @tparam K1 key type: the message which this actor responds to is of type Map[K1,V1].
@@ -107,11 +107,11 @@ trait ByFold[K1, V1, K2, W, V2] {
   * @tparam W  transitional type -- used internally
   * @tparam V2 output type: the message which is sent on completion to the sender is of type Response[K2,V2]
   * @param config an instance of Config which defines a suitable configuration
-  * @param f      the mapper function which takes a V1 and creates a key-value tuple of type (K2,W)
+  * @param f      the mapper function which takes a V1 and creates a key-value tuple of type (K2,W), wrapped in Try
   * @param g      the reducer function which combines two values (an V2 and a W) into one V2
   * @param z      the "zero" or "unit" (i.e. initializer) function which creates an "empty" V2.
   */
-abstract class MasterBaseFirst[V1, K2, W, V2](config: Config, f: V1 => (K2, W), g: (V2, W) => V2, z: () => V2) extends MasterBase[Unit, V1, K2, W, V2](config, Master.lift(f), g, z) {
+abstract class MasterBaseFirst[V1, K2, W, V2](config: Config, f: V1 => Try[(K2, W)], g: (V2, W) => V2, z: () => V2) extends MasterBase[Unit, V1, K2, W, V2](config, Master.lift(f), g, z) {
 
   import context.dispatcher
 
@@ -140,11 +140,11 @@ abstract class MasterBaseFirst[V1, K2, W, V2](config: Config, f: V1 => (K2, W), 
   * @tparam W  transitional type -- used internally
   * @tparam V2 output type: the message which is sent on completion to the sender is of type Response[K2,V2]
   * @param config an instance of Config which defines a suitable configuration
-  * @param f      the mapper function which takes a K1,V1 pair and creates a key-value tuple of type (K2,W)
+  * @param f      the mapper function which takes a K1,V1 pair and creates a key-value tuple of type (K2,W), wrapped in Try
   * @param g      the reducer function which combines two values (an V2 and a W) into one V2
   * @param z      the "zero" or "unit" (i.e. initializer) function which creates an "empty" V2.
   */
-abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => (K2, W), g: (V2, W) => V2, z: () => V2) extends MapReduceActor {
+abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => Try[(K2, W)], g: (V2, W) => V2, z: () => V2) extends MapReduceActor {
   implicit val timeout: Timeout = getTimeout(config.getString("timeout"))
 
   log.debug(s"MasterBase: timeout=$timeout")
@@ -250,17 +250,16 @@ object Master {
   def isForgiving(config: Config): Boolean = config.getBoolean("forgiving")
 
   /**
-    * Method lift which takes a function V1=>(K2,W) and returns a (Unit,V1)=>(K2,W)
+    * Method lift which takes a function A=>B and returns a (Unit,A)=>B
     *
     * CONSIDER the name of this method, lift, isn't really appropriate
     *
     * @param f the function to be lifted
-    * @tparam V1 input type: the message which this actor responds to is of type Seq[V1].
-    * @tparam K2 key type: mapper groups things by this key and reducer processes said groups.
-    * @tparam W  transitional type -- used internally
-    * @return a function of (Unit,V1)=>(K2,W)
+    * @tparam A input type: the input type of the function f.
+    * @tparam B output type: the output type of the function f.
+    * @return a function of (Unit,A)=>B
     */
-  def lift[V1, K2, W](f: V1 => (K2, W)): (Unit, V1) => (K2, W) = {
+  def lift[A, B](f: A => B): (Unit, A) => B = {
     (_, v) => f(v)
   }
 }

@@ -4,10 +4,13 @@
 
 package com.phasmid.majabigwaduce.examples
 
+import com.phasmid.majabigwaduce.IncompatibleLengthsException
 import com.phasmid.majabigwaduce.examples.matrix.MatrixOperation
 import org.scalamock.scalatest.MockFactory
 import org.scalatest._
 import org.scalatest.concurrent._
+
+import scala.util.Success
 
 class MatrixOperationSpec extends FlatSpec with Matchers with Futures with ScalaFutures with Inside with MockFactory {
   behavior of "dot"
@@ -33,10 +36,13 @@ class MatrixOperationSpec extends FlatSpec with Matchers with Futures with Scala
   }
   behavior of "product"
   // FIXME Issue #6
-  ignore should "work for empty and unequal vectors" in {
-    MatrixOperation.product(Seq(), Seq(Seq(0))) shouldBe Seq()
-    MatrixOperation.product[Int](Seq(), Seq()) shouldBe Seq()
-    MatrixOperation.product(Seq(0), Seq(Seq())) shouldBe Seq()
+  it should "fail for unequal vectors" in {
+    a[IncompatibleLengthsException] shouldBe thrownBy(MatrixOperation.product(Seq(), Seq(Seq(0))).get)
+    //    a [IncompatibleLengthsException] shouldBe thrownBy(MatrixOperation.product(Seq(0), Seq(Seq())).get)
+  }
+  it should "work for empty and unequal vectors" in {
+    MatrixOperation.product[Int](Seq(), Seq()) shouldBe Success(Nil)
+    //    a [IncompatibleLengthsException] shouldBe thrownBy(MatrixOperation.product(Seq(0), Seq(Seq())).get)
   }
 }
 

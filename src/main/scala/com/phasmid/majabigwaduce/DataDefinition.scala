@@ -37,7 +37,7 @@ sealed trait DataDefinition[K, V] extends (() => Future[Map[K, V]]) {
   def map[L, W: Monoid](f: ((K, V)) => (L, W)): DataDefinition[L, W]
 
   /**
-    * Method to evaluate this DataDefintion and reduce the dimensionality of the result by ignoring the keys
+    * Method to evaluate this DataDefinition and reduce the dimensionality of the result by ignoring the keys
     * and aggregating the values according to the function wv_w
     *
     * @param wv_w the aggregation function
@@ -231,7 +231,7 @@ case class LazyDD[K, V, L, W: Monoid](kVm: Map[K, V], f: ((K, V)) => (L, W))(par
   def evaluate: Future[DataDefinition[L, W] with HasEvaluatedMap[L, W]] =
     if (partitions < 2) Future(EagerDD(applyFunction))(scala.concurrent.ExecutionContext.Implicits.global)
     else {
-      val mr = MapReducePipe[K, V, L, W, W]((k, v) => f((k, v)), implicitly[Monoid[W]].combine, 1)
+      val mr = MapReducePipe.create[K, V, L, W, W]((k, v) => f((k, v)), implicitly[Monoid[W]].combine, 1)
       context.register(mr)
       for (x: Map[L, W] <- mr(kVm.toSeq)) yield EagerDD(x)
     }
@@ -279,7 +279,7 @@ abstract class BaseDD[K, V](implicit ec: ExecutionContext) extends DataDefinitio
   def evaluate: Future[DataDefinition[K, V] with HasEvaluatedMap[K, V]]
 
   /**
-    * Method to evaluate this DataDefintion and reduce the dimensionality of the result by ignoring the keys
+    * Method to evaluate this DataDefinition and reduce the dimensionality of the result by ignoring the keys
     * and aggregating the values according to the function xw_x.
     *
     * @param xv_x the aggregation function.
