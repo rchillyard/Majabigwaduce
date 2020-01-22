@@ -49,6 +49,10 @@ abstract class MapReduceActor extends Actor with ActorLogging {
 
 case class MapReduceException(context: String, f: Throwable) extends Throwable(context, f)
 
+object MapReduceException {
+  def apply(context: String): MapReduceException = MapReduceException(context, null)
+}
+
 /**
   * TODO Don't think we really need this close mechanism.
   * Akka does everything for us.

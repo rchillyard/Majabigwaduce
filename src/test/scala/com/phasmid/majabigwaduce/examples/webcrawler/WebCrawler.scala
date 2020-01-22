@@ -71,7 +71,8 @@ case class WebCrawler(depth: Int)(implicit system: ActorSystem, config: Config, 
 
   // TODO use Using...
   private def appendContent(a: Strings, v: URI): Strings = a :+ Source.fromURL(v.toURL).mkString
-//  private def appendContent(a: Strings, v: URI): Try[Strings] = Using(Source.fromURL(v.toURL)) { s => a :+ s.mkString }
+
+  //  private def appendContent(a: Strings, v: URI): Try[Strings] = Using(Source.fromURL(v.toURL)) { s => a :+ s.mkString }
 
   // We are passing the wrong URL into getLinks: the value of u is the server, not the current directory.
   private def getLinkStrings(u: URI, gs: Strings): (URI, Strings) = {

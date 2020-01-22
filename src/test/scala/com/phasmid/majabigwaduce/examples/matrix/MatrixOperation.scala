@@ -14,24 +14,37 @@ import com.typesafe.config.{Config, ConfigFactory}
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.language.postfixOps
-import scala.util.Random
+import scala.util.{Failure, Random, Try}
 
 case class MatrixOperation[X: Numeric](keyFunc: Int => Int)(implicit system: ActorSystem, logger: LoggingAdapter, config: Config, timeout: Timeout, ec: ExecutionContext) extends ((Seq[Seq[X]], Seq[X]) => Future[Seq[X]]) {
 
   self =>
 
   type XS = Seq[X]
+  type Row = (Int, XS)
+  type Element = (Int, X)
+  type Vector = Map[Int, X]
 
   override def apply(xss: Seq[XS], ys: XS): Future[XS] = {
-    implicit object zeroSeqX$$ extends Zero.SeqZero[X]
-    val s1: MapReduce[(Int, XS), Int, X] = MapReducePipe[Int, XS, Int, X, X](
-      (i, xs) => (keyFunc(i), MatrixOperation.dot(xs, ys)),
-      (a, x) => implicitly[Numeric[X]].plus(a, x),
-      1
-    )
-    val r = Reduce[Int, X, XS]((x, y) => y +: x)
+    implicit object zeroVector$$ extends Zero.VectorZero[X]
+    val s1 = MapReduceFirstFold[Row, Int, Element, Vector](
+      { case (i, xs) => keyFunc(i) -> (i -> MatrixOperation.dot(xs, ys)) },
+      { case (v, (i, x)) => v + (i -> x) }
+    )(config, system, timeout)
+    val r = Reduce[Int, Vector, Vector] { case (s, t) => s ++ t }
     val mr = s1 | r
-    mr((xss zipWithIndex) map { t: (XS, Int) => t swap })
+    val z = (xss zipWithIndex) map (_ swap)
+    // CONSIDER doing this as another stage of map-reduce (or part of r stage).
+    FP.flatten(for (q <- mr(z)) yield mapVectorToXS(q, xss.length))
+  }
+
+  private def mapVectorToXS(q: Vector, n: Int): Try[XS] = {
+    val keys = q.keySet
+    if (keys.size == n) {
+      val z = for (i <- 0 until n) yield q(i)
+      Try(z.foldLeft(Seq[X]())((b, x) => b :+ x))
+    }
+    else Failure(MapReduceException(s"mapVectorToXS: incorrect count: ${keys.size}, $n"))
   }
 
   //  def product(xss: Seq[XS], yss: Seq[XS]): Future[Seq[XS]] = Future.sequence(for (ys <- yss) yield self(xss, ys))

@@ -94,6 +94,12 @@ object Zero {
 
   implicit object IntSeqZero extends SeqZero[Int]
 
+  trait VectorZero[X] extends Zero[Map[Int, X]] {
+    def zero: Map[Int, X] = Map.empty
+  }
+
+  implicit object IntVectorZero extends VectorZero[Int]
+
   implicit def zeroTuple[A: Zero, B: Zero]: Zero[(A, B)] = new Zero[(A, B)] {
     def zero: (A, B) = (implicitly[Zero[A]].zero, implicitly[Zero[B]].zero)
   }
