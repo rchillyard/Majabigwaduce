@@ -27,8 +27,9 @@ case class MatrixOperation[X: Numeric](keyFunc: Int => Int)(implicit system: Act
 
   override def apply(xss: Seq[XS], ys: XS): Future[XS] = {
     implicit object zeroVector$$ extends Zero.VectorZero[X]
+    // TODO implement a signature that allows f and g to return Try[X]
     val s1 = MapReduceFirstFold[Row, Int, Element, Vector](
-      { case (i, xs) => keyFunc(i) -> (i -> MatrixOperation.dot(xs, ys)) },
+      { case (i, xs) => keyFunc(i) -> (i -> MatrixOperation.dot(xs, ys).get) },
       { case (v, (i, x)) => v + (i -> x) }
     )(config, system, timeout)
     val r = Reduce[Int, Vector, Vector] { case (s, t) => s ++ t }
@@ -36,6 +37,12 @@ case class MatrixOperation[X: Numeric](keyFunc: Int => Int)(implicit system: Act
     val z = (xss zipWithIndex) map (_ swap)
     // CONSIDER doing this as another stage of map-reduce (or part of r stage).
     FP.flatten(for (q <- mr(z)) yield mapVectorToXS(q, xss.length))
+  }
+
+  def product(xss: Seq[XS], yss: Seq[XS]): Future[Seq[XS]] = {
+    // CONSIDER doing just one transpose: that of xss
+    val q: Seq[Future[XS]] = for (ys <- Matrix2(yss).transpose) yield apply(xss, ys)
+    Future.sequence(q) map (Matrix2(_).transpose)
   }
 
   private def mapVectorToXS(q: Vector, n: Int): Try[XS] = {
@@ -46,30 +53,6 @@ case class MatrixOperation[X: Numeric](keyFunc: Int => Int)(implicit system: Act
     }
     else Failure(MapReduceException(s"mapVectorToXS: incorrect count: ${keys.size}, $n"))
   }
-
-  //  def product(xss: Seq[XS], yss: Seq[XS]): Future[Seq[XS]] = Future.sequence(for (ys <- yss) yield self(xss, ys))
-  def product(xss: Seq[XS], yss: Seq[XS]): Future[Seq[XS]] = {
-    implicit object zeroSeqX$$ extends Zero[XS] {
-      def zero: XS = Seq[X]()
-    }
-    implicit object zeroSeqSeqX$$ extends Zero[Seq[XS]] {
-      def zero: Seq[XS] = Seq[Seq[X]]()
-    }
-    val s1: MapReduce[(Int, XS), Int, XS] = MapReducePipe[Int, XS, Int, XS, XS](
-      (i, xs) => (keyFunc(i), MatrixOperation.product(xs, yss)),
-      (zs: XS, xs: XS) => for ((x, y) <- zs zip xs) yield implicitly[Numeric[X]].plus(x, y),
-      1
-    )
-    val r = Reduce[Int, XS, Seq[XS]]((x, y) => y +: x)
-    val mr = s1 | r
-    val zs: Seq[(XS, Int)] = xss zipWithIndex
-
-    val tuples: Seq[(Int, XS)] = zs map { t: (XS, Int) => t swap }
-    mr(tuples)
-
-    //    def add(t: (X, X)): X = implicitly[Numeric[X]].plus(t._1,t._2)
-  }
-
 }
 
 object MatrixOperation extends App {
@@ -81,13 +64,17 @@ object MatrixOperation extends App {
 
   implicit object DoubleZero$ extends DoubleZero$
 
-  def dot[X: Numeric](as: Seq[X], bs: Seq[X]): X = {
+  def dot[X: Numeric](as: Seq[X], bs: Seq[X]): Try[X] = {
     def product(ab: (X, X)): X = implicitly[Numeric[X]].times(ab._1, ab._2)
 
-    ((as zip bs) map product).sum
+    if (as.length == bs.length)
+      Try(((as zip bs) map product).sum)
+    else
+      Failure(MapReduceException(s"dot: incompatible lengths: ${as.length},  ${bs.length}"))
   }
 
-  def product[X: Numeric](as: Seq[X], bss: Seq[Seq[X]]): Seq[X] = for (bs <- bss.transpose) yield dot(as, bs)
+  // TODO deal with the get method
+  def product[X: Numeric](as: Seq[X], bss: Seq[Seq[X]]): Seq[X] = for (bs <- bss.transpose) yield dot(as, bs).get
 
   implicit val config: Config = ConfigFactory.load.getConfig("Matrix")
   implicit val system: ActorSystem = ActorSystem(config.getString("name"))

@@ -143,12 +143,10 @@ case class Matrix1[T: Numeric](rows: Seq[T])(implicit atMost: Duration) extends 
 /**
   * Case class to represent a two-dimensional matrix.
   *
-  * @param rows   the rows
-  * @param atMost duration of total MapReduce time
-  * @param cutoff the maximum size we should implement in current thread
+  * @param rows the rows
   * @tparam T the underlying type of this matrix
   */
-case class Matrix2[T: Numeric](rows: Seq[Seq[T]])(implicit atMost: Duration, cutoff: Dimensions) extends BaseMatrix[Seq[T]] {
+case class Matrix2[T: Numeric](rows: Seq[Seq[T]]) extends BaseMatrix[Seq[T]] {
 
   override def size: Dimensions = Dimensions.create(r, c)
 
@@ -166,6 +164,7 @@ case class Matrix2[T: Numeric](rows: Seq[Seq[T]])(implicit atMost: Duration, cut
 
   private def cols: Seq[Seq[T]] = rows.transpose
 
+  implicit val atMost: Duration = duration.FiniteDuration(1, "second")
   protected def build[U: Numeric](us: Seq[U]): Matrix[U] = Matrix1(us)
 
   protected def f[Y: Numeric, Z: Product : Monoid](ts: Seq[T], ys: Seq[Y]): Z = if (ts.length == ys.length) {
