@@ -4,10 +4,10 @@
 
 package com.phasmid.majabigwaduce
 
+import com.phasmid.majabigwaduce.DataDefinition._
+
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, duration}
-
-import DataDefinition._
 
 /**
   * The Matrix[X] trait represents a sequence of X.

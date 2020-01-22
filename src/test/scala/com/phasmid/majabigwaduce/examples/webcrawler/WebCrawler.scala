@@ -15,6 +15,7 @@ import scala.concurrent._
 import scala.concurrent.duration._
 import scala.io.Source
 import scala.language.postfixOps
+import scala.util.{Try, Using}
 
 /**
   * WebCrawler: an example application of the MapReduce framework.
@@ -68,7 +69,9 @@ case class WebCrawler(depth: Int)(implicit system: ActorSystem, config: Config, 
     (getHostURI(u), u)
   }
 
+  // TODO use Using...
   private def appendContent(a: Strings, v: URI): Strings = a :+ Source.fromURL(v.toURL).mkString
+//  private def appendContent(a: Strings, v: URI): Try[Strings] = Using(Source.fromURL(v.toURL)) { s => a :+ s.mkString }
 
   // We are passing the wrong URL into getLinks: the value of u is the server, not the current directory.
   private def getLinkStrings(u: URI, gs: Strings): (URI, Strings) = {
@@ -92,6 +95,7 @@ object WebCrawler extends App {
   implicit val config: Config = ConfigFactory.load.getConfig("WebCrawler")
   implicit val system: ActorSystem = ActorSystem(config.getString("name"))
   implicit val timeout: Timeout = getTimeout(config.getString("timeout"))
+
   import ExecutionContext.Implicits.global
 
   val ws = if (args.length > 0) args.toSeq else Seq(config.getString("start"))

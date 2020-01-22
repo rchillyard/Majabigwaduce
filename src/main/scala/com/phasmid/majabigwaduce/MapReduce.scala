@@ -83,7 +83,7 @@ trait MapReduce[T, K1, V1] extends ASync[Seq[T], Map[K1, V1]] with AutoCloseable
   * @param timeout the value of timeout to be used
   */
 case class MapReduceFirst[V0, K1, W, V1 >: W](f: V0 => (K1, W), g: (V1, W) => V1)(implicit config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_LoggingBase[V0, K1, V1](config, system)(timeout) {
-  def createProps = Props(new Master_First(config, f, g))
+  def createProps: Props = Props(new Master_First(config, f, g))
 
   //  def createName(): Option[String] = s"""mrf-mstr"""
 }
@@ -104,7 +104,7 @@ case class MapReduceFirst[V0, K1, W, V1 >: W](f: V0 => (K1, W), g: (V1, W) => V1
   * @param timeout the value of timeout to be used
   */
 case class MapReducePipe[K0, V0, K1, W, V1 >: W](f: (K0, V0) => (K1, W), g: (V1, W) => V1, n: Int)(implicit config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_LoggingBase[(K0, V0), K1, V1](config, system)(timeout) {
-  def createProps = Props(new Master(config, f, g))
+  def createProps: Props = Props(new Master(config, f, g))
 
   //  def createName(): Option[String] = s"""mrp-mstr-$n"""
 }
@@ -123,7 +123,7 @@ case class MapReducePipe[K0, V0, K1, W, V1 >: W](f: (K0, V0) => (K1, W), g: (V1,
   * @param timeout the value of timeout to be used
   */
 case class MapReduceFirstFold[V0, K1, W, V1: Zero](f: V0 => (K1, W), g: (V1, W) => V1)(config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_LoggingBase[V0, K1, V1](config, system)(timeout) {
-  def createProps = Props(new Master_First_Fold(config, f, g, implicitly[Zero[V1]].zero _))
+  def createProps: Props = Props(new Master_First_Fold(config, f, g, implicitly[Zero[V1]].zero _))
 
   //  def createName(): Option[String] =  s"""mrff-mstr"""
 }
@@ -144,7 +144,7 @@ case class MapReduceFirstFold[V0, K1, W, V1: Zero](f: V0 => (K1, W), g: (V1, W) 
   * @param timeout the value of timeout to be used
   */
 case class MapReducePipeFold[K0, V0, K1, W, V1: Zero](f: (K0, V0) => (K1, W), g: (V1, W) => V1, n: Int)(config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_LoggingBase[(K0, V0), K1, V1](config, system)(timeout) {
-  def createProps = Props(new Master_Fold(config, f, g, implicitly[Zero[V1]].zero _))
+  def createProps: Props = Props(new Master_Fold(config, f, g, implicitly[Zero[V1]].zero _))
 
   //  def createName(): Option[String] = s"""mrpf-mstr-$n"""
 }

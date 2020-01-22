@@ -37,7 +37,7 @@ sealed trait DataDefinition[K, V] extends (() => Future[Map[K, V]]) {
   def map[L, W: Monoid](f: ((K, V)) => (L, W)): DataDefinition[L, W]
 
   /**
-    * Method to evaluate this DataDefintion and reduce the dimensionality of the result by ignoring the keys
+    * Method to evaluate this DataDefinition and reduce the dimensionality of the result by ignoring the keys
     * and aggregating the values according to the function wv_w
     *
     * @param wv_w the aggregation function
@@ -279,7 +279,7 @@ abstract class BaseDD[K, V](implicit ec: ExecutionContext) extends DataDefinitio
   def evaluate: Future[DataDefinition[K, V] with HasEvaluatedMap[K, V]]
 
   /**
-    * Method to evaluate this DataDefintion and reduce the dimensionality of the result by ignoring the keys
+    * Method to evaluate this DataDefinition and reduce the dimensionality of the result by ignoring the keys
     * and aggregating the values according to the function xw_x.
     *
     * @param xv_x the aggregation function.
@@ -360,7 +360,7 @@ object DataDefinition {
     * @tparam W the outgoing value type
     * @return a (K,V) => (K,W) function
     */
-  def tupleLift[K, V, W](f: V => W): (((K, V)) => (K, W)) = vToWToTupleToTuple(f)
+  def tupleLift[K, V, W](f: V => W): ((K, V)) => (K, W) = vToWToTupleToTuple(f)
 
   trait IterableMonoid[T] extends Monoid[Iterable[T]] {
     def zero: Iterable[T] = Seq[T]()

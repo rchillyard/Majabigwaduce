@@ -9,8 +9,9 @@ import akka.util.Timeout
 import com.typesafe.config.{Config, ConfigFactory}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.concurrent.{Futures, ScalaFutures}
+import org.scalatest.matchers.should
 import org.scalatest.time.{Seconds, Span}
-import org.scalatest.{FlatSpec, Inside, Matchers}
+import org.scalatest.{Inside, flatspec}
 
 import scala.concurrent.ExecutionContext
 import scala.language.postfixOps
@@ -21,7 +22,7 @@ import scala.language.postfixOps
   *
   * Created by scalaprof on 6/28/16.
   */
-class WebCrawlerSpec extends FlatSpec with Matchers with Futures with ScalaFutures with Inside with MockFactory {
+class WebCrawlerSpec extends flatspec.AnyFlatSpec with should.Matchers with Futures with ScalaFutures with Inside with MockFactory {
   // CONSIDER when run alone, this works just fine.
   // But sometimes when run with all the specs in Majabigwaduce, this runs -- but in the logs we see exceptions thrown
   "crawl" should "work" in {
@@ -32,7 +33,7 @@ class WebCrawlerSpec extends FlatSpec with Matchers with Futures with ScalaFutur
     val ws = Seq(config.getString("start"))
     val crawler = WebCrawler(config.getInt("depth"))
     val xf = crawler(ws)
-    whenReady(xf, timeout(Span(300, Seconds)))(// The actual number is approximate and will vary (currently 9)
+    whenReady(xf, timeout(Span(300, Seconds)))( // The actual number is approximate and will vary (currently 9)
       i => assert(i > 5 && i < 200))
   }
 }

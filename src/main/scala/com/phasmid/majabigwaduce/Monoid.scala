@@ -57,7 +57,8 @@ object Monoid {
         val (ya, yb) = y
         (implicitly[Monoid[A]].combine(xa, ya), implicitly[Monoid[B]].combine(xb, yb))
       }
-      def zero: (A, B) = Zero.zeroTuple[A,B].zero
+
+      def zero: (A, B) = Zero.zeroTuple[A, B].zero
     }
 
   def foldLeft[X: Monoid](xs: Seq[X]): X = {

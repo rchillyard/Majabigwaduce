@@ -2,12 +2,15 @@ name := "Majabigwaduce"
 
 version := "1.0.0-SNAPSHOT"
 
-scalaVersion := "2.12.5"
+scalaVersion := "2.13.1"
 
 val akkaGroup = "com.typesafe.akka"
-val akkaVersion = "2.5.11"
-val scalaTestVersion = "3.0.1"
-
+val akkaVersion = "2.6.1"
+val scalaTestVersion = "3.1.0"
+val configVersion = "1.3.1"
+val scalaMockVersion = "4.4.0"
+val logBackVersion = "1.2.3"
+val scalaXMLVersion = "1.2.0"
 scalacOptions in (Compile,doc) ++= Seq("-groups", "-implicits")
 
 resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
@@ -19,13 +22,13 @@ libraryDependencies ++= Seq(
 	akkaGroup %% "akka-cluster" % akkaVersion,
 	akkaGroup %% "akka-remote" % akkaVersion,
 	akkaGroup %% "akka-cluster-metrics" % akkaVersion,
-	"com.typesafe" % "config" % "1.3.1",
+	"com.typesafe" % "config" % configVersion,
 	"org.scalatest" %% "scalatest" % scalaTestVersion % "test",
-	"org.scalamock" %% "scalamock-scalatest-support" % "3.4.2" % "test",
-	"ch.qos.logback" % "logback-classic" % "1.2.3" % "runtime",
+	"org.scalamock" %% "scalamock" % scalaMockVersion % "test",
+	"ch.qos.logback" % "logback-classic" % logBackVersion % "runtime",
 // xml and tagsoup are for WebCrawler exemplar
-  "org.scala-lang.modules" %% "scala-xml" % "1.1.0",
-	"org.ccil.cowan.tagsoup" % "tagsoup" % "1.2.1"
+  "org.scala-lang.modules" %% "scala-xml" % scalaXMLVersion % "test",
+	"org.ccil.cowan.tagsoup" % "tagsoup" % "1.2.1" % "test"
 	
 )
 

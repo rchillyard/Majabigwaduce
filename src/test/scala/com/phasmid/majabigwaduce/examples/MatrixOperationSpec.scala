@@ -8,8 +8,9 @@ import com.phasmid.majabigwaduce.examples.matrix.MatrixOperation
 import org.scalamock.scalatest.MockFactory
 import org.scalatest._
 import org.scalatest.concurrent._
+import org.scalatest.matchers.should
 
-class MatrixOperationSpec extends FlatSpec with Matchers with Futures with ScalaFutures with Inside with MockFactory {
+class MatrixOperationSpec extends FlatSpec with should.Matchers with Futures with ScalaFutures with Inside with MockFactory {
   behavior of "dot"
   it should "work for empty and unequal vectors" in {
     MatrixOperation.dot(Seq(), Seq(0)) shouldBe 0

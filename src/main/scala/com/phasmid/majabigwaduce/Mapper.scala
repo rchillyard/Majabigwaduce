@@ -98,7 +98,7 @@ case class Incoming[K, V](m: Seq[(K, V)]) {
 }
 
 object Incoming {
-  def sequence[K, V](vs: Seq[V]): Incoming[K, V] = Incoming((vs zip Stream.continually(null.asInstanceOf[K])).map(_.swap))
+  def sequence[K, V](vs: Seq[V]): Incoming[K, V] = Incoming((vs zip LazyList.continually(null.asInstanceOf[K])).map(_.swap))
 
   def map[K, V](vKm: Map[K, V]): Incoming[K, V] = Incoming(vKm.toSeq)
 }

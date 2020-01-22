@@ -52,6 +52,7 @@ object FP {
     * @tparam X the underlying type
     * @return : Try[Seq[X]\]
     */
+    // TODO fix deprecation
   def sequence[X](xts: Seq[Try[X]]): Try[Seq[X]] = (Try(Seq[X]()) /: xts) { (xst, xt) => for (xs <- xst; x <- xt) yield xs :+ x }
 
   /**
@@ -85,6 +86,7 @@ object FP {
     * @tparam X the partition type
     * @return a Map[K,X] (in sequential form)
     */
+  // TODO fix deprecation
   def sequenceLeft[K, V, X](vXeKs: Seq[(K, Either[X, V])]): Seq[(K, X)] = for ((k, e) <- vXeKs) yield (k, e.left.get)
 
   /**
@@ -96,6 +98,7 @@ object FP {
     * @tparam X the partition type
     * @return a Map[K,V] (in sequential form)
     */
+  // TODO fix deprecations
   def sequenceRight[K, V, X](vXeKs: Seq[(K, Either[X, V])]): Seq[(K, V)] = for ((k, e) <- vXeKs) yield (k, e.right.get)
 
   /**

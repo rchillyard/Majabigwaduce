@@ -31,6 +31,7 @@ abstract class MapReduceActor extends Actor with ActorLogging {
 
   def maybeLog(w: String, z: => Any): Unit = if (log.isDebugEnabled) log.debug(w, z)
 
+  // TODO resolve duplicate code fragment
   def getTimeout(t: String): Timeout = {
     val durationR = """(\d+)\s*(\w+)""".r
     val timeout = t match {

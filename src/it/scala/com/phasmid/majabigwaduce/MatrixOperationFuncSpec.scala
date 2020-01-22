@@ -9,23 +9,22 @@ import akka.event.LoggingAdapter
 import akka.util.Timeout
 import com.phasmid.majabigwaduce.examples.matrix.MatrixOperation
 import com.typesafe.config.{Config, ConfigFactory}
-import org.scalamock.scalatest.MockFactory
 import org.scalatest._
 import org.scalatest.concurrent._
+import org.scalatest.matchers.should
 import org.scalatest.time.{Seconds, Span}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.language.postfixOps
 
-class MatrixOperationFuncSpec extends FlatSpec with Matchers with Futures with ScalaFutures with Inside with MockFactory {
+class MatrixOperationFuncSpec extends FlatSpec with should.Matchers with Futures with ScalaFutures with Inside {
   "MatrixOperation" should "apply vector" in {
     implicit val config: Config = ConfigFactory.load.getConfig("Matrix")
     implicit val system: ActorSystem = ActorSystem(config.getString("name"))
     implicit val to: Timeout = getTimeout(config.getString("timeout"))
     implicit val logger: LoggingAdapter = system.log
     import ExecutionContext.Implicits.global
-    import scala.math.Numeric.IntIsIntegral
     val op: MatrixOperation[Int] = MatrixOperation(x => x % 10)
     val matrix = Seq(Seq(1, 1), Seq(2, 1))
     val vector = Seq(3, 5)
@@ -44,7 +43,6 @@ class MatrixOperationFuncSpec extends FlatSpec with Matchers with Futures with S
     implicit val to: Timeout = getTimeout(config.getString("timeout"))
     implicit val logger: LoggingAdapter = system.log
     import ExecutionContext.Implicits.global
-    import scala.math.Numeric.IntIsIntegral
     val op: MatrixOperation[Int] = MatrixOperation(x => x % 10)
     val matrix1 = Seq(Seq(1, 2, 3), Seq(4, 5, 6))
     val matrix2 = Seq(Seq(7, 8), Seq(9, 10), Seq(11, 12))

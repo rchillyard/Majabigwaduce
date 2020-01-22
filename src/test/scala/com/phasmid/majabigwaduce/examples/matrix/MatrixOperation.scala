@@ -90,10 +90,10 @@ object MatrixOperation extends App {
 
   def row(i: Int): Seq[Double] = {
     val r = new Random(i)
-    (Stream.from(0) take cols) map (_ => r.nextDouble())
+    (LazyList.from(0) take cols) map (_ => r.nextDouble())
   }
 
-  val matrix: Seq[Seq[Double]] = Stream.tabulate(rows)(row)
+  val matrix: Seq[Seq[Double]] = LazyList.tabulate(rows)(row)
   val vector: Seq[Double] = row(-1)
   val isf: Future[Seq[Double]] = op(matrix, vector)
   Await.result(isf, 10.minutes)

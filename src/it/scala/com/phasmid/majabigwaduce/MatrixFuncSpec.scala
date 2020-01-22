@@ -6,6 +6,7 @@ package com.phasmid.majabigwaduce
 
 import org.scalatest._
 import org.scalatest.concurrent._
+import org.scalatest.matchers.should
 import org.scalatest.tagobjects.Slow
 
 import scala.concurrent.duration
@@ -13,7 +14,7 @@ import scala.concurrent.duration.Duration
 import scala.language.postfixOps
 import scala.util.Random
 
-class MatrixFuncSpec extends FlatSpec with Matchers with Futures with Inside {
+class MatrixFuncSpec extends FlatSpec with should.Matchers with Futures with Inside {
 
   // TODO why does this not get satisfied from Matrix1 and Matrix2 objects?
   implicit val atMost: Duration = duration.FiniteDuration(1, "minute")
@@ -46,7 +47,7 @@ class MatrixFuncSpec extends FlatSpec with Matchers with Futures with Inside {
     val rows = matrix.rows
     // then
     rows shouldBe array
-    println(s"time to multiply matrix of size $size by $size by the identity matrix is: ${end-start} mSecs")
+    println(s"time to multiply matrix of size $size by $size by the identity matrix is: ${end - start} mSecs")
   }
 
 }
