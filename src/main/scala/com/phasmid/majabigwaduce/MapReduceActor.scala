@@ -31,6 +31,7 @@ abstract class MapReduceActor extends Actor with ActorLogging {
 
   def maybeLog(w: String, z: => Any): Unit = if (log.isDebugEnabled) log.debug(w, z)
 
+  // TODO resolve duplicate code fragment
   def getTimeout(t: String): Timeout = {
     val durationR = """(\d+)\s*(\w+)""".r
     val timeout = t match {
@@ -47,6 +48,10 @@ abstract class MapReduceActor extends Actor with ActorLogging {
 }
 
 case class MapReduceException(context: String, f: Throwable) extends Throwable(context, f)
+
+object MapReduceException {
+  def apply(context: String): MapReduceException = MapReduceException(context, null)
+}
 
 /**
   * TODO Don't think we really need this close mechanism.

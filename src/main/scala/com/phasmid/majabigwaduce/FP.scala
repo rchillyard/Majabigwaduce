@@ -52,6 +52,7 @@ object FP {
     * @tparam X the underlying type
     * @return : Try[Seq[X]\]
     */
+    // TODO fix deprecation
   def sequence[X](xts: Seq[Try[X]]): Try[Seq[X]] = (Try(Seq[X]()) /: xts) { (xst, xt) => for (xs <- xst; x <- xt) yield xs :+ x }
 
   /**
@@ -64,6 +65,29 @@ object FP {
     * @return a tuple of two maps, a Map[K,X] and a Map[K,V]
     */
   def sequence[K, V, X](vXeKm: Map[K, Either[X, V]]): (Map[K, X], Map[K, V]) = toMap(sequenceLeftRight(vXeKm))
+
+  /**
+    * Method sequence to convert a tuple of A, Try[B] to a Try[(A, B)]
+    *
+    * @param t the tuple.
+    * @tparam A the underlying type of the _1 element of t.
+    * @tparam B the underlying type of the _2 element of t.
+    * @return a Try of (A, B).
+    */
+  def sequence[A, B](t: (A, Try[B])): Try[(A, B)] = t match {
+    case (a, Success(b)) => Success(a -> b)
+    case (_, Failure(x)) => Failure(x)
+  }
+
+  /**
+    * Method sequenceInverted to convert a tuple of Try[A], B to a Try[(A, B)]
+    *
+    * @param t the tuple.
+    * @tparam A the underlying type of the _1 element of t.
+    * @tparam B the underlying type of the _2 element of t.
+    * @return a Try of (A, B).
+    */
+  def sequenceInverted[A, B](t: (Try[A], B)): Try[(A, B)] = sequence(t.swap).map(_.swap)
 
   /**
     * Method sequenceLeftRight which, given a Map[K,Either[X,V]\], returns a tuple of sequenced maps (each with the same key type), with the X values on the left and the V values on the right.
@@ -85,6 +109,7 @@ object FP {
     * @tparam X the partition type
     * @return a Map[K,X] (in sequential form)
     */
+  // TODO fix deprecation
   def sequenceLeft[K, V, X](vXeKs: Seq[(K, Either[X, V])]): Seq[(K, X)] = for ((k, e) <- vXeKs) yield (k, e.left.get)
 
   /**
@@ -96,6 +121,7 @@ object FP {
     * @tparam X the partition type
     * @return a Map[K,V] (in sequential form)
     */
+  // TODO fix deprecations
   def sequenceRight[K, V, X](vXeKs: Seq[(K, Either[X, V])]): Seq[(K, V)] = for ((k, e) <- vXeKs) yield (k, e.right.get)
 
   /**

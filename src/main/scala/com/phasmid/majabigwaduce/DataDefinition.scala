@@ -360,7 +360,7 @@ object DataDefinition {
     * @tparam W the outgoing value type
     * @return a (K,V) => (K,W) function
     */
-  def tupleLift[K, V, W](f: V => W): (((K, V)) => (K, W)) = vToWToTupleToTuple(f)
+  def tupleLift[K, V, W](f: V => W): ((K, V)) => (K, W) = vToWToTupleToTuple(f)
 
   trait IterableMonoid[T] extends Monoid[Iterable[T]] {
     def zero: Iterable[T] = Seq[T]()

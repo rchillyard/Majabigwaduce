@@ -9,9 +9,10 @@ import java.net.URI
 import org.scalamock.scalatest.MockFactory
 import org.scalatest._
 import org.scalatest.concurrent._
+import org.scalatest.matchers.should
 import org.scalatest.time._
 
-class CountWordsSpec extends FlatSpec with Matchers with Futures with ScalaFutures with Inside with MockFactory {
+class CountWordsSpec extends FlatSpec with should.Matchers with Futures with ScalaFutures with Inside with MockFactory {
   "CountWords" should "work for http://www.bbc.com/ http://www.cnn.com/ http://default/" in {
     val wBBC = "http://www.bbc.com/"
     val wCNN = "http://www.cnn.com/"
@@ -22,13 +23,13 @@ class CountWordsSpec extends FlatSpec with Matchers with Futures with ScalaFutur
     val hc = mock[HttpClient]
     val rBBC = mock[Resource]
     (rBBC.getServer _).expects().returning(uBBC)
-    rBBC.getContent _ expects() returning CountWordsSpec.bbcText
+    (rBBC.getContent _).expects().returning(CountWordsSpec.bbcText)
     val rCNN = mock[Resource]
-    rCNN.getServer _ expects() returning uCNN
-    rCNN.getContent _ expects() returning CountWordsSpec.cnnText
+    (rCNN.getServer _).expects().returning(uCNN)
+    (rCNN.getContent _).expects().returning(CountWordsSpec.cnnText)
     val rDef = mock[Resource]
-    rDef.getServer _ expects() returning uDef
-    rDef.getContent _ expects() returning CountWordsSpec.defaultText
+    (rDef.getServer _).expects().returning(uDef)
+    (rDef.getContent _).expects().returning(CountWordsSpec.defaultText)
     hc.getResource _ expects wBBC returning rBBC
     hc.getResource _ expects wCNN returning rCNN
     hc.getResource _ expects wDef returning rDef

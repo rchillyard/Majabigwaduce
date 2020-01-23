@@ -12,6 +12,7 @@ import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import org.scalatest._
 import org.scalatest.concurrent._
+import org.scalatest.matchers.should
 import org.scalatest.time._
 
 import scala.concurrent.duration._
@@ -26,7 +27,7 @@ case class MockURL(w: String) {
   def asTuple: (URL, String) = url -> content
 }
 
-class MapReduceFuncSpec extends FlatSpec with Matchers with Futures with ScalaFutures with Inside {
+class MapReduceFuncSpec extends FlatSpec with should.Matchers with Futures with ScalaFutures with Inside {
   implicit val system: ActorSystem = ActorSystem("MapReduceFuncSpec")
   implicit val timeout: Timeout = Timeout(5 seconds)
 
@@ -154,7 +155,7 @@ object MapReduceFuncSpec {
   //noinspection SpellCheckingInspection,SpellCheckingInspection
   // there are 556 words in total between the three extracts
   val bbcText =
-    """The US military has delivered more than 45 tonnes of ammunition to rebels fighting the jihadist group Islamic State (IS) in north-eastern Syria.
+  """The US military has delivered more than 45 tonnes of ammunition to rebels fighting the jihadist group Islamic State (IS) in north-eastern Syria.
 C-17 transport aircraft, accompanied by fighter escorts, dropped pallets of supplies overnight in Hassakeh province, a Pentagon spokesman said.
 The consignment reportedly comprised small arms, ammunition and grenades.
 It comes days after the US abandoned a $500m (£326m) plan to train thousands of "moderate" rebels to fight IS.

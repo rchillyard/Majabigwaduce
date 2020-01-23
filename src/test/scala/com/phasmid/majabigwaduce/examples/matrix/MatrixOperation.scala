@@ -21,50 +21,38 @@ case class MatrixOperation[X: Numeric](keyFunc: Int => Int)(implicit system: Act
   self =>
 
   type XS = Seq[X]
+  type Row = (Int, XS)
+  type Element = (Int, X)
+  type Vector = Map[Int, X]
 
   override def apply(xss: Seq[XS], ys: XS): Future[XS] = {
-    implicit object zeroSeqX$$ extends Zero.SeqZero[X]
-    val s1: MapReduce[(Int, XS), Int, X] = MapReducePipe.create[Int, XS, Int, X, X](
-      (i, xs) => (keyFunc(i), MatrixOperation.dot(xs, ys)),
-      (a, x) => implicitly[Numeric[X]].plus(a, x),
-      1
-    )
-    val r = Reduce[Int, X, XS]((x, y) => y +: x)
+    implicit object zeroVector$$ extends Zero.VectorZero[X]
+    // TODO implement a signature that allows f and g to return Try[X]
+    val s1 = MapReduceFirstFold[Row, Int, Element, Vector](
+      { case (i, xs) => FP.sequence(keyFunc(i) -> FP.sequence(i -> MatrixOperation.dot(xs, ys))) },
+      { case (v, (i, x)) => v + (i -> x) }
+    )(config, system, timeout)
+    val r = Reduce[Int, Vector, Vector] { case (s, t) => s ++ t }
     val mr = s1 | r
-    mr((xss zipWithIndex) map { t: (XS, Int) => t swap })
+    val z = (xss zipWithIndex) map (_ swap)
+    // CONSIDER doing this as another stage of map-reduce (or part of r stage).
+    FP.flatten(for (q <- mr(z)) yield mapVectorToXS(q, xss.length))
   }
 
-  //  def product(xss: Seq[XS], yss: Seq[XS]): Future[Seq[XS]] = Future.sequence(for (ys <- yss) yield self(xss, ys))
   def product(xss: Seq[XS], yss: Seq[XS]): Future[Seq[XS]] = {
-    implicit object zeroSeqX$$ extends Zero[XS] {
-      def zero: XS = Seq[X]()
-    }
-    implicit object zeroSeqSeqX$$ extends Zero[Seq[XS]] {
-      def zero: Seq[XS] = Seq[Seq[X]]()
-    }
-    val s1: MapReduce[(Int, XS), Int, XS] = MapReducePipe[Int, XS, Int, XS, XS](
-      (i, xs) => {
-        //        val f: (XS, Seq[XS]) => Try[XS] = MatrixOperation.product
-        //        val g: (XS, Seq[XS]) => Try[XS] = (xs, xss) => f(xs, xss)
-        //        val z: Try[(XS, Seq[XS])] = MatrixOperation.checkCompatibleX(xs, yss)
-        //        MatrixOperation.guard2[XS, XS, XS](MatrixOperation.checkCompatibleX[X], g)(xs, yss)
-
-        val xsy: Try[Seq[X]] = MatrixOperation.product(xs, yss)
-        FP.map2(Try(keyFunc(i)), xsy)((x, y) => (x, y))
-      },
-      (zs: XS, xs: XS) => for ((x, y) <- zs zip xs) yield implicitly[Numeric[X]].plus(x, y),
-      1
-    )
-    val r = Reduce[Int, XS, Seq[XS]]((x, y) => y +: x)
-    val mr = s1 | r
-    val zs: Seq[(XS, Int)] = xss zipWithIndex
-
-    val tuples: Seq[(Int, XS)] = zs map { t: (XS, Int) => t swap }
-    mr(tuples)
-
-    //    def add(t: (X, X)): X = implicitly[Numeric[X]].plus(t._1,t._2)
+    // CONSIDER doing just one transpose: that of xss
+    val q: Seq[Future[XS]] = for (ys <- Matrix2(yss).transpose) yield apply(xss, ys)
+    Future.sequence(q) map (Matrix2(_).transpose)
   }
 
+  private def mapVectorToXS(q: Vector, n: Int): Try[XS] = {
+    val keys = q.keySet
+    if (keys.size == n) {
+      val z = for (i <- 0 until n) yield q(i)
+      Try(z.foldLeft(Seq[X]())((b, x) => b :+ x))
+    }
+    else Failure(MapReduceException(s"mapVectorToXS: incorrect count: ${keys.size}, $n"))
+  }
 }
 
 object MatrixOperation extends App {
@@ -87,20 +75,24 @@ object MatrixOperation extends App {
     if (as.size == transpose.size && as.nonEmpty) Success((as, transpose)) else Failure(IncompatibleLengthsException(as.size, transpose.size))
   }
 
-  def dot[X](as: Seq[X], bs: Seq[X])(implicit ev: Numeric[X]): X = {
-    def product(ab: (X, X)): X = ev.times(ab._1, ab._2)
+  def dot[X: Numeric](as: Seq[X], bs: Seq[X]): Try[X] = {
+    def product(ab: (X, X)): X = implicitly[Numeric[X]].times(ab._1, ab._2)
 
-    ((as zip bs) map product).sum
+    if (as.length == bs.length)
+      Try(((as zip bs) map product).sum)
+    else
+      Failure(IncompatibleLengthsException(as.length,  bs.length))
   }
 
+  // TODO re-implement with guard method
+  def product[X: Numeric](as: Seq[X], bss: Seq[Seq[X]]): Try[Seq[X]] = FP.sequence(for (bs <- bss.transpose) yield dot(as, bs))
+//  def product[X: Numeric](as: Seq[X], bss: Seq[Seq[X]]): Try[Seq[X]] = {
+//    val f: (Seq[X], Seq[X]) => X = dot
+//    val g: (Seq[X], Seq[X]) => X = (xs1, xs2) => f(xs1, xs2)
+//    FP.sequence(for (bs <- bss.transpose) yield guard2[Seq[X], Seq[X], X](checkCompatible, g)(as, bs))
+//  }
 
   def getException[X](t: (Seq[X], Seq[X])): Try[X] = Failure(IncompatibleLengthsException(t._1.size, t._2.size))
-
-  def product[X: Numeric](as: Seq[X], bss: Seq[Seq[X]]): Try[Seq[X]] = {
-    val f: (Seq[X], Seq[X]) => X = dot
-    val g: (Seq[X], Seq[X]) => X = (xs1, xs2) => f(xs1, xs2)
-    FP.sequence(for (bs <- bss.transpose) yield guard2[Seq[X], Seq[X], X](checkCompatible, g)(as, bs))
-  }
 
   implicit val config: Config = ConfigFactory.load.getConfig("Matrix")
   implicit val system: ActorSystem = ActorSystem(config.getString("name"))
@@ -116,10 +108,10 @@ object MatrixOperation extends App {
 
   def row(i: Int): Seq[Double] = {
     val r = new Random(i)
-    (Stream.from(0) take cols) map (_ => r.nextDouble())
+    (LazyList.from(0) take cols) map (_ => r.nextDouble())
   }
 
-  val matrix: Seq[Seq[Double]] = Stream.tabulate(rows)(row)
+  val matrix: Seq[Seq[Double]] = LazyList.tabulate(rows)(row)
   val vector: Seq[Double] = row(-1)
   val isf: Future[Seq[Double]] = op(matrix, vector)
   Await.result(isf, 10.minutes)
