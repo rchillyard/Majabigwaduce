@@ -111,7 +111,7 @@ trait ByFold[K1, V1, K2, W, V2] {
   * @param g      the reducer function which combines two values (an V2 and a W) into one V2
   * @param z      the "zero" or "unit" (i.e. initializer) function which creates an "empty" V2.
   */
-abstract class MasterBaseFirst[V1, K2, W, V2](config: Config, f: V1 => Try[(K2, W)], g: (V2, W) => V2, z: () => V2) extends MasterBase[Unit, V1, K2, W, V2](config, Master.lift(f), g, z) {
+abstract class MasterBaseFirst[V1, K2, W, V2](config: Config, f: V1 => Try[(K2, W)], g: (V2, W) => V2, z: () => V2) extends MasterBase[Unit, V1, K2, W, V2](config, Master.unitize(f), g, z) {
 
   import context.dispatcher
 
@@ -250,16 +250,14 @@ object Master {
   def isForgiving(config: Config): Boolean = config.getBoolean("forgiving")
 
   /**
-    * Method lift which takes a function A=>B and returns a (Unit,A)=>B
-    *
-    * CONSIDER the name of this method, lift, isn't really appropriate
+    * Method unitize which takes a function A=>B and returns a (Unit,A)=>B
     *
     * @param f the function to be lifted
     * @tparam A input type: the input type of the function f.
     * @tparam B output type: the output type of the function f.
     * @return a function of (Unit,A)=>B
     */
-  def lift[A, B](f: A => B): (Unit, A) => B = {
+  def unitize[A, B](f: A => B): (Unit, A) => B = {
     (_, v) => f(v)
   }
 }
