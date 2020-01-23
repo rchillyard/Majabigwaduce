@@ -35,19 +35,20 @@ import scala.util._
   * Therefore the call to maybeLog is commented out.
   *
   * @author scalaprof
+  * @param f function to convert a (K1,V1) pair into a Try[(K2,V2)]
   * @tparam K1 (input) key type (may be Unit)
   * @tparam K2 (output) key type
   * @tparam V1 (input) value type
   * @tparam W  (output) value type
   *
   */
-class Mapper[K1, V1, K2, W](f: (K1, V1) => (K2, W)) extends MapReduceActor {
+class Mapper[K1, V1, K2, W](f: (K1, V1) => Try[(K2, W)]) extends MapReduceActor {
 
   override def receive: PartialFunction[Any, Unit] = {
     case i: Incoming[K1, V1] =>
       log.info(s"Mapper received $i")
       // CONSIDER using a form of groupBy to perform this operation
-      val wk2ts = for ((k1, v1) <- i.m) yield Try(f(k1, v1))
+      val wk2ts: Seq[Try[(K2, W)]] = for ((k1, v1) <- i.m) yield f(k1, v1)
       sender ! prepareReply(wk2ts)
     case q =>
       super.receive(q)
@@ -72,12 +73,13 @@ class Mapper[K1, V1, K2, W](f: (K1, V1) => (K2, W)) extends MapReduceActor {
   * The reply is in the form of a tuple: (Map[K2,W],Seq[Throwable])
   *
   * @author scalaprof
+  * @param f function to convert a (K1,V1) pair into a Try[(K2,V2)]
   * @tparam K1 (input) key type (may be Unit)
   * @tparam K2 (output) key type
   * @tparam V1 (input) value type
   * @tparam W  (output) value type
   */
-class Mapper_Forgiving[K1, V1, K2, W](f: (K1, V1) => (K2, W)) extends Mapper[K1, V1, K2, W](f) {
+class Mapper_Forgiving[K1, V1, K2, W](f: (K1, V1) => Try[(K2, W)]) extends Mapper[K1, V1, K2, W](f) {
 
   override def prepareReply(wk2ts: Seq[Try[(K2, W)]]): Any = prepareReplyAsTuple(wk2ts)
 

@@ -24,6 +24,7 @@ import scala.language.postfixOps
   */
 class WebCrawlerSpec extends flatspec.AnyFlatSpec with should.Matchers with Futures with ScalaFutures with Inside with MockFactory {
   // CONSIDER when run alone, this works just fine.
+  // CONSIDER moving to it since this requires an internet connection
   // But sometimes when run with all the specs in Majabigwaduce, this runs -- but in the logs we see exceptions thrown
   "crawl" should "work" in {
     implicit val config: Config = ConfigFactory.load.getConfig("WebCrawler")

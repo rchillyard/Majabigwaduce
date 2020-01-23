@@ -37,8 +37,8 @@ case class WebCrawler(depth: Int)(implicit system: ActorSystem, config: Config, 
 
   implicit object StringsZero$ extends StringsZero$
 
-  val stage1: MapReduce[String, URI, Strings] = MapReduceFirstFold(getHostAndURI, appendContent)(config, system, timeout)
-  val stage2: MapReduce[(URI, Strings), URI, Strings] = MapReducePipeFold(getLinkStrings, joinWordLists, 1)(config, system, timeout)
+  val stage1: MapReduce[String, URI, Strings] = MapReduceFirstFold.create(getHostAndURI, appendContent)(config, system, timeout)
+  val stage2: MapReduce[(URI, Strings), URI, Strings] = MapReducePipeFold.create(getLinkStrings, joinWordLists, 1)(config, system, timeout)
   val stage3: Reduce[URI, Strings, Strings] = Reduce[URI, Strings, Strings](_ ++ _)
   val crawler: Strings => Future[Strings] = stage1 & stage2 | stage3
 

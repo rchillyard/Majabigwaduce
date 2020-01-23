@@ -240,6 +240,8 @@ abstract class MatrixException(str: String) extends Exception(str, null)
 case class IncompatibleDimensionsException(cols: Int, rows: Int) extends MatrixException(s"# columns of LHS ($cols)" +
   s"does not match # rows of RHS ($rows)")
 
+case class IncompatibleLengthsException(l1: Int, l2: Int) extends MatrixException(s"length $l1 does not match length $l2")
+
 object Dimensions {
   implicit val cutoff: Dimensions = Dimensions(Seq(20, 20))
 

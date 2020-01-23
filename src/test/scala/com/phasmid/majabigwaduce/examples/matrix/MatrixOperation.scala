@@ -14,7 +14,7 @@ import com.typesafe.config.{Config, ConfigFactory}
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.language.postfixOps
-import scala.util.{Failure, Random, Try}
+import scala.util.{Failure, Random, Success, Try}
 
 case class MatrixOperation[X: Numeric](keyFunc: Int => Int)(implicit system: ActorSystem, logger: LoggingAdapter, config: Config, timeout: Timeout, ec: ExecutionContext) extends ((Seq[Seq[X]], Seq[X]) => Future[Seq[X]]) {
 
@@ -29,7 +29,7 @@ case class MatrixOperation[X: Numeric](keyFunc: Int => Int)(implicit system: Act
     implicit object zeroVector$$ extends Zero.VectorZero[X]
     // TODO implement a signature that allows f and g to return Try[X]
     val s1 = MapReduceFirstFold[Row, Int, Element, Vector](
-      { case (i, xs) => keyFunc(i) -> (i -> MatrixOperation.dot(xs, ys).get) },
+      { case (i, xs) => FP.sequence(keyFunc(i) -> FP.sequence(i -> MatrixOperation.dot(xs, ys))) },
       { case (v, (i, x)) => v + (i -> x) }
     )(config, system, timeout)
     val r = Reduce[Int, Vector, Vector] { case (s, t) => s ++ t }
@@ -64,17 +64,35 @@ object MatrixOperation extends App {
 
   implicit object DoubleZero$ extends DoubleZero$
 
+  def guard[T, R](g: T => Try[T], f: T => R)(t: T): Try[R] = g(t) map f
+
+  def guard2[T1, T2, R](g: (T1, T2) => Try[(T1, T2)], f: (T1, T2) => R)(t1: T1, t2: T2): Try[R] = g(t1, t2) map f.tupled
+
+  def checkCompatible[A](as: Seq[A], bs: Seq[A]): Try[(Seq[A], Seq[A])] = if (as.size == bs.size && as.nonEmpty) Success((as, bs)) else Failure(IncompatibleLengthsException(as.size, bs.size))
+
+  def checkCompatibleX[A](as: Seq[A], ass: Seq[Seq[A]]): Try[(Seq[A], Seq[Seq[A]])] = {
+    val transpose = ass.transpose
+    if (as.size == transpose.size && as.nonEmpty) Success((as, transpose)) else Failure(IncompatibleLengthsException(as.size, transpose.size))
+  }
+
   def dot[X: Numeric](as: Seq[X], bs: Seq[X]): Try[X] = {
     def product(ab: (X, X)): X = implicitly[Numeric[X]].times(ab._1, ab._2)
 
     if (as.length == bs.length)
       Try(((as zip bs) map product).sum)
     else
-      Failure(MapReduceException(s"dot: incompatible lengths: ${as.length},  ${bs.length}"))
+      Failure(IncompatibleLengthsException(as.length,  bs.length))
   }
 
-  // TODO deal with the get method
-  def product[X: Numeric](as: Seq[X], bss: Seq[Seq[X]]): Seq[X] = for (bs <- bss.transpose) yield dot(as, bs).get
+  // TODO re-implement with guard method
+  def product[X: Numeric](as: Seq[X], bss: Seq[Seq[X]]): Try[Seq[X]] = FP.sequence(for (bs <- bss.transpose) yield dot(as, bs))
+//  def product[X: Numeric](as: Seq[X], bss: Seq[Seq[X]]): Try[Seq[X]] = {
+//    val f: (Seq[X], Seq[X]) => X = dot
+//    val g: (Seq[X], Seq[X]) => X = (xs1, xs2) => f(xs1, xs2)
+//    FP.sequence(for (bs <- bss.transpose) yield guard2[Seq[X], Seq[X], X](checkCompatible, g)(as, bs))
+//  }
+
+  def getException[X](t: (Seq[X], Seq[X])): Try[X] = Failure(IncompatibleLengthsException(t._1.size, t._2.size))
 
   implicit val config: Config = ConfigFactory.load.getConfig("Matrix")
   implicit val system: ActorSystem = ActorSystem(config.getString("name"))
