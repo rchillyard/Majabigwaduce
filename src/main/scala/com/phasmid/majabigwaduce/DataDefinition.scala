@@ -231,6 +231,7 @@ case class LazyDD[K, V, L, W: Monoid](kVm: Map[K, V], f: ((K, V)) => (L, W))(par
   def evaluate: Future[DataDefinition[L, W] with HasEvaluatedMap[L, W]] =
     if (partitions < 2) Future(EagerDD(applyFunction))(scala.concurrent.ExecutionContext.Implicits.global)
     else {
+      implicit val actors: Actors = Actors(implicitly[ActorSystem], implicitly[Config])
       val mr = MapReducePipe.create[K, V, L, W, W]((k, v) => f((k, v)), implicitly[Monoid[W]].combine, 1)
       context.register(mr)
       for (x: Map[L, W] <- mr(kVm.toSeq)) yield EagerDD(x)

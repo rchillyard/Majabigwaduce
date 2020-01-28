@@ -145,18 +145,21 @@ abstract class MasterBaseFirst[V1, K2, W, V2](config: Config, f: V1 => Try[(K2, 
   * @param z      the "zero" or "unit" (i.e. initializer) function which creates an "empty" V2.
   */
 abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => Try[(K2, W)], g: (V2, W) => V2, z: () => V2) extends MapReduceActor {
+
+  // CONSIDER using Using
+  private val actors = Actors(context.system, config)
+
   implicit val timeout: Timeout = getTimeout(config.getString("timeout"))
 
   log.debug(s"MasterBase: timeout=$timeout")
 
   import context.dispatcher
 
-  private val mapper = context.actorOf(mapperProps, "mpr")
+  private val mapper = actors.createActor(Some("mpr"), mapperProps)
   private val nReducers = config.getInt("reducers")
   log.debug(s"creating $nReducers reducers")
-  private val reducers = for (i <- 1 to nReducers) yield context.actorOf(reducerProps(g, z), s"rdcr-$i")
+  private val reducers = for (i <- 1 to nReducers) yield actors.createActor(Some(s"rdcr-$i"), reducerProps(g, z))
   if (Master.isForgiving(config)) log.debug("setting forgiving mode")
-  private val exceptionStack = config.getBoolean("exceptionStack")
 
   /**
     * @return an instance of Props appropriate to the the given parameters
@@ -203,6 +206,12 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => Try[
     v2XeK2m <- doDistributeReduceCollate(wsK2m)
   } yield v2XeK2m
 
+
+  override def close(): Unit = {
+    actors.close()
+    super.close()
+  }
+
   private def doMap(i: KeyValueSeq[K1, V1]): Future[Map[K2, Seq[W]]] = {
     // NOTE this involves a cast to the parametric type Z which can result in a ClassCastException
     def iToMapper[Z: ClassTag]: Future[Z] = (mapper ? i).mapTo[Z]
@@ -234,7 +243,9 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => Try[
     wsK2s zip rs
   }
 
-  private def logException(x: Throwable): Unit = if (exceptionStack) log.error(x, "mapper exception") else log.warning("mapper exception {}", x.getLocalizedMessage)
+  private def logException(x: Throwable): Unit = actors.logException("mapper exception", x)
+
+  //    if (exceptionStack) log.error(x, "mapper exception") else log.warning("mapper exception {}", x.getLocalizedMessage)
 }
 
 case class Response[K, V](left: Map[K, Throwable], right: Map[K, V]) {

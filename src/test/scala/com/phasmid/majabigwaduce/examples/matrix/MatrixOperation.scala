@@ -26,12 +26,13 @@ case class MatrixOperation[X: Numeric](keyFunc: Int => Int)(implicit system: Act
   type Vector = Map[Int, X]
 
   override def apply(xss: Seq[XS], ys: XS): Future[XS] = {
+    val actors: Actors = Actors(implicitly[ActorSystem], implicitly[Config])
     implicit object zeroVector$$ extends Zero.VectorZero[X]
     // TODO implement a signature that allows f and g to return Try[X]
     val s1 = MapReduceFirstFold[Row, Int, Element, Vector](
       { case (i, xs) => FP.sequence(keyFunc(i) -> FP.sequence(i -> MatrixOperation.dot(xs, ys))) },
       { case (v, (i, x)) => v + (i -> x) }
-    )(config, system, timeout)
+    )(actors, timeout)
     val r = Reduce[Int, Vector, Vector] { case (s, t) => s ++ t }
     val mr = s1 | r
     val z = (xss zipWithIndex) map (_ swap)

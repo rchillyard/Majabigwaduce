@@ -14,7 +14,7 @@ import scala.language.postfixOps
 import scala.reflect.ClassTag
 import scala.util._
 
-abstract class MapReduceActor extends Actor with ActorLogging {
+abstract class MapReduceActor extends Actor with ActorLogging with AutoCloseable {
   override def preStart: Unit = {
     log.debug("is starting")
     super.preStart

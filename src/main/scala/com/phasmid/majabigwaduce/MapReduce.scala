@@ -4,10 +4,9 @@
 
 package com.phasmid.majabigwaduce
 
-import akka.actor.{ActorSystem, Props}
+import akka.actor.Props
 import akka.pattern.ask
 import akka.util.Timeout
-import com.typesafe.config.Config
 
 import scala.concurrent._
 import scala.util.Try
@@ -79,23 +78,22 @@ trait MapReduce[T, K1, V1] extends ASync[Seq[T], Map[K1, V1]] with AutoCloseable
   * @tparam V1 output value type (super-type of W)
   * @param f       the mapper function which takes a V0 instance and creates a key-value tuple of type (K1,W)
   * @param g       the reducer function which combines two values (an V1 and a W) into one V1
-  * @param config  an instance of Config which defines a suitable configuration
-  * @param system  the actor system
+  * @param actors  an instance of Actors
   * @param timeout the value of timeout to be used
   */
-case class MapReduceFirst[V0, K1, W, V1 >: W](f: V0 => Try[(K1, W)], g: (V1, W) => V1)(implicit config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_LoggingBase[V0, K1, V1](config, system)(timeout) {
+case class MapReduceFirst[V0, K1, W, V1 >: W](f: V0 => Try[(K1, W)], g: (V1, W) => V1)(actors: Actors, timeout: Timeout) extends MapReduce_LoggingBase[V0, K1, V1](actors)(timeout) {
   // The following constructor allows for a f which needs to be lifted to T=>Try[R]
   // CONSIDER implementing an apply method in MapReduce for this signature
-  //  def this(fy: V0 => (K1, W), g: (V1, W) => V1)(config: Config, system: ActorSystem, timeout: Timeout) = this(MapReduce.lift(fy), g)(config, system, timeout)
-  def createProps: Props = Props(new Master_First(config, f, g))
+  //  def this(fy: V0 => (K1, W), g: (V1, W) => V1)(actors: Actors, timeout: Timeout) = this(MapReduce.lift(fy), g)(actors, timeout)
+  def createProps: Props = Props(new Master_First(actors.config, f, g))
 
-  //  def createName(): Option[String] = s"""mrf-mstr"""
+  override def createName: Option[String] = Some(s"""mrf-mstr""")
 }
 
 object MapReduceFirst {
   // The following apply method allows for a f which needs to be lifted to T=>Try[R]
-  def create[V0, K1, W, V1 >: W](fy: V0 => (K1, W), g: (V1, W) => V1)(implicit config: Config, system: ActorSystem, timeout: Timeout): MapReduceFirst[V0, K1, W, V1] =
-    apply(MapReduce.lift(fy), g)(config, system, timeout)
+  def create[V0, K1, W, V1 >: W](fy: V0 => (K1, W), g: (V1, W) => V1)(implicit actors: Actors, timeout: Timeout): MapReduceFirst[V0, K1, W, V1] =
+    apply(MapReduce.lift(fy), g)(actors, timeout)
 }
 /**
   * A later-stage MapReduce class where the result type V1 is a super-type of the intermediate type W
@@ -108,20 +106,19 @@ object MapReduceFirst {
   * @param f       the mapper function which takes a K0,V0 pair and creates a key-value tuple of type (K1,W)
   * @param g       the reducer function which combines two values (an V1 and a W) into one V1
   * @param n       the stage number of this map-reduce stage.
-  * @param config  an instance of Config which defines a suitable configuration
-  * @param system  the actor system
+  * @param actors  an instance of Actors
   * @param timeout the value of timeout to be used
   */
-case class MapReducePipe[K0, V0, K1, W, V1 >: W](f: (K0, V0) => Try[(K1, W)], g: (V1, W) => V1, n: Int)(implicit config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_LoggingBase[(K0, V0), K1, V1](config, system)(timeout) {
-  def createProps: Props = Props(new Master(config, f, g))
+case class MapReducePipe[K0, V0, K1, W, V1 >: W](f: (K0, V0) => Try[(K1, W)], g: (V1, W) => V1, n: Int)(implicit actors: Actors, timeout: Timeout) extends MapReduce_LoggingBase[(K0, V0), K1, V1](actors)(timeout) {
+  def createProps: Props = Props(new Master(actors.config, f, g))
 
-  //  def createName(): Option[String] = s"""mrp-mstr-$n"""
+  override def createName: Option[String] = Some(s"""mrp-mstr-$n""")
 }
 
 object MapReducePipe {
   // The following apply method allows for a f which needs to be lifted to T=>Try[R]
-  def create[K0, V0, K1, W, V1 >: W](f: (K0, V0) => (K1, W), g: (V1, W) => V1, n: Int)(implicit config: Config, system: ActorSystem, timeout: Timeout): MapReducePipe[K0, V0, K1, W, V1] =
-    apply(MapReduce.lift(f), g, n)(config, system, timeout)
+  def create[K0, V0, K1, W, V1 >: W](f: (K0, V0) => (K1, W), g: (V1, W) => V1, n: Int)(implicit actors: Actors, timeout: Timeout): MapReducePipe[K0, V0, K1, W, V1] =
+    apply(MapReduce.lift(f), g, n)(actors, timeout)
 }
 
 /**
@@ -133,24 +130,23 @@ object MapReducePipe {
   * @tparam V1 output value type (must support type class Init).
   * @param f       the mapper function which takes a V0 instance and creates a key-value tuple of type (K1,W) (wrapped in Try, but see alternative constructor).
   * @param g       the reducer function which combines two values (an V1 and a W) into one V1.
-  * @param config  an instance of Config which defines a suitable configuration.
-  * @param system  the actor system.
+  * @param actors  an instance of Actors.
   * @param timeout the value of timeout to be used.
   *
   *                CONSIDER why is config parameter set not implicit?
   */
-case class MapReduceFirstFold[V0, K1, W, V1: Zero](f: V0 => Try[(K1, W)], g: (V1, W) => V1)(config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_LoggingBase[V0, K1, V1](config, system)(timeout) {
+case class MapReduceFirstFold[V0, K1, W, V1: Zero](f: V0 => Try[(K1, W)], g: (V1, W) => V1)(actors: Actors, timeout: Timeout) extends MapReduce_LoggingBase[V0, K1, V1](actors)(timeout) {
   // The following constructor allows for a f which needs to be lifted to T=>Try[R]
   // CONSIDER implementing an apply method in MapReduce for this signature
-  //  def this(fy: V0 => (K1, W), g: (V1, W) => V1)(config: Config, system: ActorSystem, timeout: Timeout) = this(MapReduce.lift(fy), g)(config, system, timeout)
-  def createProps: Props = Props(new Master_First_Fold(config, f, g, implicitly[Zero[V1]].zero _))
+  //  def this(fy: V0 => (K1, W), g: (V1, W) => V1)(actors: Actors, timeout: Timeout) = this(MapReduce.lift(fy), g)(actors, timeout)
+  def createProps: Props = Props(new Master_First_Fold(actors.config, f, g, implicitly[Zero[V1]].zero _))
 
-  //  def createName(): Option[String] =  s"""mrff-mstr"""
+  override def createName: Option[String] = Some(s"""mrff-mstr""")
 }
 
 object MapReduceFirstFold {
-  def create[V0, K1, W, V1: Zero](f: V0 => (K1, W), g: (V1, W) => V1)(config: Config, system: ActorSystem, timeout: Timeout): MapReduceFirstFold[V0, K1, W, V1] =
-    apply(MapReduce.lift(f), g)(config, system, timeout)
+  def create[V0, K1, W, V1: Zero](f: V0 => (K1, W), g: (V1, W) => V1)(actors: Actors, timeout: Timeout): MapReduceFirstFold[V0, K1, W, V1] =
+    apply(MapReduce.lift(f), g)(actors, timeout)
 }
 
 /**
@@ -164,20 +160,19 @@ object MapReduceFirstFold {
   * @param f       the mapper function which takes a V0 instance and creates a key-value tuple of type (K1,W)
   * @param g       the reducer function which combines two values (an V1 and a W) into one V1
   * @param n       the stage number of this map-reduce stage.
-  * @param config  an instance of Config which defines a suitable configuration
-  * @param system  the actor system
+  * @param actors  an instance of Actors.
   * @param timeout the value of timeout to be used
   */
-case class MapReducePipeFold[K0, V0, K1, W, V1: Zero](f: (K0, V0) => Try[(K1, W)], g: (V1, W) => V1, n: Int)(config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_LoggingBase[(K0, V0), K1, V1](config, system)(timeout) {
+case class MapReducePipeFold[K0, V0, K1, W, V1: Zero](f: (K0, V0) => Try[(K1, W)], g: (V1, W) => V1, n: Int)(actors: Actors, timeout: Timeout) extends MapReduce_LoggingBase[(K0, V0), K1, V1](actors)(timeout) {
   // The following constructor allows for a f which needs to be lifted to T=>Try[R]
-  //  def this(fy: (K0, V0) => (K1, W), g: (V1, W) => V1, n: Int)(config: Config, system: ActorSystem, timeout: Timeout) = this(MapReduce.lift(fy), g, n)(config, system, timeout)
-  def createProps: Props = Props(new Master_Fold(config, f, g, implicitly[Zero[V1]].zero _))
+  //  def this(fy: (K0, V0) => (K1, W), g: (V1, W) => V1, n: Int)(actors: Actors, timeout: Timeout) = this(MapReduce.lift(fy), g, n)(actors, timeout)
+  def createProps: Props = Props(new Master_Fold(actors.config, f, g, implicitly[Zero[V1]].zero _))
 
-  //  def createName(): Option[String] = s"""mrpf-mstr-$n"""
+  override def createName: Option[String] = Some(s"""mrpf-mstr-$n""")
 }
 
 object MapReducePipeFold {
-  def create[K0, V0, K1, W, V1: Zero](f: (K0, V0) => (K1, W), g: (V1, W) => V1, n: Int)(config: Config, system: ActorSystem, timeout: Timeout): MapReducePipeFold[K0, V0, K1, W, V1] = new MapReducePipeFold(MapReduce.lift(f), g, n)(config, system, timeout)
+  def create[K0, V0, K1, W, V1: Zero](f: (K0, V0) => (K1, W), g: (V1, W) => V1, n: Int)(actors: Actors, timeout: Timeout): MapReducePipeFold[K0, V0, K1, W, V1] = new MapReducePipeFold(MapReduce.lift(f), g, n)(actors, timeout)
 }
 
 /**
@@ -222,27 +217,21 @@ case class Reduce[K, T, S: Zero](f: (S, T) => S) extends RF[K, T, S] {
   * @tparam T  the input type of the MapReduce function: T may be V1 for a first stage, or (K1,V1) for a subsequent stage.
   * @tparam K1 intermediate key type
   * @tparam V1 intermediate value type
-  * @param config  an instance of Config which defines a suitable configuration
-  * @param system  the actor system
+  * @param actors  an instance of Actors
   * @param timeout the value of timeout to be used
   */
-abstract class MapReduce_LoggingBase[T, K1, V1](config: Config, system: ActorSystem)(implicit timeout: Timeout) extends MapReduce_Base[T, K1, V1](system)(timeout) {
-  private val exceptionStack = config.getBoolean("exceptionStack")
-
-  def logException(m: String, x: Throwable): Unit = if (exceptionStack) system.log.error(x, m) else system.log.warning(s"$m: ${x.getLocalizedMessage}")
+abstract class MapReduce_LoggingBase[T, K1, V1](actors: Actors)(timeout: Timeout) extends MapReduce_Base[T, K1, V1](actors)(timeout) {
+  def logException(m: => String, x: Throwable): Unit = actors.logException(m, x)
 }
 
 /**
   * An abstract base class for MapReduce classes (other than MapReduceComposed).
   */
-abstract class MapReduce_Base[T, K, V](system: ActorSystem)(implicit timeout: Timeout) extends MapReduce[T, K, V] {
+abstract class MapReduce_Base[T, K, V](actors: Actors)(implicit timeout: Timeout) extends MapReduce[T, K, V] {
   self =>
-  implicit def ec: ExecutionContextExecutor = system.dispatcher
+  implicit def ec: ExecutionContextExecutor = actors.system.dispatcher
 
-  private val master = createName() match {
-    case Some(name) => system.actorOf(createProps, name)
-    case None => system.actorOf(createProps)
-  }
+  private val master = actors.createActor(createName, createProps)
 
   def apply(ts: Seq[T]): Future[Map[K, V]] = {
     // Note: currently, we ignore the value of report but we could pass back a tuple that includes ok and the resulting map
@@ -256,21 +245,23 @@ abstract class MapReduce_Base[T, K, V](system: ActorSystem)(implicit timeout: Ti
     *
     * @return
     */
-  def createName(): Option[String] = None
+  def createName: Option[String] = None
 
   def report(vKr: Response[K, V]): Boolean = {
     for ((k, x) <- vKr.left) logException(s"exception thrown (but forgiven) for key $k", x)
     vKr.size == 0
   }
 
-  def logException(m: String, x: Throwable): Unit
+  def logException(m: => String, x: Throwable): Unit
 
-  def close(): Unit = system.stop(master)
+  def close(): Unit = actors.system.stop(master)
 }
 
 object MapReduce {
 
+  // CONSIDER move to FP
   def lift[T, R](f: T => R): T => Try[R] = t => Try(f(t))
 
+  // CONSIDER move to FP
   def lift[T1, T2, R](f: (T1, T2) => R): (T1, T2) => Try[R] = (t1, t2) => Try(f(t1, t2))
 }

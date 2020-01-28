@@ -43,7 +43,9 @@ case class CountWords(resourceFunc: String => Resource)(implicit system: ActorSy
 
   override def apply(ws: Strings): Future[Int] = {
 
-    val stage1 = MapReduceFirstFold.create({ w: String => val u = resourceFunc(w); logger.debug(s"stage1 map: $w"); (u.getServer, u.getContent) }, appendString)(config, system, timeout)
+    implicit val actors: Actors = Actors(implicitly[ActorSystem], implicitly[Config])
+
+    val stage1 = MapReduceFirstFold.create({ w: String => val u = resourceFunc(w); logger.debug(s"stage1 map: $w"); (u.getServer, u.getContent) }, appendString)(actors, timeout)
 
     val stage2 = MapReducePipe.create[URI, Strings, URI, Int, Int](
       (w, gs) => w -> (countFields(gs) reduce addInts),
