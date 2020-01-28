@@ -87,7 +87,7 @@ case class MapReduceFirst[V0, K1, W, V1 >: W](f: V0 => Try[(K1, W)], g: (V1, W) 
   // The following constructor allows for a f which needs to be lifted to T=>Try[R]
   // CONSIDER implementing an apply method in MapReduce for this signature
   //  def this(fy: V0 => (K1, W), g: (V1, W) => V1)(config: Config, system: ActorSystem, timeout: Timeout) = this(MapReduce.lift(fy), g)(config, system, timeout)
-  def createProps = Props(new Master_First(config, f, g))
+  def createProps: Props = Props(new Master_First(config, f, g))
 
   //  def createName(): Option[String] = s"""mrf-mstr"""
 }
@@ -113,7 +113,7 @@ object MapReduceFirst {
   * @param timeout the value of timeout to be used
   */
 case class MapReducePipe[K0, V0, K1, W, V1 >: W](f: (K0, V0) => Try[(K1, W)], g: (V1, W) => V1, n: Int)(implicit config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_LoggingBase[(K0, V0), K1, V1](config, system)(timeout) {
-  def createProps = Props(new Master(config, f, g))
+  def createProps: Props = Props(new Master(config, f, g))
 
   //  def createName(): Option[String] = s"""mrp-mstr-$n"""
 }
@@ -143,7 +143,7 @@ case class MapReduceFirstFold[V0, K1, W, V1: Zero](f: V0 => Try[(K1, W)], g: (V1
   // The following constructor allows for a f which needs to be lifted to T=>Try[R]
   // CONSIDER implementing an apply method in MapReduce for this signature
   //  def this(fy: V0 => (K1, W), g: (V1, W) => V1)(config: Config, system: ActorSystem, timeout: Timeout) = this(MapReduce.lift(fy), g)(config, system, timeout)
-  def createProps = Props(new Master_First_Fold(config, f, g, implicitly[Zero[V1]].zero _))
+  def createProps: Props = Props(new Master_First_Fold(config, f, g, implicitly[Zero[V1]].zero _))
 
   //  def createName(): Option[String] =  s"""mrff-mstr"""
 }
@@ -171,7 +171,7 @@ object MapReduceFirstFold {
 case class MapReducePipeFold[K0, V0, K1, W, V1: Zero](f: (K0, V0) => Try[(K1, W)], g: (V1, W) => V1, n: Int)(config: Config, system: ActorSystem, timeout: Timeout) extends MapReduce_LoggingBase[(K0, V0), K1, V1](config, system)(timeout) {
   // The following constructor allows for a f which needs to be lifted to T=>Try[R]
   //  def this(fy: (K0, V0) => (K1, W), g: (V1, W) => V1, n: Int)(config: Config, system: ActorSystem, timeout: Timeout) = this(MapReduce.lift(fy), g, n)(config, system, timeout)
-  def createProps = Props(new Master_Fold(config, f, g, implicitly[Zero[V1]].zero _))
+  def createProps: Props = Props(new Master_Fold(config, f, g, implicitly[Zero[V1]].zero _))
 
   //  def createName(): Option[String] = s"""mrpf-mstr-$n"""
 }

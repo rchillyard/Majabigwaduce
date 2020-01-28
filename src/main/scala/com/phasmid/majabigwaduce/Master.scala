@@ -4,7 +4,7 @@
 
 package com.phasmid.majabigwaduce
 
-import akka.actor.Props
+import akka.actor.{ActorRef, Props}
 import akka.pattern.ask
 import akka.util.Timeout
 import com.typesafe.config.Config
@@ -119,7 +119,7 @@ abstract class MasterBaseFirst[V1, K2, W, V2](config: Config, f: V1 => Try[(K2, 
     case v1s: Seq[V1] =>
       log.info(s"Master received Seq[V1]: with ${v1s.length} elements")
       val caller = sender // XXX: this looks strange but it is required
-      doMapReduce(Incoming.sequence[Unit, V1](v1s)).onComplete {
+      doMapReduce(KeyValueSeq.sequence[Unit, V1](v1s)).onComplete {
         case Success(wXeK2m) => caller ! Response(wXeK2m)
         case Failure(x) => caller ! akka.actor.Status.Failure(x)
       }
@@ -178,7 +178,7 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => Try[
       log.info(s"Master received Map[K1,V1]: with ${v1K1m.size} elements")
       //      maybeLog("received: {}",v1K1m)
       val caller = sender
-      doMapReduce(Incoming.map[K1, V1](v1K1m)).onComplete {
+      doMapReduce(KeyValueSeq.map[K1, V1](v1K1m)).onComplete {
         case Success(v2XeK2m) =>
           maybeLog("response: {}", v2XeK2m)
           caller ! Response(v2XeK2m)
@@ -190,7 +190,7 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => Try[
       log.info(s"Master received Seq[(K1,V1)]: with ${v1s.length} elements")
       //      maybeLog("received: {}",v1s)
       val caller = sender
-      doMapReduce(Incoming[K1, V1](v1s)).onComplete {
+      doMapReduce(KeyValueSeq[K1, V1](v1s)).onComplete {
         case Success(v2XeK2m) => caller ! Response(v2XeK2m)
         case Failure(x) => caller ! akka.actor.Status.Failure(x)
       }
@@ -198,28 +198,40 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => Try[
       super.receive(q)
   }
 
-  def doMapReduce(i: Incoming[K1, V1]): Future[Map[K2, Either[Throwable, V2]]] = for {
+  def doMapReduce(i: KeyValueSeq[K1, V1]): Future[Map[K2, Either[Throwable, V2]]] = for {
     wsK2m <- doMap(i)
     v2XeK2m <- doDistributeReduceCollate(wsK2m)
   } yield v2XeK2m
 
-  private def doMap(i: Incoming[K1, V1]): Future[Map[K2, Seq[W]]] = {
+  private def doMap(i: KeyValueSeq[K1, V1]): Future[Map[K2, Seq[W]]] = {
+    // NOTE this involves a cast to the parametric type Z which can result in a ClassCastException
     def iToMapper[Z: ClassTag]: Future[Z] = (mapper ? i).mapTo[Z]
 
-    if (Master.isForgiving(config: Config))
-      iToMapper[(Map[K2, Seq[W]], Seq[Throwable])] map {
-        case (wsK2m, xs) => for (x <- xs) logException(x); wsK2m
-      }
-    else FP.flatten(iToMapper[Try[Map[K2, Seq[W]]]])
+    iToMapper[(Map[K2, Seq[W]], Seq[Throwable])] flatMap {
+      case (m, xs) =>
+        if (xs.nonEmpty && !Master.isForgiving(config)) Future.failed[Map[K2, Seq[W]]](xs.head)
+        else {
+          xs.foreach(logException)
+          Future.successful(m)
+        }
+    }
   }
 
   private def doDistributeReduceCollate(wsK2m: Map[K2, Seq[W]]): Future[Map[K2, Either[Throwable, V2]]] = {
     if (wsK2m.isEmpty) log.warning("mapper returned empty map" + (if (Master.isForgiving(config: Config)) "" else ": see log for problem and consider using Mapper_Forgiving instead"))
-    val rs = LazyList.continually(reducers.to(LazyList)).flatten
-    val wsK2s = for ((k2, ws) <- wsK2m.toSeq) yield (k2, ws)
-    val v2XeK2fs = for (((k2, ws), a) <- wsK2s zip rs) yield (a ? Intermediate(k2, ws)).mapTo[(K2, Either[Throwable, V2])]
+    val v2XeK2fs = for (((k2, ws), a) <- distributeWork(wsK2m)) yield doReductionAsync(k2, ws, a)
     // TODO Where are we getting a null from?
     for (wXeK2s <- Future.sequence(v2XeK2fs)) yield wXeK2s.toMap
+  }
+
+  // NOTE this involves a cast to the parametric type (K2, Either[Throwable, V2]) which can result in a ClassCastException
+  private def doReductionAsync(k2: K2, ws: Seq[W], actor: ActorRef): Future[(K2, Either[Throwable, V2])] = (actor ? Intermediate(k2, ws)).mapTo[(K2, Either[Throwable, V2])]
+
+  // NOTE that this method operates in real time, without the protection of Try
+  private def distributeWork(wsK2m: Map[K2, Seq[W]]): Seq[((K2, Seq[W]), ActorRef)] = {
+    val rs = LazyList.continually(reducers.to(LazyList)).flatten
+    val wsK2s = for ((k2, ws) <- wsK2m.to(Seq)) yield (k2, ws)
+    wsK2s zip rs
   }
 
   private def logException(x: Throwable): Unit = if (exceptionStack) log.error(x, "mapper exception") else log.warning("mapper exception {}", x.getLocalizedMessage)
