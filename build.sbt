@@ -1,6 +1,6 @@
 name := "Majabigwaduce"
 
-version := "1.0.0-SNAPSHOT"
+version := "1.0.1-SNAPSHOT"
 
 scalaVersion := "2.13.1"
 
@@ -17,15 +17,15 @@ resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/release
 
 libraryDependencies ++= Seq(
 	akkaGroup %% "akka-actor" % akkaVersion,
-	akkaGroup %% "akka-testkit" % akkaVersion % "test",
 	akkaGroup %% "akka-slf4j" % akkaVersion,
 	akkaGroup %% "akka-cluster" % akkaVersion,
 	akkaGroup %% "akka-remote" % akkaVersion,
 	akkaGroup %% "akka-cluster-metrics" % akkaVersion,
 	"com.typesafe" % "config" % configVersion,
+	"ch.qos.logback" % "logback-classic" % logBackVersion % "runtime",
+	akkaGroup %% "akka-testkit" % akkaVersion % "test",
 	"org.scalatest" %% "scalatest" % scalaTestVersion % "test",
 	"org.scalamock" %% "scalamock" % scalaMockVersion % "test",
-	"ch.qos.logback" % "logback-classic" % logBackVersion % "runtime",
 // xml and tagsoup are for WebCrawler exemplar
   "org.scala-lang.modules" %% "scala-xml" % scalaXMLVersion % "test",
 	"org.ccil.cowan.tagsoup" % "tagsoup" % "1.2.1" % "test"
