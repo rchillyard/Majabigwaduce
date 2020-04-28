@@ -1,3 +1,4 @@
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/1d777e04503246a991b88b9da4aea9ff)](https://app.codacy.com/manual/scalaprof/Majabigwaduce?utm_source=github.com&utm_medium=referral&utm_content=rchillyard/Majabigwaduce&utm_campaign=Badge_Grade_Dashboard)
 [![CircleCI](https://circleci.com/gh/rchillyard/Majabigwaduce.svg?style=svg)](https://circleci.com/gh/rchillyard/Majabigwaduce)
 
 Majabigwaduce
