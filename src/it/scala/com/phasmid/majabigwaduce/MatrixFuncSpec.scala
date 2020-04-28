@@ -42,7 +42,7 @@ class MatrixFuncSpec extends FlatSpec with should.Matchers with Futures with Ins
     productByIdentity(1000)
   }
 
-  private def productByIdentity(N: Int) = {
+  private def productByIdentity(N: Int): Unit = {
     val r = Random
     val size = N
     // CONSIDER removing the toVector as it doesn't really seem to make any difference

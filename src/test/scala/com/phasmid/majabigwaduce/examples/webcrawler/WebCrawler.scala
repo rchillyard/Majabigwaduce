@@ -83,7 +83,7 @@ case class WebCrawler(depth: Int)(implicit system: ActorSystem, config: Config, 
 
   // We are passing the wrong URL into getLinks: the value of u is the server, not the current directory.
   private def getLinkStrings(u: URI, gs: Strings): (URI, Strings) = {
-    def normalizeURL(w: URI, w2: String) = new URL(w.toURL, w2.toString).toString
+    def normalizeURL(w: URI, w2: String) = new URL(w.toURL, w2).toString
 
     def getLinks(u: URI, g: String): Strings = for (
       nsA <- HTMLParser.parse(g) \\ "a";

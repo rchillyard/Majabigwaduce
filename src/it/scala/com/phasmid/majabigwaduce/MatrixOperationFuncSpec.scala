@@ -31,13 +31,15 @@ class MatrixOperationFuncSpec extends FlatSpec with should.Matchers with Futures
     val isf: Future[Seq[Int]] = op(matrix, vector)
 
     whenReady(isf, timeout(Span(300, Seconds))) {
-      is: Seq[Int] => assert(is.head == 8 && is.tail.head == 11)
+      is: Seq[Int] =>
+        assert(is.head == 8 && is.tail.head == 11)
+      //        println(s"Response: $is")
     }
 
     Await.ready(system.terminate(), 5 seconds)
   }
 
-  it should "create product of matrices" in {
+  ignore should "create product of matrices" in {
     implicit val config: Config = ConfigFactory.load.getConfig("Matrix")
     implicit val system: ActorSystem = ActorSystem(config.getString("name"))
     implicit val to: Timeout = getTimeout(config.getString("timeout"))

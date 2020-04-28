@@ -158,6 +158,7 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => Try[
   private val mapper = actors.createActor(Some("mpr"), mapperProps)
   private val nReducers = config.getInt("reducers")
   log.debug(s"creating $nReducers reducers")
+  //noinspection SpellCheckingInspection
   private val reducers = for (i <- 1 to nReducers) yield actors.createActor(Some(s"rdcr-$i"), reducerProps(g, z))
   if (Master.isForgiving(config)) log.debug("setting forgiving mode")
 
