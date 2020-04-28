@@ -4,9 +4,6 @@
 
 package com.phasmid.majabigwaduce
 
-import com.phasmid.majabigwaduce.FP._
-
-import scala.collection.mutable
 import scala.util._
 
 /**
@@ -42,35 +39,25 @@ import scala.util._
   * @tparam W  (output) value type
   *
   */
-class Mapper[K1, V1, K2, W](f: (K1, V1) => Try[(K2, W)]) extends MapReduceActor {
+class Mapper[K1, V1, K2, W](f: (K1, V1) => Try[(K2, W)]) extends MapReduceActor with Responder[K2, W] with CleanerCollector[K2, W] {
 
   override def receive: PartialFunction[Any, Unit] = {
-    case i: Incoming[K1, V1] =>
+    case i: KeyValueSeq[K1, V1] =>
       log.info(s"Mapper received $i")
       // CONSIDER using a form of groupBy to perform this operation
       val wk2ts: Seq[Try[(K2, W)]] = for ((k1, v1) <- i.m) yield f(k1, v1)
-      sender ! prepareReply(wk2ts)
+      sendReply(sender, prepareResponse[Map[K2, Seq[W]]](wk2ts))
     case q =>
       super.receive(q)
   }
 
-  def prepareReply(wk2ts: Seq[Try[(K2, W)]]): Any = prepareReplyAsTry(wk2ts)
 
-  private def prepareReplyAsTry(wk2ts: Seq[Try[(K2, W)]]): Try[Map[K2, Seq[W]]] =
-    sequence(wk2ts) match {
-      case Success(wk2s) =>
-        val wsK2m = mutable.HashMap[K2, Seq[W]]() // mutable
-        for ((k2, w) <- wk2s) wsK2m put(k2, w +: wsK2m.getOrElse(k2, Nil))
-        Success(wsK2m.toMap)
-      case Failure(x) =>
-        log.warning(s"prepareReply: exception noted and returned as failure: ${x.getLocalizedMessage}")
-        Failure(MapReduceException(s"prepareReply (see previously in log)", x))
-    }
+  //  override def processExceptions[Y: ClassTag](x: Seq[Try[(K2, W)]]): (Y, Seq[Throwable]) = ???
 }
 
 /**
   * This sub-class of Mapper is more forgiving (and retains any exceptions thrown).
-  * The reply is in the form of a tuple: (Map[K2,W],Seq[Throwable])
+  * The reply is in the form of a tuple: (Map[K2,Seq of W],Seq[Throwable])
   *
   * @author scalaprof
   * @param f function to convert a (K1,V1) pair into a Try[(K2,V2)]
@@ -80,28 +67,18 @@ class Mapper[K1, V1, K2, W](f: (K1, V1) => Try[(K2, W)]) extends MapReduceActor 
   * @tparam W  (output) value type
   */
 class Mapper_Forgiving[K1, V1, K2, W](f: (K1, V1) => Try[(K2, W)]) extends Mapper[K1, V1, K2, W](f) {
-
-  override def prepareReply(wk2ts: Seq[Try[(K2, W)]]): Any = prepareReplyAsTuple(wk2ts)
-
-  private def prepareReplyAsTuple(wk2ts: Seq[Try[(K2, W)]]): (Map[K2, Seq[W]], Seq[Throwable]) = {
-    val wsK2m = mutable.HashMap[K2, Seq[W]]() // mutable
-    val xs = Seq[Throwable]() // mutable
-    for (wk2t <- wk2ts; wk2e = sequence(wk2t))
-      wk2e match {
-        case Right((k2, w)) => wsK2m put(k2, w +: wsK2m.getOrElse(k2, Nil))
-        case Left(x) => xs :+ x
-      }
-    (wsK2m.toMap, xs)
-  }
+  override val isStrict: Boolean = false
 }
 
-case class Incoming[K, V](m: Seq[(K, V)]) {
+// CONSIDER eliminating this case class and simply using the KeyValueSeq object to build a Seq[(K, V])]
+case class KeyValueSeq[K, V](m: Seq[(K, V)]) {
   override def toString = s"Incoming: with ${m.size} elements"
 }
 
-object Incoming {
-  def sequence[K, V](vs: Seq[V]): Incoming[K, V] = Incoming((vs zip LazyList.continually(null.asInstanceOf[K])).map(_.swap))
+object KeyValueSeq {
+  def sequence[K, V](vs: Seq[V]): KeyValueSeq[K, V] = KeyValueSeq((vs zip LazyList.continually(null.asInstanceOf[K])).map(_.swap))
 
-  def map[K, V](vKm: Map[K, V]): Incoming[K, V] = Incoming(vKm.toSeq)
+  def map[K, V](vKm: Map[K, V]): KeyValueSeq[K, V] = KeyValueSeq(vKm.toSeq)
 }
+
 

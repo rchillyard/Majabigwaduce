@@ -24,7 +24,7 @@ High-level API
 DataDefintion
 -------------
 Majabigwaduce has a high-level API, something like that used by Spark.
-It is based on the concept of _DataDefinition_, essentially a lazy, partitionable, map of key-value pairs.
+It is based on the concept of *DataDefinition*, essentially a lazy, partitionable, map of key-value pairs.
 _DataDefinition_ is a trait with two concrete sub-classes:
 
 * _LazyDD_ is a lazily-evaluated DataDefinition and which is the normal implementation of DataDefinition to be used.
@@ -35,11 +35,11 @@ A DataDefinition (in these cases a _LazyDD_) is normally created with a statemen
 
     val dd = DataDefinition(map, partitions)
     
-where _map_ is either a _Map[K,V]_ or a _Seq[(K,V)]_; or
+where _map_ is either a _Map\[K,V\]_ or a _Seq\[(K,V)\]_; or
 
     val dd = DataDefinition(list, f, partitions)
     
-where _list_ is a _Seq[V]_ and where _f_ is a function of type _V=>K_ (the mapper function).
+where _list_ is a _Seq\[V\]_ and where _f_ is a function of type _V=>K_ (the mapper function).
 
 In all cases, _partitions_ represents the desired number of partitions for the data definition,
 but can be omitted, in which case it will be defaulted to be 2.
@@ -52,8 +52,8 @@ There are three types of transformation function currently supported:
 
 There are three types of "action" function:
  
-* _apply()_ which yields a _Future[Map[K,V]]_
-* _reduce(f)_ which yields a _Future[W]_ where the function _f_ is the aggregation function
+* _apply()_ which yields a _Future\[Map\[K,V\]\]_
+* _reduce(f)_ which yields a _Future\[W\]_ where the function _f_ is the aggregation function
 of type _(W,V)=>W_ where _W_ is constrained by a context bound: _W: Zero_.
 * _count_ which yields the number of key-value pairs in the DataDefinition, wrapped in _Future_.
 
@@ -67,20 +67,20 @@ Functional Map-Reduce (mid-level API)
 The set of Master classes (lowest-level API) can be used by applications exactly as described below.
 However, there is a more convenient, functional form based on the trait _MapReduce_ which is defined thus:
 
-	trait MapReduce[T,K2,V2] extends Function1[Seq[T],Future[Map[K2,V2]]] {
+	trait MapReduce[T,K2,V2] extends Seq[T] => Future[Map[K2,V2]] {
 	    def compose[K3,V3](mr: MapReduce[(K2,V2),K3,V3]): MapReduce[T,K3,V3] = MapReduceComposed(this,mr)
 	    def compose[S>:V2](r: Reduce[V2,S])(implicit executionContext: ExecutionContext): Function1[Seq[T],Future[S]]= { ts => for (v2K2m <- apply(ts); s = r.apply(v2K2m)) yield s }
 	    def ec: ExecutionContext
 	}
 
-This trait casts the map-reduce process as a simple function: one which takes a _Seq[T]_ and results in a (future of) _Map[K2,V2]_ where _T_ is either _V1_ in the case of the first stage of a map-reduce pipeline or _(Kn,Vn)_ in the case of the subsequent (nth) stage. There are four case classes which implement this trait (and which should be specified by the application programmer):
+This trait casts the map-reduce process as a simple function: one which takes a _Seq\[T\]_ and results in a (future of) _Map\[K2,V2]_ where _T_ is either _V1_ in the case of the first stage of a map-reduce pipeline or _(Kn,Vn)_ in the case of the subsequent (nth) stage. There are four case classes which implement this trait (and which should be specified by the application programmer):
 
 * _MapReduceFirst_
 * _MapReducePipe_
 * _MapReduceFirstFold_
 * _MapReducePipeFold_
 
-Additionally, there is the _MapReduceComposed_ case class which is created by invoking the _compose_ method. A pipeline of map-reduce stages can thus be composed by using the _compose_ method of _MapReduce_. Such a pipeline may be (optionally) terminated by composing with a _Reduce_ instance which combines the values of the final _Map[Kn,Vn]_ into a single _S_ value (where _S_ is a super-class of _Vn_).
+Additionally, there is the _MapReduceComposed_ case class which is created by invoking the _compose_ method. A pipeline of map-reduce stages can thus be composed by using the _compose_ method of _MapReduce_. Such a pipeline may be (optionally) terminated by composing with a _Reduce_ instance which combines the values of the final _Map\[Kn,Vn]_ into a single _S_ value (where _S_ is a super-class of _Vn_).
 
 Thus a pipeline in functional form is a closure which captures all of the functions, and their parameters which are in scope at the time of defining the pipeline.
 
@@ -103,11 +103,11 @@ the value _V1_. Thus the input to the map stage is, in general:
 
     Map[K1,V1]
     
-For the first stage, there is usually no appropriate key so instead we pass in a message of the following form (which is more or less equivalent to _Map[Unit,V1]_):
+For the first stage, there is usually no appropriate key so instead we pass in a message of the following form (which is more or less equivalent to _Map\[Unit,V1]_):
 
 	Seq[V1]
 	
-The reduction stage, as we have already seen, starts with information in the form of _Map[K2,Seq[W]]_ and the work is divided up and sent to each of the reducers. Thus each reducer takes as input (via a message) the following tuple:
+The reduction stage, as we have already seen, starts with information in the form of _Map\[K2,Seq\[W]]_ and the work is divided up and sent to each of the reducers. Thus each reducer takes as input (via a message) the following tuple:
 
 	(K2,Seq[W])
 	
@@ -137,7 +137,7 @@ Generally, there are five polymorphic types which describe the definition of _Ma
 And, again generally, the constructor for the _Master_ takes the following parameters:
 
 * _config: Config_
-* _f: (K1,V1)=>(K2,W)_
+* _f: (K1,V1)=>Try[(K2,W)]_
 * _g: (V2,W)=>V2_
 * (optionally) _z: ()=>V2_
 
@@ -160,9 +160,9 @@ The "fold" variations require the _z_ parameter, whereas the other variations do
 
 The "first" variations do not require a _K1_ to be defined (it defaults to _Unit_) and see below in _Mapper_ for the difference in input message types.
 
-The __input message__ type for the "first" variations is: _Seq[V1]_ while the input message type for the non-"first" variations is _Map[K1,V1]_.
+The __input message__ type for the "first" variations is: _Seq\[V1\]_ while the input message type for the non-"first" variations is _Map[K1,V1]_.
     
-The __output message__ type is always _Response[K2,V2]_. The _Response_ type is defined thus:
+The __output message__ type is always _Response\[K2,V2\]_. The _Response_ type is defined thus:
 
 	case class Response[K,V](left: Map[K,Throwable], right: Map[K,V]) {
 	  def size = right.size
@@ -173,19 +173,19 @@ where _K_ represents _K2_ and _V_ represents _V2_. As you can see, the results o
 Mapper
 -----
 
-The _Mapper_ class is a sub-class of _Actor_. In general, the _Mapper_ takes the following polymorphic types: _[K1,V1,K2,W]_.
+The _Mapper_ class is a sub-class of _Actor_. In general, the _Mapper_ takes the following polymorphic types: _\[K1,V1,K2,W\]_.
 
-The constructor takes a function _f_ of type _(K1,V1)=>(K2,W)_, that's to say it is a function which transforms a _(K1,V1)_ tuple into a _(K2,W)_ tuple.
+The constructor takes a function _f_ of type _(K1,V1)=>Try\[(K2,W)]_, that's to say it is a function which transforms a _(K1,V1)_ tuple into a _Try_ of _(K2,W)_ tuple.
 
-The incoming message is of the form: _Incoming[K,V]_ where _Incoming_ is essentially a wrapper around the input (but in sequence/tuple form) and is defined thus:
+The incoming message is of the form: _KeyValueSeq\[K,V]_ where _KeyValueSeq_ is essentially a wrapper around the input (but in sequence/tuple form) and is defined thus:
 
-	case class Incoming[K, V](m: Seq[(K,V)])
+	case class KeyValueSeq[K, V](m: Seq[(K,V)])
 
-Where, in practice, _K=K1_ and _V=V1_. For the first-stage map-reduce processes, _K1_ is assumed to be _Unit_. And so you can see the reason for making the input in the form of a wrapper around _Seq[(K1,V1)]_. If the keys are unique then this is 100% two-way convertible with a _Map[K1,V1]_. But since the _K1_ keys can sometimes be missing entirely, we cannot properly form a _Map_. A _Map_ can always be represented as _Seq[Tuple2]_, however.
+Where, in practice, _K=K1_ and _V=V1_. For the first-stage map-reduce processes, _K1_ is assumed to be _Unit_. And so you can see the reason for making the input in the form of a wrapper around _Seq\[(K1,V1)]_. If the keys are unique then this is 100% two-way convertible with a _Map\[K1,V1]_. But since the _K1_ keys can sometimes be missing entirely, we cannot properly form a _Map_. A _Map_ can always be represented as _Seq\[Tuple2]_, however.
 
 It makes sense that the output from the reducer phase and, ultimately the master, recalls both successful calls to the reducer and failures. This follows from the independent nature of the reduce phase.
 But what about errors in the mapper phase? If the mapper fails on even one input tuple, the entire mapping process is pretty much trashed. What would be the point of continuing on to do the reduce phase after a mapper error?
-That is indeed the normal way of things: if there are any failures in mapping, the whole mapping fails. The form of (successful) output is _Map[K2,Seq[W]]_ while any failure outputs a _Throwable_ (this is all part of the _Future_ class behavior). 
+That is indeed the normal way of things: if there are any failures in mapping, the whole mapping fails. The form of (successful) output is _Map\[K2,Seq\[W]]_ while any failure outputs a _Throwable_ (this is all part of the _Future_ class behavior). 
 
 Nevertheless, there is an alternative form of mapper called _Mapper_Forgiving_ which will return (to the master) both (as a tuple) the successful output and a sequence of _Throwable_ objects.
 This behavior is turned on my setting _forgiving_ to true in the configuration.
@@ -193,11 +193,11 @@ This behavior is turned on my setting _forgiving_ to true in the configuration.
 Reducer
 -------
 
-The _Reducer_ class is a sub-class of _Actor_. In general, the _Reducer_ takes the following polymorphic types: _[K2,W,V2]_.
+The _Reducer_ class is a sub-class of _Actor_. In general, the _Reducer_ takes the following polymorphic types: _\[K2,W,V2]_.
 
 The constructor takes a function _g_ of type _(V2,W)=>V2_, that's to say it is a function which recursively combines an accumulator of type _V2_ with an element of type _W_, yielding a new value for the accumulator. That's to say, _g_ is passed to the _reduceLeft_ method of _Seq_.
 
-The incoming message is of the form: _Intermediate[K2,W]_ where Intermediate is essentially a wrapper around the input and is defined thus:
+The incoming message is of the form: _Intermediate\[K2,W]_ where Intermediate is essentially a wrapper around the input and is defined thus:
 
 	case class Intermediate[K, V](k: K, vs: Seq[V])
 
@@ -214,8 +214,8 @@ Dependencies
 
 The components that are used by this project are:
 
-* Scala (2.12.x)
-* Akka (2.5.11)
+* Scala (2.13.x)
+* Akka (2.6.1)
 * Typesafe Configuration (1.3.1)
 * and dependencies thereof
 
@@ -226,8 +226,8 @@ There are several examples provided (in the examples directory):
 
 * CountWords: a simple example which counts the words in documents and can provide a total word count of all documents.
 * WebCrawler: a more complex version of the same sort of thing.
-* Matrix: uses the high-level API
-* MatrixOperation: obsolete
+* Matrix: uses the high-level API.
+* MatrixOperation: possibly obsolete.
 
 CountWords
 ----------
@@ -283,14 +283,14 @@ Here is the _CountWords_ app. It actually uses a "mock" URI rather than the real
 	
 It is a three-stage map-reduce problem, including a final reduce stage.
 
-Stage 1 takes a _Seq[String]_ (representing URIs) and produces a _Map[URI,Seq[String]]_.
+Stage 1 takes a _Seq\[String]_ (representing URIs) and produces a _Map\[URI,Seq\[String]]_.
 The mapper for the first stage returns a tuple of the _URI_ (corresponding to the server for the string) and the content of the resource defined by the string.
-The reducer simply adds a _String_ to a _Seq[String]_.
-There is additionally an _init_ function which creates an empty _Seq[String]_.
-The result of the first stage is a map of _URI->Seq[String]_ where the key represents a server and the value elements are the contents of the documents read from that server. 
+The reducer simply adds a _String_ to a _Seq\[String]_.
+There is additionally an _init_ function which creates an empty _Seq\[String]_.
+The result of the first stage is a map of _URI->Seq\[String]_ where the key represents a server and the value elements are the contents of the documents read from that server. 
 
-Stage 2 takes the result of the first stage and produces a _Map[URI,Int]_.
-The second stage mapper takes the _URI_ and _Seq[String]_ from the first stage and splits each string on white space, getting the number of words, then returns the sum of the lengths.
+Stage 2 takes the result of the first stage and produces a _Map\[URI,Int]_.
+The second stage mapper takes the _URI_ and _Seq\[String]_ from the first stage and splits each string on white space, getting the number of words, then returns the sum of the lengths.
 In practice (if you are using just the three default args), these sequences have only one string each.
 The second stage reducer simply adds together the results of the mapping phase.
 The result of stage 2 is a map of _URI->Int_.
@@ -385,3 +385,9 @@ Future enhancements
 
 * Enable the shuffle process to match keys with reducers according to an application-specific mapping (rather than the current, arbitrary, mapping).
 * Enable reducers (and possibly mappers) to be replicated across a cluster.
+
+Revision History
+================
+
+* 1.0.0 Earliest version (for 2.12)
+* 1.0.1 Version compatible with 2.13

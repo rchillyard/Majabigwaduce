@@ -47,7 +47,8 @@ class MapReduceFuncSpec extends FlatSpec with should.Matchers with Futures with 
     val props = Props.create(classOf[Master_First_Fold[String, URL, String, Seq[String]]], config, MapReduce.lift(mapper _), reducer _, init _)
     //noinspection SpellCheckingInspection
     val master = system.actorOf(props, s"""mstr-$spec1""")
-    val wsUrf = master.ask(Seq("http://www.bbc.com/", "http://www.cnn.com/", "http://default/")).mapTo[Response[URL, Seq[String]]]
+    val futureResponse = master.ask(Seq("http://www.bbc.com/", "http://www.cnn.com/", "http://default/"))
+    val wsUrf = futureResponse.mapTo[Response[URL, Seq[String]]]
     whenReady(wsUrf, timeout(Span(6, Seconds))) {
       wsUr =>
         assert(wsUr.size == 3)
@@ -114,6 +115,7 @@ class MapReduceFuncSpec extends FlatSpec with should.Matchers with Futures with 
     val wsUrf = master1.ask(Seq("http://www.bbc.com/", "http://www.cnn.com/", "http://default/")).mapTo[Response[URL, Seq[String]]]
     val iUrf = wsUrf flatMap { wsUr => val wsUm = wsUr.right; master2.ask(wsUm).mapTo[Response[URL, Int]] }
     iUrf.onComplete {
+      // FIXME why does this happen>
       case Failure(x: AskTimeoutException) => fail(s"should throw MapReduceException, not $x")
       case Failure(x) =>
         // TODO understand why this fails when this test is run as part of a suite, but it works fine when alone.

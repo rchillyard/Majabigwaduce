@@ -35,10 +35,15 @@ case class WebCrawler(depth: Int)(implicit system: ActorSystem, config: Config, 
     def zero: Strings = Nil: Strings
   }
 
+  val actors: Actors = Actors(implicitly[ActorSystem], implicitly[Config])
+
   implicit object StringsZero$ extends StringsZero$
 
-  val stage1: MapReduce[String, URI, Strings] = MapReduceFirstFold.create(getHostAndURI, appendContent)(config, system, timeout)
-  val stage2: MapReduce[(URI, Strings), URI, Strings] = MapReducePipeFold.create(getLinkStrings, joinWordLists, 1)(config, system, timeout)
+  // TODO fix MapReduceFirstFold so that we can pass appendContent directly.
+  val g: (Strings, URI) => Strings = (ws, u) => appendContent(ws, u).get
+
+  val stage1: MapReduce[String, URI, Strings] = MapReduceFirstFold(getHostAndURI, g)(actors, timeout)
+  val stage2: MapReduce[(URI, Strings), URI, Strings] = MapReducePipeFold.create(getLinkStrings, joinWordLists, 1)(actors, timeout)
   val stage3: Reduce[URI, Strings, Strings] = Reduce[URI, Strings, Strings](_ ++ _)
   val crawler: Strings => Future[Strings] = stage1 & stage2 | stage3
 
@@ -62,21 +67,23 @@ case class WebCrawler(depth: Int)(implicit system: ActorSystem, config: Config, 
     }
 
   // Probably, we should get three URIs: the host, the directory and the URI for the string w
-  private def getHostAndURI(w: String): (URI, URI) = {
+  private def getHostAndURI(w: String): Try[(URI, URI)] = {
     def getHostURI(u: URI): URI = new URL(u.getScheme + "://" + u.getHost).toURI
 
-    val u = new URI(w)
-    (getHostURI(u), u)
+    Try {
+      val u = new URI(w)
+      (getHostURI(u), u)
+    }
   }
 
   // TODO use Using...
-  private def appendContent(a: Strings, v: URI): Strings = a :+ Source.fromURL(v.toURL).mkString
+//  private def appendContent(a: Strings, v: URI): Strings = a :+ Source.fromURL(v.toURL).mkString
 
-  //  private def appendContent(a: Strings, v: URI): Try[Strings] = Using(Source.fromURL(v.toURL)) { s => a :+ s.mkString }
+    private def appendContent(a: Strings, v: URI): Try[Strings] = Using(Source.fromURL(v.toURL)) { s => a :+ s.mkString }
 
   // We are passing the wrong URL into getLinks: the value of u is the server, not the current directory.
   private def getLinkStrings(u: URI, gs: Strings): (URI, Strings) = {
-    def normalizeURL(w: URI, w2: String) = new URL(w.toURL, w2.toString).toString
+    def normalizeURL(w: URI, w2: String) = new URL(w.toURL, w2).toString
 
     def getLinks(u: URI, g: String): Strings = for (
       nsA <- HTMLParser.parse(g) \\ "a";

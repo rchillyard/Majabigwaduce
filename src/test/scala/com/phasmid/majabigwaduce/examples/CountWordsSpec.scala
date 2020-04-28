@@ -38,6 +38,7 @@ class CountWordsSpec extends FlatSpec with should.Matchers with Futures with Sca
   }
 }
 
+//noinspection SpellCheckingInspection
 object CountWordsSpec {
   // there are 556 words in total between the three extracts
   val bbcText =

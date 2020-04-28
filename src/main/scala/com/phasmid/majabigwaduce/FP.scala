@@ -52,8 +52,7 @@ object FP {
     * @tparam X the underlying type
     * @return : Try[Seq[X]\]
     */
-    // TODO fix deprecation
-  def sequence[X](xts: Seq[Try[X]]): Try[Seq[X]] = (Try(Seq[X]()) /: xts) { (xst, xt) => for (xs <- xst; x <- xt) yield xs :+ x }
+  def sequence[X](xts: Seq[Try[X]]): Try[Seq[X]] = xts.foldLeft(Try(Seq[X]())) { (xst, xt) => for (xs <- xst; x <- xt) yield xs :+ x }
 
   /**
     * Method sequence to separate out the left and right parts of a map of Either's.
