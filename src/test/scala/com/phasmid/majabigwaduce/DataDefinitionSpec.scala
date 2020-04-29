@@ -14,7 +14,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.language.postfixOps
 
-class DataDefinitionSpec extends FlatSpec with should.Matchers with Futures with ScalaFutures with Inside {
+class DataDefinitionSpec extends flatspec.AnyFlatSpec with should.Matchers with Futures with ScalaFutures with Inside {
 
   behavior of "LazyDD of Map"
   it should "apply correctly with single partition" in {

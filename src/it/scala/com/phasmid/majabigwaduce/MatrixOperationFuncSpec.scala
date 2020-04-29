@@ -18,7 +18,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.language.postfixOps
 
-class MatrixOperationFuncSpec extends FlatSpec with should.Matchers with Futures with ScalaFutures with Inside {
+class MatrixOperationFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with Futures with ScalaFutures with Inside {
   "MatrixOperation" should "apply vector" in {
     implicit val config: Config = ConfigFactory.load.getConfig("Matrix")
     implicit val system: ActorSystem = ActorSystem(config.getString("name"))

@@ -12,7 +12,7 @@ import org.scalatest.concurrent._
 import org.scalatest.matchers.should
 import org.scalatest.time._
 
-class CountWordsSpec extends FlatSpec with should.Matchers with Futures with ScalaFutures with Inside with MockFactory {
+class CountWordsSpec extends flatspec.AnyFlatSpec with should.Matchers with Futures with ScalaFutures with Inside with MockFactory {
   "CountWords" should "work for http://www.bbc.com/ http://www.cnn.com/ http://default/" in {
     val wBBC = "http://www.bbc.com/"
     val wCNN = "http://www.cnn.com/"

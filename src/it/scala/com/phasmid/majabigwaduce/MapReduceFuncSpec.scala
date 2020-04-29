@@ -27,7 +27,7 @@ case class MockURL(w: String) {
   def asTuple: (URL, String) = url -> content
 }
 
-class MapReduceFuncSpec extends FlatSpec with should.Matchers with Futures with ScalaFutures with Inside {
+class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with Futures with ScalaFutures with Inside {
   implicit val system: ActorSystem = ActorSystem("MapReduceFuncSpec")
   implicit val timeout: Timeout = Timeout(5 seconds)
 

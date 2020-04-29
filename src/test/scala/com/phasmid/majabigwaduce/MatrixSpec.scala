@@ -12,7 +12,7 @@ import scala.concurrent.duration
 import scala.concurrent.duration.Duration
 import scala.language.postfixOps
 
-class MatrixSpec extends FlatSpec with should.Matchers with Futures with Inside {
+class MatrixSpec extends flatspec.AnyFlatSpec with should.Matchers with Futures with Inside {
 
   // TODO why does this not get satisfied from Matrix1 and Matrix2 objects?
   implicit val atMost: Duration = duration.FiniteDuration(1, "second")
