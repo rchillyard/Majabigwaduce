@@ -232,6 +232,13 @@ object Matrix2 {
   implicit val atMost: Duration = duration.FiniteDuration(10, "second")
   implicit val cutoff: Dimensions = Dimensions(Seq(20, 20))
 
+  /**
+    * Method to create an identity matrix of order n.
+    *
+    * @param n the required size of the rows and columns.
+    * @tparam T the underlying type.
+    * @return a matrix of size n x n with 1s down the diagonal and zeros elsewhere.
+    */
   def identity[T: Numeric](n: Int): Matrix2[T] = Matrix2[T](for (i <- 0 until n) yield for (j <- 0 until n) yield Matrix.kroneckerDelta(i, j))
 }
 

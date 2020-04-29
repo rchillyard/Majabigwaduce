@@ -305,6 +305,7 @@ abstract class BaseDD[K, V](implicit ec: ExecutionContext) extends DataDefinitio
   * @param timeout the value of timeout
   */
 case class DDContext(config: Config, system: ActorSystem, timeout: Timeout)(implicit executor: ExecutionContext) {
+  // NOTE: consciously using var here.
   var closeables: List[AutoCloseable] = Nil
 
   def clean(): Unit = {
@@ -339,9 +340,9 @@ object DataDefinition {
 
   implicit val context: DDContext = DDContext.apply
 
-  def apply[K, V: Monoid](k_vs: Map[K, V], partitions: Int): DataDefinition[K, V] = LazyDD(k_vs, identity[(K, V)])(partitions)
+  def apply[K, V: Monoid](kVs: Map[K, V], partitions: Int): DataDefinition[K, V] = LazyDD(kVs, identity[(K, V)])(partitions)
 
-  def apply[K, V: Monoid](k_vs: Map[K, V]): DataDefinition[K, V] = LazyDD(k_vs, identity[(K, V)])()
+  def apply[K, V: Monoid](kVs: Map[K, V]): DataDefinition[K, V] = LazyDD(kVs, identity[(K, V)])()
 
   def apply[K, V: Monoid](vs: Seq[V], f: V => K, partitions: Int): DataDefinition[K, V] = apply((for (v <- vs) yield (f(v), v)).toMap, partitions)
 

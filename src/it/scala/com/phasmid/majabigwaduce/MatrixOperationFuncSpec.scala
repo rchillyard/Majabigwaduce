@@ -32,8 +32,8 @@ class MatrixOperationFuncSpec extends FlatSpec with should.Matchers with Futures
 
     whenReady(isf, timeout(Span(300, Seconds))) {
       is: Seq[Int] =>
-        assert(is.head == 8 && is.tail.head == 11)
-      //        println(s"Response: $is")
+        val ok = for (i1 <- is.headOption; i2 <- is.tail.headOption) yield i1 == 8 && i2 == 11
+        ok should matchPattern { case Some(true) => }
     }
 
     Await.ready(system.terminate(), 5 seconds)

@@ -11,7 +11,7 @@ case class Actors(system: ActorSystem, config: Config) extends AutoCloseable {
       case None => "Nemo"
     }
     val actorId = s"$actorName-$suffix"
-    system.log.debug(s"""createActor: $actorId of ${props.args.head}""")
+    system.log.debug(s"""createActor: $actorId of ${props.args.headOption.getOrElse(().getClass)}""")
     system.actorOf(props, actorId)
   }
 
@@ -21,15 +21,11 @@ case class Actors(system: ActorSystem, config: Config) extends AutoCloseable {
 
   private lazy val exceptionStack = config.getBoolean("exceptionStack")
 
-  // NOTE: mutable list of actor refs
-  //  var actors = Seq[ActorRef]()
-
-  def close(): Unit = {
-    //    actors foreach(system.)
-  }
+  def close(): Unit = {}
 }
 
 object Actors {
+  // NOTE: consciously using var here.
   var count: Int = 0
   def getCount: Int = {count+=1; count}
 }
