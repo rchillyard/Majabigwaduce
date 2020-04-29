@@ -85,6 +85,8 @@ case class MapReduceFirst[V0, K1, W, V1 >: W](f: V0 => Try[(K1, W)], g: (V1, W) 
   // The following constructor allows for a f which needs to be lifted to T=>Try[R]
   // CONSIDER implementing an apply method in MapReduce for this signature
   //  def this(fy: V0 => (K1, W), g: (V1, W) => V1)(actors: Actors, timeout: Timeout) = this(MapReduce.lift(fy), g)(actors, timeout)
+
+  // CONSIDER this looks dangerous, although this class does not extend Actor so maybe it's OK.
   def createProps: Props = Props(new Master_First(actors.config, f, g))
 
   //noinspection SpellCheckingInspection

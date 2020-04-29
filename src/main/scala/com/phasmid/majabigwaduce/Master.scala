@@ -120,7 +120,7 @@ abstract class MasterBaseFirst[V1, K2, W, V2](config: Config, f: V1 => Try[(K2, 
       log.info(s"Master received Seq[V1]: with ${v1s.length} elements")
       val caller = sender // XXX: this looks strange but it is required
       doMapReduce(KeyValueSeq.sequence[Unit, V1](v1s)).onComplete {
-        case Success(wXeK2m) => caller ! Response(wXeK2m)
+        case Success(wXeK2m) => caller ! Response.create(wXeK2m)
         case Failure(x) => caller ! akka.actor.Status.Failure(x)
       }
     case q =>
@@ -186,7 +186,7 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => Try[
       doMapReduce(KeyValueSeq.map[K1, V1](v1K1m)).onComplete {
         case Success(v2XeK2m) =>
           maybeLog("response: {}", v2XeK2m)
-          caller ! Response(v2XeK2m)
+          caller ! Response.create(v2XeK2m)
         case Failure(x) =>
           log.error(x, s"no response--failure")
           caller ! akka.actor.Status.Failure(x)
@@ -196,7 +196,7 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => Try[
       //      maybeLog("received: {}",v1s)
       val caller = sender
       doMapReduce(KeyValueSeq[K1, V1](v1s)).onComplete {
-        case Success(v2XeK2m) => caller ! Response(v2XeK2m)
+        case Success(v2XeK2m) => caller ! Response.create(v2XeK2m)
         case Failure(x) => caller ! akka.actor.Status.Failure(x)
       }
     case q =>
@@ -257,10 +257,11 @@ case class Response[K, V](left: Map[K, Throwable], right: Map[K, V]) {
 }
 
 object Response {
-  def apply[K, V](vXeKm: Map[K, Either[Throwable, V]]): Response[K, V] = {
-    val t = FP.toMap(FP.sequenceLeftRight(vXeKm))
-    new Response(t._1, t._2)
-  }
+
+  import FP._
+
+  def create[K, V](vXeKm: Map[K, Either[Throwable, V]]): Response[K, V] =
+    invokeTupled(toMap(sequenceLeftRight(vXeKm)))(apply)
 }
 
 object Master {

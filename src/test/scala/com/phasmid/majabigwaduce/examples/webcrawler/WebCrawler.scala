@@ -15,7 +15,7 @@ import scala.concurrent._
 import scala.concurrent.duration._
 import scala.io.Source
 import scala.language.postfixOps
-import scala.util.{Try, Using}
+import scala.util.{Failure, Success, Try, Using}
 
 /**
   * WebCrawler: an example application of the MapReduce framework.
@@ -39,8 +39,11 @@ case class WebCrawler(depth: Int)(implicit system: ActorSystem, config: Config, 
 
   implicit object StringsZero$ extends StringsZero$
 
-  // TODO fix MapReduceFirstFold so that we can pass appendContent directly.
-  val g: (Strings, URI) => Strings = (ws, u) => appendContent(ws, u).get
+  val g: (Strings, URI) => Strings = (ws, u) => appendContent(ws, u) match {
+    case Success(w) => w
+    case Failure(x) => actors.logException(s"problem with reduce function: ${x.getLocalizedMessage}")
+      Nil
+  }
 
   val stage1: MapReduce[String, URI, Strings] = MapReduceFirstFold(getHostAndURI, g)(actors, timeout)
   val stage2: MapReduce[(URI, Strings), URI, Strings] = MapReducePipeFold.create(getLinkStrings, joinWordLists, 1)(actors, timeout)
@@ -88,7 +91,7 @@ case class WebCrawler(depth: Int)(implicit system: ActorSystem, config: Config, 
     def getLinks(u: URI, g: String): Strings = for (
       nsA <- HTMLParser.parse(g) \\ "a";
       nsH <- nsA \ "@href";
-      nH <- nsH.head
+      nH <- nsH.headOption.toSeq
     ) yield normalizeURL(u, nH.toString)
 
     (u, (for (g <- gs) yield getLinks(u, g)) reduce (_ ++ _))

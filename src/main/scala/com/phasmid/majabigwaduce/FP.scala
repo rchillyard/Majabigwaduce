@@ -121,7 +121,7 @@ object FP {
     * @return a Map[K,V] (in sequential form)
     */
   def sequenceRight[K, X, V](xVeKs: Seq[(K, Either[X, V])]): Seq[(K, V)] =
-    for ((k, e) <- xVeKs; if e.isRight) yield k -> e.getOrElse(null.asInstanceOf[V])
+    for ((k, e) <- xVeKs; if e.isRight) yield k -> e.getOrElse(0.asInstanceOf[V])
 
   /**
     * Method toMap which takes a tuple of sequenced maps and returns a tuple of actual maps (each map has the same key type but different value types)
@@ -206,5 +206,5 @@ object FP {
     t2 <- t2y
   } yield f(t1, t2)
 
-
+  def invokeTupled[T1, T2, R](t: (T1, T2))(f: (T1, T2) => R): R = f.tupled(t)
 }

@@ -40,11 +40,11 @@ sealed trait DataDefinition[K, V] extends (() => Future[Map[K, V]]) {
     * Method to evaluate this DataDefinition and reduce the dimensionality of the result by ignoring the keys
     * and aggregating the values according to the function wv_w
     *
-    * @param wv_w the aggregation function
+    * @param wVWf the aggregation function
     * @tparam W the underlying type of the result
     * @return a W value, wrapped in Future.
     */
-  def reduce[W: Zero](wv_w: (W, V) => W): Future[W]
+  def reduce[W: Zero](wVWf: (W, V) => W): Future[W]
 
   /**
     * Evaluate the number of elements in this DataDefinition
@@ -283,11 +283,11 @@ abstract class BaseDD[K, V](implicit ec: ExecutionContext) extends DataDefinitio
     * Method to evaluate this DataDefinition and reduce the dimensionality of the result by ignoring the keys
     * and aggregating the values according to the function xw_x.
     *
-    * @param xv_x the aggregation function.
+    * @param wVWf the aggregation function.
     * @tparam X the underlying type of the result.
     * @return an X value, wrapped in Future.
     */
-  def reduce[X: Zero](xv_x: (X, V) => X): Future[X] = for (kVm <- apply()) yield kVm.values.foldLeft(implicitly[Zero[X]].zero)(xv_x)
+  def reduce[X: Zero](wVWf: (X, V) => X): Future[X] = for (kVm <- apply()) yield kVm.values.foldLeft(implicitly[Zero[X]].zero)(wVWf)
 
   /**
     * Evaluate the number of elements in this DataDefinition

@@ -5,18 +5,18 @@
 package com.phasmid.majabigwaduce.examples
 package webcrawler
 
+import java.io.ByteArrayInputStream
+
+import org.ccil.cowan.tagsoup.jaxp.SAXFactoryImpl
+import org.xml.sax.InputSource
+
+import scala.xml.Node
+import scala.xml.parsing.NoBindingFactoryAdapter
+
 /**
   * @author scalaprof
   */
 object HTMLParser {
-
-  import java.io.ByteArrayInputStream
-
-  import org.ccil.cowan.tagsoup.jaxp.SAXFactoryImpl
-  import org.xml.sax.InputSource
-
-  import scala.xml.Node
-  import scala.xml.parsing.NoBindingFactoryAdapter
 
   lazy val adapter = new NoBindingFactoryAdapter()
   private lazy val parser = (new SAXFactoryImpl).newSAXParser

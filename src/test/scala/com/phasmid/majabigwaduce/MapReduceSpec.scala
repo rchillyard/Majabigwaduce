@@ -77,6 +77,3 @@ case class MockMapReduce[T, K, V](f: Seq[T] => Map[K, V]) extends MapReduce[T, K
 
   def close(): Unit = ()
 }
-
-object MapReduceSpec {
-}

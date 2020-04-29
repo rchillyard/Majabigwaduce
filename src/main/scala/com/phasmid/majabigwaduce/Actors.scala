@@ -34,7 +34,7 @@ case class Actors(system: ActorSystem, config: Config) extends AutoCloseable {
 
   private val suffix = (System.nanoTime().hashCode + Actors.getCount).toHexString
 
-  def logException(m: => String, x: Throwable): Unit = if (exceptionStack) system.log.error(x, m) else system.log.warning(s"$m: ${x.getLocalizedMessage}")
+  def logException(m: => String, x: Throwable = null): Unit = if (exceptionStack) system.log.error(x, m) else system.log.warning(s"$m: ${x.getLocalizedMessage}")
 
   private lazy val exceptionStack = config.getBoolean("exceptionStack")
 
