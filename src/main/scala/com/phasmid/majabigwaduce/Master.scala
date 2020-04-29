@@ -155,11 +155,12 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => Try[
 
   import context.dispatcher
 
-  private val mapper = actors.createActor(Some("mpr"), mapperProps)
+  // NOTE: the mapper and reducers should be terminated when this master is terminated.
+  private val mapper = actors.createActor(context, Some(Master.sMpr), mapperProps)
   private val nReducers = config.getInt("reducers")
   log.debug(s"creating $nReducers reducers")
-  //noinspection SpellCheckingInspection
-  private val reducers = for (i <- 1 to nReducers) yield actors.createActor(Some(s"rdcr-$i"), reducerProps(g, z))
+  private val reducers = for (i <- 1 to nReducers) yield
+    actors.createActor(context, Some(s"${Master.sReducer}-$i"), reducerProps(g, z))
   if (Master.isForgiving(config)) log.debug("setting forgiving mode")
 
   /**
@@ -284,4 +285,8 @@ object Master {
   def unitize[A, B](f: A => B): (Unit, A) => B = {
     (_, v) => f(v)
   }
+
+  //noinspection SpellCheckingInspection
+  val sReducer = "rdcr"
+  val sMpr = "mpr"
 }

@@ -236,7 +236,7 @@ abstract class MapReduce_Base[T, K, V](actors: Actors)(implicit timeout: Timeout
   self =>
   implicit def ec: ExecutionContextExecutor = actors.system.dispatcher
 
-  private val master = actors.createActor(createName, createProps)
+  private val master = actors.createActor(actors.system, createName, createProps)
 
   def apply(ts: Seq[T]): Future[Map[K, V]] = {
     // Note: currently, we ignore the value of report but we could pass back a tuple that includes ok and the resulting map
