@@ -478,9 +478,9 @@ class DataDefinitionSpec extends flatspec.AnyFlatSpec with should.Matchers with 
     target.clean()
   }
 
-  //The join only works when key is never changed, this test won't work since key changes
-  // FIXME Issue 7 Join works only when key never changed
-  ignore should "mapKeyAndValue/join/apply correctly with single partition" in {
+  // The join only works when key is never changed, this test won't work since key changes
+  // The problem here was attributed to Issue #7 but it seems to work now.
+  it should "mapKeyAndValue/join/apply correctly with single partition" in {
     // given
     val target = EagerDD(Map("a" -> 1, "b" -> 2, "c" -> 3))
     val target2 = DataDefinition(Map("a1" -> 2.1, "b1" -> 3.1), 0)

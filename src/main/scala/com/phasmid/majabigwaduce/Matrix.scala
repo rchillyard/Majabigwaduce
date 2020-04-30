@@ -165,6 +165,7 @@ case class Matrix2[T: Numeric](rows: Seq[Seq[T]]) extends BaseMatrix[Seq[T]] {
   private def cols: Seq[Seq[T]] = rows.transpose
 
   implicit val atMost: Duration = duration.FiniteDuration(1, "second")
+
   protected def build[U: Numeric](us: Seq[U]): Matrix[U] = Matrix1(us)
 
   protected def f[Y: Numeric, Z: Product : Monoid](ts: Seq[T], ys: Seq[Y]): Z = if (ts.length == ys.length) {
@@ -175,7 +176,7 @@ case class Matrix2[T: Numeric](rows: Seq[Seq[T]]) extends BaseMatrix[Seq[T]] {
   else throw IncompatibleDimensionsException(ts.length, ys.length)
 
   private val r = rows.length
-  private val c = rows.head.length // CONSIDER checking other rows too
+  private val c = rows.headOption.map(_.length).getOrElse(0) // CONSIDER checking other rows too
 }
 
 /**
@@ -205,11 +206,11 @@ trait Product[Z] {
 case class Dimensions(xs: Seq[Int]) extends Ordered[Dimensions] {
   def size: Int = xs.length
 
-  def rows: Int = xs.head
+  def rows: Int = xs.headOption.getOrElse(0)
 
   val cols: Int = xs.tail.headOption.getOrElse(1)
 
-  def area: Int = xs.head * cols
+  def area: Int = rows * cols
 
   def compare(that: Dimensions): Int = implicitly[Ordering[Int]].compare(area, that.area)
 }

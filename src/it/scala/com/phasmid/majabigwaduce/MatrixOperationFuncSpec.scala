@@ -39,7 +39,8 @@ class MatrixOperationFuncSpec extends flatspec.AnyFlatSpec with should.Matchers 
     Await.ready(system.terminate(), 5 seconds)
   }
 
-  ignore should "create product of matrices" in {
+  // NOTE: Issue #15 now fixed (this test was ignored).
+  it should "create product of matrices" in {
     implicit val config: Config = ConfigFactory.load.getConfig("Matrix")
     implicit val system: ActorSystem = ActorSystem(config.getString("name"))
     implicit val to: Timeout = getTimeout(config.getString("timeout"))
