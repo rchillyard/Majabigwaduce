@@ -82,21 +82,24 @@ trait MapReduce[T, K1, V1] extends ASync[Seq[T], Map[K1, V1]] with AutoCloseable
   * @param timeout the value of timeout to be used
   */
 case class MapReduceFirst[V0, K1, W, V1 >: W](f: V0 => Try[(K1, W)], g: (V1, W) => V1)(actors: Actors, timeout: Timeout) extends MapReduce_LoggingBase[V0, K1, V1](actors)(timeout) {
-  // The following constructor allows for a f which needs to be lifted to T=>Try[R]
-  // CONSIDER implementing an apply method in MapReduce for this signature
-  //  def this(fy: V0 => (K1, W), g: (V1, W) => V1)(actors: Actors, timeout: Timeout) = this(MapReduce.lift(fy), g)(actors, timeout)
-
-  // CONSIDER this looks dangerous, although this class does not extend Actor so maybe it's OK.
+  /**
+    * Method to create a Props value for this class.
+    * CONSIDER this looks dangerous, although this class does not extend Actor so maybe it's OK.
+    *
+    * @return a Props based on a new instance of Master_First
+    */
   def createProps: Props = Props(new Master_First(actors.config, f, g))
 
-  //noinspection SpellCheckingInspection
-  override def createName: Option[String] = Some(s"""mrf-mstr""")
+  override def createName: Option[String] = Some(MapReduceFirst.sMrfMstr)
 }
 
 object MapReduceFirst {
   // The following apply method allows for a f which needs to be lifted to T=>Try[R]
   def create[V0, K1, W, V1 >: W](fy: V0 => (K1, W), g: (V1, W) => V1)(implicit actors: Actors, timeout: Timeout): MapReduceFirst[V0, K1, W, V1] =
     apply(MapReduce.lift(fy), g)(actors, timeout)
+
+  //noinspection SpellCheckingInspection
+  val sMrfMstr: String = "mrf-mstr"
 }
 /**
   * A later-stage MapReduce class where the result type V1 is a super-type of the intermediate type W
@@ -112,17 +115,19 @@ object MapReduceFirst {
   * @param actors  an instance of Actors
   * @param timeout the value of timeout to be used
   */
-//noinspection SpellCheckingInspection
 case class MapReducePipe[K0, V0, K1, W, V1 >: W](f: (K0, V0) => Try[(K1, W)], g: (V1, W) => V1, n: Int)(implicit actors: Actors, timeout: Timeout) extends MapReduce_LoggingBase[(K0, V0), K1, V1](actors)(timeout) {
   def createProps: Props = Props(new Master(actors.config, f, g))
 
-  override def createName: Option[String] = Some(s"""mrp-mstr-$n""")
+  override def createName: Option[String] = Some(s"""${MapReducePipe.sMrpMaster}-$n""")
 }
 
 object MapReducePipe {
   // The following apply method allows for a f which needs to be lifted to T=>Try[R]
   def create[K0, V0, K1, W, V1 >: W](f: (K0, V0) => (K1, W), g: (V1, W) => V1, n: Int)(implicit actors: Actors, timeout: Timeout): MapReducePipe[K0, V0, K1, W, V1] =
     apply(MapReduce.lift(f), g, n)(actors, timeout)
+
+  //noinspection SpellCheckingInspection
+  val sMrpMaster: String = "mrf-mstr"
 }
 
 /**
@@ -146,13 +151,15 @@ case class MapReduceFirstFold[V0, K1, W, V1: Zero](f: V0 => Try[(K1, W)], g: (V1
   //  def this(fy: V0 => (K1, W), g: (V1, W) => V1)(actors: Actors, timeout: Timeout) = this(MapReduce.lift(fy), g)(actors, timeout)
   def createProps: Props = Props(new Master_First_Fold(actors.config, f, g, implicitly[Zero[V1]].zero _))
 
-  //noinspection SpellCheckingInspection
-  override def createName: Option[String] = Some(s"""mrff-mstr""")
+  override def createName: Option[String] = Some(MapReduceFirstFold.sMrffMstr)
 }
 
 object MapReduceFirstFold {
   def create[V0, K1, W, V1: Zero](f: V0 => (K1, W), g: (V1, W) => V1)(actors: Actors, timeout: Timeout): MapReduceFirstFold[V0, K1, W, V1] =
     apply(MapReduce.lift(f), g)(actors, timeout)
+
+  //noinspection SpellCheckingInspection
+  val sMrffMstr = "mrff-mstr"
 }
 
 /**
@@ -169,17 +176,20 @@ object MapReduceFirstFold {
   * @param actors  an instance of Actors.
   * @param timeout the value of timeout to be used
   */
-//noinspection SpellCheckingInspection
 case class MapReducePipeFold[K0, V0, K1, W, V1: Zero](f: (K0, V0) => Try[(K1, W)], g: (V1, W) => V1, n: Int)(actors: Actors, timeout: Timeout) extends MapReduce_LoggingBase[(K0, V0), K1, V1](actors)(timeout) {
   // The following constructor allows for a f which needs to be lifted to T=>Try[R]
   //  def this(fy: (K0, V0) => (K1, W), g: (V1, W) => V1, n: Int)(actors: Actors, timeout: Timeout) = this(MapReduce.lift(fy), g, n)(actors, timeout)
   def createProps: Props = Props(new Master_Fold(actors.config, f, g, implicitly[Zero[V1]].zero _))
 
-  override def createName: Option[String] = Some(s"""mrpf-mstr-$n""")
+  override def createName: Option[String] = Some(s"""${MapReducePipeFold.sMRPFMaster}-$n""")
 }
 
 object MapReducePipeFold {
-  def create[K0, V0, K1, W, V1: Zero](f: (K0, V0) => (K1, W), g: (V1, W) => V1, n: Int)(actors: Actors, timeout: Timeout): MapReducePipeFold[K0, V0, K1, W, V1] = new MapReducePipeFold(MapReduce.lift(f), g, n)(actors, timeout)
+  def create[K0, V0, K1, W, V1: Zero](f: (K0, V0) => (K1, W), g: (V1, W) => V1, n: Int)(actors: Actors, timeout: Timeout): MapReducePipeFold[K0, V0, K1, W, V1] =
+    apply(MapReduce.lift(f), g, n)(actors, timeout)
+
+  //noinspection SpellCheckingInspection
+  val sMRPFMaster = "mrpf-mstr"
 }
 
 /**

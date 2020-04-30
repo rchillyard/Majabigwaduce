@@ -15,6 +15,7 @@ import scala.util.{Failure, Success}
 
 class MatrixOperationSpec extends flatspec.AnyFlatSpec with should.Matchers with Futures with ScalaFutures with Inside with MockFactory {
   behavior of "dot"
+
   it should "work for empty vectors" in {
     MatrixOperation.dot[Int](Seq(), Seq()) shouldBe Success(0)
   }

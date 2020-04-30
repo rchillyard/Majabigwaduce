@@ -59,7 +59,7 @@ abstract class MapReduceActor extends Actor with ActorLogging with AutoCloseable
   }
 
   def close(): Unit = {
-    // close down any non-actor resources (actors get closed anyway).
+    // NOTE: close down any non-actor resources (actors get closed anyway).
   }
 }
 
@@ -113,15 +113,13 @@ trait CleanerCollector[K, W] {
   }
 }
 
-case class MapReduceException(context: String, f: Throwable) extends Throwable(context, f)
+case class MapReduceException(context: String, x: Throwable) extends Throwable(context, x)
 
 object MapReduceException {
   def apply(context: String): MapReduceException = MapReduceException(context, null)
 }
 
 /**
-  * TODO Don't think we really need this close mechanism.
-  * Akka does everything for us.
-  *
+  * CONSIDER Don't think we really need this close mechanism. Akka does everything for us.
   */
 object Close

@@ -17,7 +17,7 @@ import scala.concurrent.{Await, ExecutionContext, Future}
   * Trait to represent a "data definition" (similar to RDD in Spark).
   * Essentially, a DataDefinition[K, V] is a function which transforms Unit into a Future[Map[K,V].
   * Like RDD, it is lazy and can be partitioned.
-  * In order to yield a concrete value, i.e. an "action", there are three methods which may be called: apply(), reduce(f), and count.
+  * In order to yield a concrete value, i.e. an "action", there are three methods which may be called: apply, reduce(f), and count.
   *
   * Created by scalaprof on 10/31/16.
   *
@@ -87,7 +87,8 @@ sealed trait DataDefinition[K, V] extends (() => Future[Map[K, V]]) {
 
 /**
   * Case Class which implements DataDefinition[K, V] eagerly and which is based on a Map[K,V].
-  * NOTE: there is no very practical usage for this type, but it serves as an alternative subclass of DataDefinition.
+  * NOTE: this type serves as the appropriate result of evaluating a lazy DD.
+  * In that respect it is the equivalent of the array which is created when invoking collect on an RDD in Spark.
   *
   * @param kVm the actual data definition represented as a Map
   * @param ec  the (implicit) execution context
@@ -270,7 +271,7 @@ abstract class BaseDD[K, V](implicit ec: ExecutionContext) extends DataDefinitio
     *
     * @return a map of key-value pairs wrapped in Future
     */
-  override def apply(): Future[Map[K, V]] = evaluate map (_.evalMap)
+  override def apply: Future[Map[K, V]] = evaluate map (_.evalMap)
 
   /**
     * Evaluate this BaseDD as a Future[HasEvaluatedMap[K, V]
@@ -287,14 +288,14 @@ abstract class BaseDD[K, V](implicit ec: ExecutionContext) extends DataDefinitio
     * @tparam X the underlying type of the result.
     * @return an X value, wrapped in Future.
     */
-  def reduce[X: Zero](wVWf: (X, V) => X): Future[X] = for (kVm <- apply()) yield kVm.values.foldLeft(implicitly[Zero[X]].zero)(wVWf)
+  def reduce[X: Zero](wVWf: (X, V) => X): Future[X] = for (kVm <- apply) yield kVm.values.foldLeft(implicitly[Zero[X]].zero)(wVWf)
 
   /**
     * Evaluate the number of elements in this DataDefinition
     *
     * @return the number of k-v pairs
     */
-  def count: Future[Int] = for (kVm <- apply()) yield kVm.size
+  def count: Future[Int] = for (kVm <- apply) yield kVm.size
 }
 
 /**

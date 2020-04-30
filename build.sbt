@@ -1,6 +1,6 @@
 name := "Majabigwaduce"
 
-version := "1.0.2"
+version := "1.0.3"
 
 scalaVersion := "2.13.1"
 
@@ -26,14 +26,12 @@ libraryDependencies ++= Seq(
 	akkaGroup %% "akka-testkit" % akkaVersion % "test",
 	"org.scalatest" %% "scalatest" % scalaTestVersion % "test",
 	"org.scalamock" %% "scalamock" % scalaMockVersion % "test",
-// xml and tagsoup are for WebCrawler exemplar
+// NOTE: xml and tagsoup are for WebCrawler exemplar
   "org.scala-lang.modules" %% "scala-xml" % scalaXMLVersion % "test",
 	"org.ccil.cowan.tagsoup" % "tagsoup" % "1.2.1" % "test"
-	
 )
 
 unmanagedSourceDirectories in Test += baseDirectory.value / "src/it/scala"
 unmanagedResourceDirectories in Test += baseDirectory.value / "src/it/resources"
 
 parallelExecution in Test := false
-

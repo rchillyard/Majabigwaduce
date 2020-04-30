@@ -29,7 +29,7 @@ class MapperSpec
     "return map and empty throwable list" in {
       val f: (String, String) => Try[(Int, String)] = (k, v) => Try(k.hashCode, v.toUpperCase)
       val mapper = system.actorOf(Props.create(classOf[Mapper[String, String, Int, String]], f))
-      mapper ! KeyValueSeq(Seq("hello" -> "Fred", "goodbye" -> "Thursday"))
+      mapper ! KeyValuePairs(Seq("hello" -> "Fred", "goodbye" -> "Thursday"))
       expectMsg(Map(207022353 -> List("THURSDAY"), 99162322 -> List("FRED")) -> List())
     }
     "return failure status" in {
@@ -38,7 +38,7 @@ class MapperSpec
       implicit val executionContext: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
       val f: (String, String) => Try[(Int, String)] = (_, _) => Failure(MapReduceException("test"))
       val mapper = system.actorOf(Props.create(classOf[Mapper[String, String, Int, String]], f))
-      val rf = mapper ask KeyValueSeq(Seq("hello" -> "Fred", "goodbye" -> "Thursday"))
+      val rf = mapper ask KeyValuePairs(Seq("hello" -> "Fred", "goodbye" -> "Thursday"))
       Await.ready(rf, _5seconds)
       whenReady(rf.failed) {
         x => x shouldBe a[MapReduceException]
@@ -50,7 +50,7 @@ class MapperSpec
     "return map and empty throwable list" in {
       val f: (String, String) => Try[(Int, String)] = (k, v) => Try(k.hashCode, v.toUpperCase)
       val mapper = system.actorOf(Props.create(classOf[Mapper_Forgiving[String, String, Int, String]], f))
-      mapper ! KeyValueSeq(Seq("hello" -> "Fred", "goodbye" -> "Thursday"))
+      mapper ! KeyValuePairs(Seq("hello" -> "Fred", "goodbye" -> "Thursday"))
       expectMsg(Map(207022353 -> List("THURSDAY"), 99162322 -> List("FRED")) -> List())
     }
     "return failure status" in {
@@ -59,7 +59,7 @@ class MapperSpec
       implicit val executionContext: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
       val f: (String, String) => Try[(Int, String)] = (_, _) => Failure(MapReduceException("test"))
       val mapper = system.actorOf(Props.create(classOf[Mapper_Forgiving[String, String, Int, String]], f))
-      val rf: Future[(Map[Int, List[String]], List[String])] = (mapper ask KeyValueSeq(Seq("hello" -> "Fred", "goodbye" -> "Thursday"))).mapTo[(Map[Int, List[String]], List[String])]
+      val rf: Future[(Map[Int, List[String]], List[String])] = (mapper ask KeyValuePairs(Seq("hello" -> "Fred", "goodbye" -> "Thursday"))).mapTo[(Map[Int, List[String]], List[String])]
       Await.ready(rf, _5seconds)
       whenReady(rf) {
         case (m, xs) =>
