@@ -12,7 +12,7 @@ import scala.concurrent.duration
 import scala.concurrent.duration.Duration
 import scala.language.postfixOps
 
-class MatrixSpec extends FlatSpec with should.Matchers with Futures with Inside {
+class MatrixSpec extends flatspec.AnyFlatSpec with should.Matchers with Futures with Inside {
 
   // TODO why does this not get satisfied from Matrix1 and Matrix2 objects?
   implicit val atMost: Duration = duration.FiniteDuration(1, "second")
@@ -47,8 +47,8 @@ class MatrixSpec extends FlatSpec with should.Matchers with Futures with Inside 
     val rows = target.rows
     // then
     rows.length shouldBe 2
-    rows.head shouldBe 1
-    rows.last shouldBe 2
+    rows.headOption shouldBe Some(1)
+    rows.lastOption shouldBe Some(2)
   }
 
   it should "implement product correctly" in {
@@ -59,8 +59,8 @@ class MatrixSpec extends FlatSpec with should.Matchers with Futures with Inside 
     val rows = matrix.rows
     // then
     rows.length shouldBe 2
-    rows.head shouldBe 3
-    rows.last shouldBe 6
+    rows.headOption shouldBe Some(3)
+    rows.lastOption shouldBe Some(6)
   }
 
   it should "throw exception as appropriate in product" in {
@@ -89,8 +89,8 @@ class MatrixSpec extends FlatSpec with should.Matchers with Futures with Inside 
     val rows = target.rows
     // then
     rows.length shouldBe 2
-    rows.head shouldBe Seq(1, 2)
-    rows.last shouldBe Seq(3, 4)
+    rows.headOption shouldBe Some(Seq(1, 2))
+    rows.lastOption shouldBe Some(Seq(3, 4))
   }
 
   it should "implement transpose correctly" in {
@@ -100,8 +100,8 @@ class MatrixSpec extends FlatSpec with should.Matchers with Futures with Inside 
     val rows = target.transpose
     // then
     rows.length shouldBe 2
-    rows.head shouldBe Seq(1, 3)
-    rows.last shouldBe Seq(2, 4)
+    rows.headOption shouldBe Some(Seq(1, 3))
+    rows.lastOption shouldBe Some(Seq(2, 4))
   }
 
   it should "implement product correctly" in {
@@ -112,8 +112,8 @@ class MatrixSpec extends FlatSpec with should.Matchers with Futures with Inside 
     val rows = matrix.rows
     // then
     rows.length shouldBe 2
-    rows.head shouldBe 1
-    rows.last shouldBe 1
+    rows.headOption shouldBe Some(1)
+    rows.lastOption shouldBe Some(1)
   }
 
   it should "throw exception as appropriate in product" in {
@@ -131,9 +131,8 @@ class MatrixSpec extends FlatSpec with should.Matchers with Futures with Inside 
     val matrix: Matrix[Seq[Int]] = target.product2(multiplicand)
     val rows = matrix.rows
     // then
-    rows.length shouldBe 2
-    rows.head shouldBe Seq(4, 4)
-    rows.last shouldBe Seq(10, 8)
+    rows.headOption shouldBe Some(Seq(4, 4))
+    rows.lastOption shouldBe Some(Seq(10, 8))
   }
 
   it should "implement product by identity correctly" in {
@@ -156,9 +155,8 @@ class MatrixSpec extends FlatSpec with should.Matchers with Futures with Inside 
     val rows = matrix.rows
     // then
     rows.length shouldBe 2
-    rows.head.length shouldBe 2
-    rows.head shouldBe Seq(5, -4)
-    rows.last shouldBe Seq(4, 5)
+    rows.headOption shouldBe Some(Seq(5, -4))
+    rows.lastOption shouldBe Some(Seq(4, 5))
   }
 
   it should "implement product2 correctly 2x3 by 3x3" in {
@@ -170,9 +168,8 @@ class MatrixSpec extends FlatSpec with should.Matchers with Futures with Inside 
     val rows = matrix.rows
     // then
     rows.length shouldBe 2
-    rows.head.length shouldBe 3
-    rows.head shouldBe Seq(11, 12, 26)
-    rows.last shouldBe Seq(7, 5, -2)
+    rows.headOption shouldBe Some(Seq(11, 12, 26))
+    rows.lastOption shouldBe Some(Seq(7, 5, -2))
   }
 
   it should "throw exception as appropriate in product2" in {
@@ -193,12 +190,7 @@ class MatrixSpec extends FlatSpec with should.Matchers with Futures with Inside 
     // then
     val rows = matrix.rows
     rows.length shouldBe 3
-    rows.head.length shouldBe 3
-    rows.head shouldBe Seq(70, 30, 148)
-    rows.last shouldBe Seq(74, 0, 230)
+    rows.headOption shouldBe Some(Seq(70, 30, 148))
+    rows.lastOption shouldBe Some(Seq(74, 0, 230))
   }
-}
-
-
-object MatrixSpec {
 }

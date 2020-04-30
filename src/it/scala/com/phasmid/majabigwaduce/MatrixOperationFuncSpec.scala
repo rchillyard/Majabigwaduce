@@ -18,7 +18,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.language.postfixOps
 
-class MatrixOperationFuncSpec extends FlatSpec with should.Matchers with Futures with ScalaFutures with Inside {
+class MatrixOperationFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with Futures with ScalaFutures with Inside {
   "MatrixOperation" should "apply vector" in {
     implicit val config: Config = ConfigFactory.load.getConfig("Matrix")
     implicit val system: ActorSystem = ActorSystem(config.getString("name"))
@@ -32,14 +32,15 @@ class MatrixOperationFuncSpec extends FlatSpec with should.Matchers with Futures
 
     whenReady(isf, timeout(Span(300, Seconds))) {
       is: Seq[Int] =>
-        assert(is.head == 8 && is.tail.head == 11)
-      //        println(s"Response: $is")
+        val ok = for (i1 <- is.headOption; i2 <- is.tail.headOption) yield i1 == 8 && i2 == 11
+        ok should matchPattern { case Some(true) => }
     }
 
     Await.ready(system.terminate(), 5 seconds)
   }
 
-  ignore should "create product of matrices" in {
+  // NOTE: Issue #15 now fixed (this test was ignored).
+  it should "create product of matrices" in {
     implicit val config: Config = ConfigFactory.load.getConfig("Matrix")
     implicit val system: ActorSystem = ActorSystem(config.getString("name"))
     implicit val to: Timeout = getTimeout(config.getString("timeout"))

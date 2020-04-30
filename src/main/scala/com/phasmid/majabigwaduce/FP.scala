@@ -102,26 +102,26 @@ object FP {
   /**
     * Method sequenceLeft which, given a Map[K,Either[X,V]\] (in sequential form), returns a Map[K,X] (also in sequential form) for those elements of the input map which are a (left) X (as opposed to a (right) V).
     *
-    * @param vXeKs a Map[K,Either[X,V]\] (in sequential form)
+    * @param xVeKs a Map[K,Either[X,V]\] (in sequential form)
     * @tparam K the key type
-    * @tparam V the value type
     * @tparam X the partition type
+    * @tparam V the value type
     * @return a Map[K,X] (in sequential form)
     */
-  // TODO fix deprecation
-  def sequenceLeft[K, V, X](vXeKs: Seq[(K, Either[X, V])]): Seq[(K, X)] = for ((k, e) <- vXeKs) yield (k, e.left.get)
+  def sequenceLeft[K, X, V](xVeKs: Seq[(K, Either[X, V])]): Seq[(K, X)] =
+    sequenceRight[K, V, X](for ((k, e) <- xVeKs) yield (k, e.swap))
 
   /**
     * Method sequenceRight which, given a Map[K,Either[X,V]\] (in sequential form), returns a Map[K,V] (also in sequential form) for those elements of the input map which are a (right) V (as opposed to a (left) X).
     *
-    * @param vXeKs a Map[K,Either[X,V]\] (in sequential form)
+    * @param xVeKs a Map[K,Either[X,V]\] (in sequential form)
     * @tparam K the key type
     * @tparam V the value type
     * @tparam X the partition type
     * @return a Map[K,V] (in sequential form)
     */
-  // TODO fix deprecations
-  def sequenceRight[K, V, X](vXeKs: Seq[(K, Either[X, V])]): Seq[(K, V)] = for ((k, e) <- vXeKs) yield (k, e.right.get)
+  def sequenceRight[K, X, V](xVeKs: Seq[(K, Either[X, V])]): Seq[(K, V)] =
+    for ((k, e) <- xVeKs; if e.isRight) yield k -> e.getOrElse(0.asInstanceOf[V])
 
   /**
     * Method toMap which takes a tuple of sequenced maps and returns a tuple of actual maps (each map has the same key type but different value types)
@@ -206,5 +206,5 @@ object FP {
     t2 <- t2y
   } yield f(t1, t2)
 
-
+  def invokeTupled[T1, T2, R](t: (T1, T2))(f: (T1, T2) => R): R = f.tupled(t)
 }

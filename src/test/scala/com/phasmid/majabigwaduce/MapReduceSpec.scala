@@ -11,7 +11,7 @@ import org.scalatest.matchers.should
 import scala.concurrent.{ExecutionContext, Future}
 import scala.language.postfixOps
 
-class MapReduceSpec extends FlatSpec with should.Matchers with Futures with ScalaFutures with Inside {
+class MapReduceSpec extends flatspec.AnyFlatSpec with should.Matchers with Futures with ScalaFutures with Inside {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -76,7 +76,4 @@ case class MockMapReduce[T, K, V](f: Seq[T] => Map[K, V]) extends MapReduce[T, K
   override def apply(v1: Seq[T]): Future[Map[K, V]] = Future(f(v1))
 
   def close(): Unit = ()
-}
-
-object MapReduceSpec {
 }

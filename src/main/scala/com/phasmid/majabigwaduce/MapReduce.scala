@@ -85,6 +85,8 @@ case class MapReduceFirst[V0, K1, W, V1 >: W](f: V0 => Try[(K1, W)], g: (V1, W) 
   // The following constructor allows for a f which needs to be lifted to T=>Try[R]
   // CONSIDER implementing an apply method in MapReduce for this signature
   //  def this(fy: V0 => (K1, W), g: (V1, W) => V1)(actors: Actors, timeout: Timeout) = this(MapReduce.lift(fy), g)(actors, timeout)
+
+  // CONSIDER this looks dangerous, although this class does not extend Actor so maybe it's OK.
   def createProps: Props = Props(new Master_First(actors.config, f, g))
 
   //noinspection SpellCheckingInspection
@@ -236,7 +238,7 @@ abstract class MapReduce_Base[T, K, V](actors: Actors)(implicit timeout: Timeout
   self =>
   implicit def ec: ExecutionContextExecutor = actors.system.dispatcher
 
-  private val master = actors.createActor(createName, createProps)
+  private val master = actors.createActor(actors.system, createName, createProps)
 
   def apply(ts: Seq[T]): Future[Map[K, V]] = {
     // Note: currently, we ignore the value of report but we could pass back a tuple that includes ok and the resulting map

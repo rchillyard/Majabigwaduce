@@ -40,11 +40,11 @@ sealed trait DataDefinition[K, V] extends (() => Future[Map[K, V]]) {
     * Method to evaluate this DataDefinition and reduce the dimensionality of the result by ignoring the keys
     * and aggregating the values according to the function wv_w
     *
-    * @param wv_w the aggregation function
+    * @param wVWf the aggregation function
     * @tparam W the underlying type of the result
     * @return a W value, wrapped in Future.
     */
-  def reduce[W: Zero](wv_w: (W, V) => W): Future[W]
+  def reduce[W: Zero](wVWf: (W, V) => W): Future[W]
 
   /**
     * Evaluate the number of elements in this DataDefinition
@@ -283,11 +283,11 @@ abstract class BaseDD[K, V](implicit ec: ExecutionContext) extends DataDefinitio
     * Method to evaluate this DataDefinition and reduce the dimensionality of the result by ignoring the keys
     * and aggregating the values according to the function xw_x.
     *
-    * @param xv_x the aggregation function.
+    * @param wVWf the aggregation function.
     * @tparam X the underlying type of the result.
     * @return an X value, wrapped in Future.
     */
-  def reduce[X: Zero](xv_x: (X, V) => X): Future[X] = for (kVm <- apply()) yield kVm.values.foldLeft(implicitly[Zero[X]].zero)(xv_x)
+  def reduce[X: Zero](wVWf: (X, V) => X): Future[X] = for (kVm <- apply()) yield kVm.values.foldLeft(implicitly[Zero[X]].zero)(wVWf)
 
   /**
     * Evaluate the number of elements in this DataDefinition
@@ -305,6 +305,7 @@ abstract class BaseDD[K, V](implicit ec: ExecutionContext) extends DataDefinitio
   * @param timeout the value of timeout
   */
 case class DDContext(config: Config, system: ActorSystem, timeout: Timeout)(implicit executor: ExecutionContext) {
+  // NOTE: consciously using var here.
   var closeables: List[AutoCloseable] = Nil
 
   def clean(): Unit = {
@@ -339,9 +340,9 @@ object DataDefinition {
 
   implicit val context: DDContext = DDContext.apply
 
-  def apply[K, V: Monoid](k_vs: Map[K, V], partitions: Int): DataDefinition[K, V] = LazyDD(k_vs, identity[(K, V)])(partitions)
+  def apply[K, V: Monoid](kVs: Map[K, V], partitions: Int): DataDefinition[K, V] = LazyDD(kVs, identity[(K, V)])(partitions)
 
-  def apply[K, V: Monoid](k_vs: Map[K, V]): DataDefinition[K, V] = LazyDD(k_vs, identity[(K, V)])()
+  def apply[K, V: Monoid](kVs: Map[K, V]): DataDefinition[K, V] = LazyDD(kVs, identity[(K, V)])()
 
   def apply[K, V: Monoid](vs: Seq[V], f: V => K, partitions: Int): DataDefinition[K, V] = apply((for (v <- vs) yield (f(v), v)).toMap, partitions)
 
