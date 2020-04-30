@@ -152,6 +152,17 @@ case class Matrix2[T: Numeric](rows: Seq[Seq[T]]) extends BaseMatrix[Seq[T]] {
 
   def transpose: Seq[Seq[T]] = cols
 
+  /**
+    * Method to multiply this Matrix2 with another Matrix2.
+    *
+    * @param other  the other Matrix2.
+    * @param ev     evidence that Seq[T] is a monoid.
+    * @param atMost max duration.
+    * @param cutoff the cutoff (see Dimensions).
+    * @tparam Y the underlying type of the other Matrix2.
+    * @tparam Z the underlying type of the resulting Matrix.
+    * @return the product of this and other as a Matrix
+    */
   def product2[Y: Numeric, Z: Product : Monoid : Numeric](other: Matrix2[Y])(implicit ev: Monoid[Seq[T]], atMost: Duration, cutoff: Dimensions): Matrix[Seq[Z]] = {
     implicit object MonoidSeqZ extends Monoid[Seq[Z]] {
       def combine(x: Seq[Z], y: Seq[Z]): Seq[Z] = x ++ y
@@ -164,7 +175,7 @@ case class Matrix2[T: Numeric](rows: Seq[Seq[T]]) extends BaseMatrix[Seq[T]] {
 
   private def cols: Seq[Seq[T]] = rows.transpose
 
-  implicit val atMost: Duration = duration.FiniteDuration(1, "second")
+  import Matrix2._
 
   protected def build[U: Numeric](us: Seq[U]): Matrix[U] = Matrix1(us)
 
@@ -231,6 +242,7 @@ object Matrix1 {
 
 object Matrix2 {
   implicit val atMost: Duration = duration.FiniteDuration(10, "second")
+
   implicit val cutoff: Dimensions = Dimensions(Seq(20, 20))
 
   /**

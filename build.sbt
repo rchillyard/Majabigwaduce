@@ -5,7 +5,7 @@ version := "1.0.3"
 scalaVersion := "2.13.1"
 
 val akkaGroup = "com.typesafe.akka"
-val akkaVersion = "2.6.4"
+val akkaVersion = "2.6.5"
 val scalaTestVersion = "3.1.1"
 val configVersion = "1.4.0"
 val scalaMockVersion = "4.4.0"

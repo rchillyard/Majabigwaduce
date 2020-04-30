@@ -7,6 +7,7 @@ package com.phasmid.majabigwaduce
 import java.net.URL
 
 import akka.actor.{ActorSystem, Props}
+import akka.event.LoggingAdapter
 import akka.pattern._
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
@@ -33,6 +34,8 @@ class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with F
 
   import system.dispatcher
 
+  private val logger: LoggingAdapter = system.log
+
   private val config = ConfigFactory.load()
   val spec0 = "WC"
   val spec1 = "WC-1"
@@ -42,6 +45,7 @@ class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with F
   behavior of spec1
 
   it should "work for http://www.bbc.com/ http://www.cnn.com/ http://default/" in {
+    logger.info(s"Starting $spec1:work for http://www.bbc.com/ http://www.cnn.com/ http://default/")
     def mapper(w: String): (URL, String) = MockURL(w).asTuple
 
     val props = Props.create(classOf[Master_First_Fold[String, URL, String, Seq[String]]], config, MapReduce.lift(mapper _), reducer _, init _)
@@ -61,6 +65,7 @@ class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with F
   behavior of spec2
 
   it should "yield 556" in {
+    logger.info(s"Starting $spec2:yield 556")
     def mapper(w: String, gs: Seq[String]): (String, Int) = (w, (for (g <- gs) yield g.split("""\s+""").length) reduce (_ + _))
 
     val props = Props.create(classOf[Master[String, Seq[String], String, Int, Int]], config, MapReduce.lift(mapper _), adder _)
@@ -81,6 +86,7 @@ class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with F
   }
 
   `spec0` should "work for http://www.bbc.com/ http://www.cnn.com/ http://default/" in {
+    logger.info(s"Starting $spec0:work for http://www.bbc.com/ http://www.cnn.com/ http://default/")
     def mapper1(w: String): (URL, String) = MockURL(w).asTuple
 
     def mapper2(w: URL, gs: Seq[String]): (URL, Int) = (w, (for (g <- gs) yield g.split("""\s+""").length) reduce (_ + _))
@@ -104,6 +110,9 @@ class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with F
   }
 
   it should "fail because mapper is incorrectly defined" in {
+    logger.info(s"Starting $spec0:fail because mapper is incorrectly defined")
+    implicit val timeout: Timeout = Timeout(60 seconds) // We need a longer timeout for this one to work correctly.
+
     def mapper1(w: String): (URL, String) = MockURL(w).asTuple
 
     def mapper2(w: String, gs: Seq[String]): (String, Int) = (w, (for (g <- gs) yield g.split("""\s+""").length) reduce (_ + _))
@@ -115,11 +124,8 @@ class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with F
     val wsUrf = master1.ask(Seq("http://www.bbc.com/", "http://www.cnn.com/", "http://default/")).mapTo[Response[URL, Seq[String]]]
     val iUrf = wsUrf flatMap { wsUr => val wsUm = wsUr.right; master2.ask(wsUm).mapTo[Response[URL, Int]] }
     iUrf.onComplete {
-      // FIXME why does this happen>
       case Failure(x: AskTimeoutException) => fail(s"should throw MapReduceException, not $x")
       case Failure(x) =>
-        // TODO understand why this fails when this test is run as part of a suite, but it works fine when alone.
-        // TODO also why does it actually pass the unit test, even though the exception is a NullPointerException?
         x shouldBe a[MapReduceException]
         x.getCause shouldBe a[ClassCastException]
       case Success(_) => fail("should fail")
@@ -131,6 +137,7 @@ class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with F
   behavior of spec3
 
   it should "work for word map" in {
+    logger.info(s"Starting $spec3:work for word map")
     def mapper(w: String, us: Seq[URL]): (String, Int) = (w, us.length)
 
     val props = Props.create(classOf[Master[String, Seq[URL], String, Int, Int]], config, MapReduce.lift(mapper _), adder _)
@@ -189,6 +196,4 @@ Russian President Vladimir Putin was rebuffed in his bid to gain support for his
       case _ => defaultText
     }
   }
-
-
 }
