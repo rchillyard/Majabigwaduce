@@ -5,6 +5,7 @@
 package com.phasmid.majabigwaduce
 
 import com.phasmid.majabigwaduce.DataDefinition._
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, duration}
@@ -48,7 +49,7 @@ trait Matrix[X] {
     * @return a Matrix which is the product of this and m
     */
   def product[Y: Numeric, Z: Product : Monoid : Numeric](ys: Seq[Y])(implicit ev: Monoid[X], atMost: Duration, cutoff: Dimensions): Matrix[Z] =
-    build(forRows(f(_, ys))(implicitly[Monoid[Z]], ev, atMost, cutoff))
+    build(forRows(productSpecial(_, ys))(implicitly[Monoid[Z]], ev, atMost, cutoff))
 
   /**
     * The rows of this Matrix
@@ -82,8 +83,11 @@ trait Matrix[X] {
 
   /**
     * Method to pair an X and a Seq[Y] to yield a Z.
-    * If X is a Seq[T] then f yields the dot product.
-    * If X is a Seq[Seq[T], then f yields a sequence of dot products.
+    * If X is a Seq[T] then productSpecial yields the dot product.
+    * If X is a Seq[Seq[T], then productSpecial yields a sequence of dot products.
+    *
+    * NOTE: this method is an instance method (defined in Matrix trait).
+    * CONSIDER defining the two forms of this method in Matrix1 and Matrix2 companion objects.
     *
     * @param x  the X value
     * @param ys the Seq[Y] value
@@ -91,7 +95,7 @@ trait Matrix[X] {
     * @tparam Z the type of the result
     * @return the result
     */
-  protected def f[Y: Numeric, Z: Product : Monoid](x: X, ys: Seq[Y]): Z
+  protected def productSpecial[Y: Numeric, Z: Product : Monoid](x: X, ys: Seq[Y]): Z
 }
 
 /**
@@ -109,12 +113,29 @@ abstract class BaseMatrix[X] extends Matrix[X] {
     */
   def size: Dimensions = Dimensions.create(rows.length)
 
+  /**
+    * Method to process the rows of this Matrix.
+    * If the size is less than the cutoff, then we do the operation in the current thread;
+    * otherwise we do it using MapReduce.
+    *
+    * @param g      a function which takes an X and yields a Z
+    * @param ev     evidence of Monoid[X]
+    * @param atMost duration of total MapReduce time
+    * @param cutoff the maximum size we should implement in current thread
+    * @tparam Z the underlying type of the result
+    * @return a Matrix which is the product of this and m
+    */
   protected def forRows[Z: Monoid](g: X => Z)(implicit ev: Monoid[X], atMost: Duration, cutoff: Dimensions): Seq[Z] =
     if (size < cutoff) for (t <- rows) yield g(t)
     else {
-      import scala.language.postfixOps
-      val dd = DataDefinition(for (tuple <- rows zipWithIndex) yield tuple.swap)
+      //      import scala.language.postfixOps
+
+      Matrix.logger.info("forRows.1")
+      val dd: DataDefinition[Int, X] = DataDefinition(for (t <- rows.zipWithIndex) yield t.swap)
+      Matrix.logger.info("forRows.2")
+      // Using map-reduce, apply the function g to each element of dd.
       val z = Await.result(dd.map(tupleLift(g)).apply(), atMost)
+      Matrix.logger.info("forRows.3")
       // CONSIDER doing this more efficiently?
       for (i <- 1 to size.rows) yield z(i - 1)
     }
@@ -131,7 +152,7 @@ case class Matrix1[T: Numeric](rows: Seq[T])(implicit atMost: Duration) extends 
 
   protected def build[U: Numeric](us: Seq[U]): Matrix[U] = Matrix1(us)
 
-  protected def f[Y: Numeric, Z: Product : Monoid](x: T, ys: Seq[Y]): Z = {
+  protected def productSpecial[Y: Numeric, Z: Product : Monoid](x: T, ys: Seq[Y]): Z = {
     val zp = implicitly[Product[Z]]
     ys match {
       case y :: Nil => zp.product(x, y)
@@ -169,7 +190,7 @@ case class Matrix2[T: Numeric](rows: Seq[Seq[T]]) extends BaseMatrix[Seq[T]] {
 
       def zero: Seq[Z] = Nil
     }
-    if (c == other.r) Matrix2(forRows(ts => for (us <- other.cols) yield f(ts, us))(implicitly[Monoid[Seq[Z]]], ev, atMost, cutoff))
+    if (c == other.r) Matrix2(forRows(ts => for (us <- other.cols) yield productSpecial(ts, us))(implicitly[Monoid[Seq[Z]]], ev, atMost, cutoff))
     else throw IncompatibleDimensionsException(c, other.rows.length)
   }
 
@@ -179,7 +200,7 @@ case class Matrix2[T: Numeric](rows: Seq[Seq[T]]) extends BaseMatrix[Seq[T]] {
 
   protected def build[U: Numeric](us: Seq[U]): Matrix[U] = Matrix1(us)
 
-  protected def f[Y: Numeric, Z: Product : Monoid](ts: Seq[T], ys: Seq[Y]): Z = if (ts.length == ys.length) {
+  protected def productSpecial[Y: Numeric, Z: Product : Monoid](ts: Seq[T], ys: Seq[Y]): Z = if (ts.length == ys.length) {
     val zp = implicitly[Product[Z]]
     val vs: Seq[Z] = for ((t, y) <- ts zip ys) yield zp.product(t, y)
     Monoid.foldLeft(vs)
@@ -234,6 +255,8 @@ object Matrix {
     * @return 1 if i==j otherwise 0
     */
   def kroneckerDelta[T: Numeric](i: Int, j: Int): T = if (i == j) implicitly[Numeric[T]].fromInt(1) else implicitly[Numeric[T]].zero
+
+  val logger: Logger = LoggerFactory.getLogger(Matrix.getClass)
 }
 
 object Matrix1 {
