@@ -43,7 +43,7 @@ class Mapper[K1, V1, K2, W](f: (K1, V1) => Try[(K2, W)]) extends MapReduceActor 
 
   override def receive: PartialFunction[Any, Unit] = {
     case i: KeyValuePairs[K1, V1] =>
-      log.info(s"Mapper received $i") // NOTE: this only logs the number of elements, not their values.
+      log.debug(s"Mapper received $i") // NOTE: this only logs the number of elements, not their values.
       // CONSIDER using a form of groupBy to perform this operation
       val wk2ts: Seq[Try[(K2, W)]] = for ((k1, v1) <- i.m) yield f(k1, v1)
       sendReply(sender, prepareResponse[Map[K2, Seq[W]]](wk2ts))

@@ -117,7 +117,7 @@ abstract class MasterBaseFirst[V1, K2, W, V2](config: Config, f: V1 => Try[(K2, 
 
   override def receive: PartialFunction[Any, Unit] = {
     case v1s: Seq[V1] =>
-      log.info(s"Master received Seq[V1]: with ${v1s.length} elements")
+      log.debug(s"Master received Seq[V1]: with ${v1s.length} elements")
       val caller = sender // XXX: this looks strange but it is required
       doMapReduce(KeyValuePairs.sequence[Unit, V1](v1s)).onComplete {
         case Success(wXeK2m) => caller ! Response.create(wXeK2m)
@@ -178,7 +178,7 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => Try[
 
   override def receive: PartialFunction[Any, Unit] = {
     case v1K1m: Map[K1, V1] =>
-      log.info(s"Master received Map[K1,V1]: with ${v1K1m.size} elements")
+      log.debug(s"Master received Map[K1,V1]: with ${v1K1m.size} elements")
       val caller = sender
       doMapReduce(KeyValuePairs.map[K1, V1](v1K1m)).onComplete {
         case Success(v2XeK2m) =>
@@ -189,7 +189,7 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => Try[
           caller ! akka.actor.Status.Failure(x)
       }
     case v1s: Seq[(K1, V1)]@unchecked =>
-      log.info(s"Master received Seq[(K1,V1)]: with ${v1s.length} elements")
+      log.debug(s"Master received Seq[(K1,V1)]: with ${v1s.length} elements")
       //      maybeLog("received: {}",v1s)
       val caller = sender
       doMapReduce(KeyValuePairs[K1, V1](v1s)).onComplete {
@@ -206,8 +206,8 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => Try[
     *
     * CONSIDER why are we using Either[Throwable, V2] instead of Try[V2]?
     *
-    * @param i
-    * @return
+    * @param i the incoming KeyValuePairs.
+    * @return a Map[K2, Try[V2]\] wrapped in Future.
     */
   def doMapReduce(i: KeyValuePairs[K1, V1]): Future[Map[K2, Either[Throwable, V2]]] = for {
     wsK2m <- doMap(i)
