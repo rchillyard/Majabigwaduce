@@ -55,16 +55,18 @@ trait LazyMonad[T, U] extends Iterable[U] {
     * @return a new LazyMonad[T, U] in the form of an Iterable[U].
     */
   override def filter(q: U => Boolean): Iterable[U] = build(ts)(f, f andThen q)
-}
-
-case class LazySequence[T, U](ts: Iterable[T], f: T => U, p: T => Boolean) extends LazyMonad[T, U] {
 
   /**
     * Method defined by Iterable[U] which eagerly evaluates this LazySequence.
     *
     * @return an Iterator[U] formed from pre-filtering the wrapped iterable by p and then mapping what's left with f.
     */
-  def iterator: Iterator[U] = ts.filter(p).map(f).iterator
+  def iterator: Iterator[U] = applyFilterAndMap.iterator
+
+  protected def applyFilterAndMap: Iterable[U] = ts.filter(p).map(f)
+}
+
+case class LazySequence[T, U](ts: Iterable[T], f: T => U, p: T => Boolean) extends LazyMonad[T, U] {
 
   /**
     * Non-instance method to construct a new LazySequence based on the parameters: iterable, g, and q.
@@ -77,6 +79,21 @@ case class LazySequence[T, U](ts: Iterable[T], f: T => U, p: T => Boolean) exten
     * @return a LazyMonad[A, B].
     */
   def build[A, B](iterable: Iterable[A])(g: A => B, q: A => Boolean): LazyMonad[A, B] = LazySequence(iterable, g, q)
+
+  //  /**
+  //    * The flatMap method.
+  //    *
+  //    * @param g the function U => V which will be applied to the values of the wrapped iterable.
+  //    * @tparam V the underlying iterator type of the resulting LazyMonad.
+  //    * @return a LazyMonad[T, V]
+  //    */
+  //  override def flatMap[V](g: U => LazyMonad[T, V]): LazyMonad[T, V] =
+  //  {
+  //    val r: LazyMonad[T, LazyMonad[T, V]] = map(g)
+  //    val s: Iterable[LazyMonad[T, V]] = r.applyFilterAndMap
+  //    val k: Iterable[V] = s.flatten
+  //    val p: LazyMonad[V, V] = build(k)(identity, _ => true)
+  //  }
 }
 
 object LazyMonad {

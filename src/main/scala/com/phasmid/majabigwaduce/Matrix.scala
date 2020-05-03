@@ -134,7 +134,7 @@ abstract class BaseMatrix[X] extends Matrix[X] {
       val dd: DataDefinition[Int, X] = DataDefinition(for (t <- rows.zipWithIndex) yield t.swap)
       Matrix.logger.info("forRows.2")
       // Using map-reduce, apply the function g to each element of dd.
-      val z = Await.result(dd.map(tupleLift(g)).apply(), atMost)
+      val z: Map[Int, Z] = Await.result(dd.map(tupleLift(g)).apply(), atMost)
       Matrix.logger.info("forRows.3")
       // CONSIDER doing this more efficiently?
       for (i <- 1 to size.rows) yield z(i - 1)

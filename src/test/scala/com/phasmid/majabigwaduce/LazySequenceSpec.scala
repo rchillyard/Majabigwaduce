@@ -88,4 +88,15 @@ class LazySequenceSpec extends AnyFlatSpec with should.Matchers {
     count shouldBe list123.length
   }
 
+  behavior of "LazyMonad"
+  it should "allow for comprehension (1)" in {
+    val l = LazyMonad(list123)
+    val z: LazyMonad[Int, Int] = for (x <- l) yield x
+    z shouldBe z
+  }
+  //  it should "allow for comprehension (2)" in {
+  //    val l = LazyMonad(list123)
+  //    val z: LazyMonad[Int, Int] = for (x <- l; y <- x) yield x
+  //    z shouldBe z
+  //  }
 }
