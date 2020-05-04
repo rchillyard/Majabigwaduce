@@ -14,7 +14,7 @@ import com.typesafe.config.{Config, ConfigFactory}
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.language.postfixOps
-import scala.util.{Failure, Random, Success, Try}
+import scala.util.{Failure, Random, Try}
 
 /**
   * This case class is a framework for performing matrix operations.
@@ -86,65 +86,6 @@ object MatrixOperation extends App {
   }
 
   implicit object DoubleZero$ extends DoubleZero$
-
-  /**
-    * Guard method (currently not used).
-    *
-    * CONSIDER moving to FP.
-    *
-    * @param g a function T => Try[T]
-    * @param f a function T => R
-    * @param t the input value.
-    * @tparam T the input type.
-    * @tparam R the output type.
-    * @return a value of R, wrapped in Try.
-    */
-  def guard[T, R](g: T => Try[T], f: T => R)(t: T): Try[R] = g(t) map f
-
-  /**
-    * Guard method (currently not used).
-    *
-    * CONSIDER moving to FP.
-    *
-    * @param g  a function (T1, T2) => Try[(T1, T2)]
-    * @param f  a function (T1, T2) => R
-    * @param t1 a T1 value.
-    * @param t2 a T2 value.
-    * @tparam T1 the type of the t1 parameter.
-    * @tparam T2 the type of the t2 parameter.
-    * @tparam R  the result type.
-    * @return a value of R, wrapped in Try.
-    */
-  def guard2[T1, T2, R](g: (T1, T2) => Try[(T1, T2)], f: (T1, T2) => R)(t1: T1, t2: T2): Try[R] = g(t1, t2) map f.tupled
-
-  /**
-    * Method to make a compatibility check on two vectors (not currently used).
-    * The result is successful if the vectors are of the same (non-zero) size.
-    *
-    * CONSIDER moving to FP.
-    *
-    * @param as a vector of As.
-    * @param bs a vector of As.
-    * @tparam A the underlying type of the vectors.
-    * @return a tuple of the two vectors, all wrapped in Try.
-    */
-  def checkCompatible[A](as: Seq[A], bs: Seq[A]): Try[(Seq[A], Seq[A])] = if (as.size == bs.size && as.nonEmpty) Success((as, bs)) else Failure(IncompatibleLengthsException(as.size, bs.size))
-
-  /**
-    * Method to make a compatibility check on a vector and a 2-matrix (not currently used).
-    * The result is successful if the vectors are of the same (non-zero) size.
-    *
-    * CONSIDER moving to FP.
-    *
-    * @param as  a vector of As, represented as a Seq[A].
-    * @param ass a 2-matrix of As, represented as a Seq[Seq[A]\].
-    * @tparam A the underlying type of the elements.
-    * @return a tuple of the vector and the transpose of the 2-matrix, all wrapped in Try.
-    */
-  def checkCompatibleX[A](as: Seq[A], ass: Seq[Seq[A]]): Try[(Seq[A], Seq[Seq[A]])] = {
-    val transpose = ass.transpose
-    if (as.size == transpose.size && as.nonEmpty) Success((as, transpose)) else Failure(IncompatibleLengthsException(as.size, transpose.size))
-  }
 
   /**
     * Method to yield the dot product of two vectors.

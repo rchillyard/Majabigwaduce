@@ -274,8 +274,7 @@ class DataDefinitionSpec extends flatspec.AnyFlatSpec with should.Matchers with 
     // given
     def mapper(w: String): Int = w.charAt(0).toInt - 'a'.toInt + 1
 
-    // CONSIDER we should be able to default the partitions parameter
-    val target = DataDefinition(Seq("a", "b"), mapper, 2)
+    val target = DataDefinition.create(Seq("a", "b"), mapper)
     // when
     val mf: Future[Map[Int, String]] = target()
     // then

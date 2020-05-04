@@ -334,6 +334,7 @@ case class DDContext(config: Config, system: ActorSystem, timeout: Timeout)(impl
 
   def ec: ExecutionContext = executor
 
+  // TEST
   override def toString: String = s"DDContext: system=${system.name}, timeout=$timeout"
 }
 
@@ -363,10 +364,31 @@ object DataDefinition {
 
   def apply[K, V: Monoid](kVm: Map[K, V]): DataDefinition[K, V] = LazyDD(kVm.toSeq, identity[(K, V)])()
 
-  // CONSIDER improving the efficiency here
-  def apply[K, V: Monoid](vs: Seq[V], f: V => K, partitions: Int = DefaultPartitions): DataDefinition[K, V] = apply(for (v <- vs) yield (f(v), v), partitions)
+  def expandTuples[V: Monoid](vs: Seq[V]): Seq[(Unit, V)] = LazyList.continually(()).zip(vs)
 
-  def apply[K, V: Monoid](vs: Seq[V], f: V => K): DataDefinition[K, V] = apply(vs, f, DefaultPartitions)
+  /**
+    * Method to create a LazyDD from a Seq[V], an function V => K, and a specific number of partitions.
+    *
+    * @param vs         a Seq[V].
+    * @param f          the key generation function.
+    * @param partitions the desired number of partitions.
+    * @tparam K the key type.
+    * @tparam V the underlying type of vs.
+    * @return a LazyDD.
+    */
+  def apply[K, V: Monoid](vs: Seq[V], f: V => K, partitions: Int = DefaultPartitions): DataDefinition[K, V] =
+    LazyDD[Any, V, K, V](expandTuples(vs), t => (f(t._2), t._2))(partitions)
+
+  /**
+    * Method to create a LazyDD from a sequence of V (no keys) and using the default partitions value.
+    *
+    * @param vs a Seq[V].
+    * @param f  the key generation function.
+    * @tparam K the key type.
+    * @tparam V the underlying type of vs.
+    * @return a LazyDD.
+    */
+  def create[K, V: Monoid](vs: Seq[V], f: V => K): DataDefinition[K, V] = apply(vs, f, DefaultPartitions)
 
   /**
     * This lift method is used to lift a V=>W into a (K,V)=>(K,W) and is used in those situations where only the values
