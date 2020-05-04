@@ -175,7 +175,7 @@ object FP {
   def lift2[T1, T2, R](f: (T1, T2) => R): (Seq[T1], Seq[T2]) => Seq[R] = map2(_, _)(f)
 
   /**
-    * The map2 function for Seq
+    * CONSIDER eliminating this because it is just another way of doing a for-comprehension.
     *
     * @param t1y parameter 1 wrapped in Seq
     * @param t2y parameter 2 wrapped in Seq
@@ -192,6 +192,7 @@ object FP {
     } yield f(t1, t2)
 
   /**
+    * CONSIDER eliminating this because it is just another way of doing a for-comprehension.
     *
     * @param t1y parameter 1 wrapped in Try
     * @param t2y parameter 2 wrapped in Try
@@ -206,6 +207,16 @@ object FP {
     t2 <- t2y
   } yield f(t1, t2)
 
+  /**
+    * Method to invoke a function (T1,T2)=>R on a tuple (T1, T2).
+    *
+    * @param t the tuple.
+    * @param f the function.
+    * @tparam T1 the type of the first attribute of t.
+    * @tparam T2 the type of the second attribute of t.
+    * @tparam R  the type of the result.
+    * @return the result of invoking f on t.
+    */
   def invokeTupled[T1, T2, R](t: (T1, T2))(f: (T1, T2) => R): R = f.tupled(t)
 
   /**
@@ -239,24 +250,25 @@ object FP {
     * The result is successful if the vectors are of the same (non-zero) size.
     *
     * @param as a vector of As.
-    * @param bs a vector of As.
-    * @tparam A the underlying type of the vectors.
+    * @param bs a vector of Bs.
+    * @tparam A the underlying type of as.
+    * @tparam B the underlying type of bs.
     * @return a tuple of the two vectors, all wrapped in Try.
     */
-  def checkCompatible[A](as: Seq[A], bs: Seq[A]): Try[(Seq[A], Seq[A])] = if (as.size == bs.size && as.nonEmpty) Success((as, bs)) else Failure(IncompatibleLengthsException(as.size, bs.size))
+  def checkCompatible[A, B](as: Seq[A], bs: Seq[B]): Try[(Seq[A], Seq[B])] = if (as.size == bs.size && as.nonEmpty) Success((as, bs)) else Failure(IncompatibleLengthsException(as.size, bs.size))
 
   /**
     * Method to make a compatibility check on a vector and a 2-matrix (not currently used).
     * The result is successful if the vectors are of the same (non-zero) size.
     *
     * @param as  a vector of As, represented as a Seq[A].
-    * @param ass a 2-matrix of As, represented as a Seq[Seq[A]\].
-    * @tparam A the underlying type of the elements.
+    * @param bss a 2-matrix of Bs, represented as a Seq[Seq[B]\].
+    * @tparam A the underlying type of as.
+    * @tparam B the underlying type of bss.
     * @return a tuple of the vector and the transpose of the 2-matrix, all wrapped in Try.
     */
-  def checkCompatibleX[A](as: Seq[A], ass: Seq[Seq[A]]): Try[(Seq[A], Seq[Seq[A]])] = {
-    val transpose = ass.transpose
-    if (as.size == transpose.size && as.nonEmpty) Success((as, transpose)) else Failure(IncompatibleLengthsException(as.size, transpose.size))
+  def checkCompatibleX[A, B](as: Seq[A], bss: Seq[Seq[B]]): Try[(Seq[A], Seq[Seq[B]])] = {
+    checkCompatible(as, bss.transpose)
   }
 
 }
