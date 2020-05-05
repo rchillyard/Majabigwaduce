@@ -171,6 +171,8 @@ object EagerDD {
 /**
   * Case Class which implements DataDefinition[K, W] and which is based on a Map[K,V] and a function V => W.
   *
+  * CONSIDER a property cutoff to determine whether it's appropriate to invoke the map-reduce machinery on kVs.
+  *
   * @param kVs        the map of key-value pairs which serve as the input to this LazyDD
   * @param f          a function which will transform the key-value pairs
   * @param partitions the number of partitions to be used

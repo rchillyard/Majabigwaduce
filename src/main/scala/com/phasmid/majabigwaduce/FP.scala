@@ -267,8 +267,6 @@ object FP {
     * @tparam B the underlying type of bss.
     * @return a tuple of the vector and the transpose of the 2-matrix, all wrapped in Try.
     */
-  def checkCompatibleX[A, B](as: Seq[A], bss: Seq[Seq[B]]): Try[(Seq[A], Seq[Seq[B]])] = {
-    checkCompatible(as, bss.transpose)
-  }
+  def checkCompatibleX[A, B](as: Seq[A], bss: Seq[Seq[B]]): Try[(Seq[A], Seq[Seq[B]])] = checkCompatible(as, bss.transpose)
 
 }

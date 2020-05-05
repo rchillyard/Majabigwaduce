@@ -37,12 +37,12 @@ class MatrixFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with Futu
     productByIdentity(500)
   }
 
-  // FIXME Issue #5 cannot handle 1000 elements
-  ignore should "implement product by identity correctly (N=1000)" taggedAs Slow in {
+  it should "implement product by identity correctly (N=1000)" taggedAs Slow in {
+    implicit val atMost: Duration = duration.FiniteDuration(5, "minute")
     productByIdentity(1000)
   }
 
-  private def productByIdentity(N: Int): Unit = {
+  private def productByIdentity(N: Int)(implicit atMost: Duration): Unit = {
     val r = Random
     val size = N
     // CONSIDER removing the toVector as it doesn't really seem to make any difference
