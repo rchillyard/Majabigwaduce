@@ -2,19 +2,106 @@
  * Copyright (c) 2018. Phasmid Software
  */
 
-package com.phasmid.majabigwaduce
+package com.phasmid.majabigwaduce.core
 
 import akka.actor.Props
 import akka.pattern.ask
 import akka.util.Timeout
+import com.phasmid.majabigwaduce.{ASync, RF}
 
 import scala.concurrent._
 import scala.util.Try
 
+/**
+  * MapReduce is a trait, with case classes, which implements a functional API for the map-reduce classes in this package.
+  *
+  * @author scalaprof
+  * @tparam T  the input type of the MapReduce function: T may be V1 for a first stage, or (K1,V1) for a subsequent stage.
+  * @tparam K1 the key type of the returned map
+  * @tparam V1 the value type of the returned map
+  */
+trait MapReduce[T, K1, V1] extends ASync[Seq[T], Map[K1, V1]] with AutoCloseable {
 
+  self =>
 
+  /**
+    * Compose this MapReduce object with mr, yielding a new MapReduce object.
+    *
+    * @tparam K2 the key type of the composed MapReduce object
+    * @tparam V2 the value type of the composed MapReduce object
+    * @param f a function of type ASync[Seq[(K1, V1)], Map[K2, V2], i.e. Seq[(K1, V1)]=>Future[Map[K2, V2]
+    * @return a new MapReduceComposed object
+    */
+  def :&[K2, V2](f: ASync[Seq[(K1, V1)], Map[K2, V2]]): MapReduce[T, K2, V2] = MapReduceComposed(self, f)(self.ec)
 
+  /**
+    * Alternative formulation for compose method (:&)
+    *
+    * @param mr the other MapReduce object
+    * @tparam K2 the key type of the composed MapReduce object
+    * @tparam V2 the value type of the composed MapReduce object
+    * @return a new MapReduceComposed object
+    */
+  def &[K2, V2](mr: MapReduce[(K1, V1), K2, V2]): MapReduce[T, K2, V2] = :&(mr)
 
+  /**
+    * terminate this MapReduce object with r, a reducer which yields a simple value
+    *
+    * @param r                the Reduce object
+    * @param executionContext (implicit)
+    * @tparam S the return type, which is a super-class of V1 (for sum, or sigma)
+    * @return an Async function of Seq[T]=>Future[S] type S.
+    */
+  def :|[S](r: RF[K1, V1, S])(implicit executionContext: ExecutionContext): ASync[Seq[T], S] = ts => for (v2K2m <- self(ts); s = r(v2K2m)) yield s
+
+  /**
+    * alternative name to terminate
+    *
+    * @param r                the Reduce object
+    * @param executionContext (implicit)
+    * @tparam S the return type, which is a super-class of V1 (for sum, or sigma)
+    * @return an Async function of Seq[T]=>Future[S] type S.
+    */
+  def |[S](r: RF[K1, V1, S])(implicit executionContext: ExecutionContext): ASync[Seq[T], S] = :|(r)(executionContext)
+
+  /**
+    * @return a suitable execution context
+    */
+  def ec: ExecutionContext
+}
+
+/**
+  * A first-stage MapReduce class where the result type V1 is a super-type of the intermediate type W
+  *
+  * @tparam V0 input value type
+  * @tparam K1 output key type
+  * @tparam W  intermediate type
+  * @tparam V1 output value type (super-type of W)
+  * @param f       the mapper function which takes a V0 instance and creates a key-value tuple of type (K1,W)
+  * @param g       the reducer function which combines two values (an V1 and a W) into one V1
+  * @param actors  an instance of Actors
+  * @param timeout the value of timeout to be used
+  */
+case class MapReduceFirst[V0, K1, W, V1 >: W](f: V0 => Try[(K1, W)], g: (V1, W) => V1)(actors: Actors, timeout: Timeout) extends MapReduce_LoggingBase[V0, K1, V1](actors)(timeout) {
+  /**
+    * Method to create a Props value for this class.
+    * CONSIDER this looks dangerous, although this class does not extend Actor so maybe it's OK.
+    *
+    * @return a Props based on a new instance of Master_First
+    */
+  def createProps: Props = Props(new Master_First(actors.config, f, g))
+
+  override def createName: Option[String] = Some(MapReduceFirst.sMrfMstr)
+}
+
+object MapReduceFirst {
+  // The following apply method allows for a f which needs to be lifted to T=>Try[R]
+  def create[V0, K1, W, V1 >: W](fy: V0 => (K1, W), g: (V1, W) => V1)(implicit actors: Actors, timeout: Timeout): MapReduceFirst[V0, K1, W, V1] =
+    apply(MapReduce.lift(fy), g)(actors, timeout)
+
+  //noinspection SpellCheckingInspection
+  val sMrfMstr: String = "mrf-mstr"
+}
 
 /**
   * A later-stage MapReduce class where the result type V1 is a super-type of the intermediate type W
@@ -189,4 +276,11 @@ abstract class MapReduce_Base[T, K, V](actors: Actors)(implicit timeout: Timeout
   def close(): Unit = actors.system.stop(master)
 }
 
+object MapReduce {
 
+  // CONSIDER move to FP
+  def lift[T, R](f: T => R): T => Try[R] = t => Try(f(t))
+
+  // CONSIDER move to FP
+  def lift[T1, T2, R](f: (T1, T2) => R): (T1, T2) => Try[R] = (t1, t2) => Try(f(t1, t2))
+}

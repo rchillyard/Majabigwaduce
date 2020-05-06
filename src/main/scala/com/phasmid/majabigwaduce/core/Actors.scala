@@ -1,4 +1,4 @@
-package com.phasmid.majabigwaduce
+package com.phasmid.majabigwaduce.core
 
 import akka.actor.{ActorRef, ActorRefFactory, ActorSystem, Props}
 import com.typesafe.config.Config
@@ -44,5 +44,9 @@ case class Actors(system: ActorSystem, config: Config) extends AutoCloseable {
 object Actors {
   // NOTE: consciously using var here.
   var count: Int = 0
-  def getCount: Int = {count+=1; count}
+
+  def getCount: Int = {
+    count += 1
+    count
+  }
 }

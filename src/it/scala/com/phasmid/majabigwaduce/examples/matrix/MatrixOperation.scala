@@ -7,8 +7,8 @@ package com.phasmid.majabigwaduce.examples.matrix
 import akka.actor.ActorSystem
 import akka.event.LoggingAdapter
 import akka.util.Timeout
-import com.phasmid.majabigwaduce.core.{Actors, FP, MapReduceException, MapReduceFirstFold, Reduce, Zero}
-import com.phasmid.majabigwaduce.examples.countwords.CountWords.getTimeout
+import com.phasmid.majabigwaduce.core._
+import com.phasmid.majabigwaduce.examples.countwords.CountWords
 import com.phasmid.majabigwaduce.matrix.{IncompatibleLengthsException, Matrix2}
 import com.typesafe.config.{Config, ConfigFactory}
 
@@ -119,7 +119,7 @@ object MatrixOperation extends App {
 
   implicit val config: Config = ConfigFactory.load.getConfig("Matrix")
   implicit val system: ActorSystem = ActorSystem(config.getString("name"))
-  implicit val timeout: Timeout = getTimeout(config.getString("timeout"))
+  implicit val timeout: Timeout = CountWords.getTimeout(config.getString("timeout"))
   val rows = config.getInt("rows")
   val cols = config.getInt("columns")
   val modulus = config.getInt("modulus")

@@ -2,10 +2,9 @@
  * Copyright (c) 2018. Phasmid Software
  */
 
-package com.phasmid.majabigwaduce
+package com.phasmid.majabigwaduce.core
 
-import com.phasmid.majabigwaduce.FP._
-import com.phasmid.majabigwaduce.core.MapReduceActor
+import com.phasmid.majabigwaduce.core.FP._
 
 import scala.util._
 

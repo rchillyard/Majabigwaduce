@@ -9,8 +9,7 @@ import java.net.URI
 import akka.actor.ActorSystem
 import akka.event.LoggingAdapter
 import akka.util.Timeout
-import com.phasmid.majabigwaduce._
-import com.phasmid.majabigwaduce.core.{Actors, MapReduceFirstFold, MapReducePipe, Reduce, Zero}
+import com.phasmid.majabigwaduce.core._
 import com.typesafe.config.{Config, ConfigFactory}
 
 import scala.concurrent._
@@ -90,6 +89,7 @@ object CountWords {
   }
 
   // TODO try to combine this with the same method in MapReduceActor
+  // TODO make this more visible (it is used in matrix package also)
   def getTimeout(t: String): Timeout = {
     val durationR = """(\d+)\s*(\w+)""".r
     t match {

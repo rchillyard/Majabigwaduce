@@ -2,12 +2,13 @@
  * Copyright (c) 2018. Phasmid Software
  */
 
-package com.phasmid.majabigwaduce
+package com.phasmid.majabigwaduce.dd
 
 import akka.actor.ActorSystem
 import akka.util.Timeout
-import com.phasmid.majabigwaduce.DataDefinition.IterableMonoid
-import com.phasmid.majabigwaduce.LazyDD.joinMap
+import com.phasmid.majabigwaduce.core.{Actors, MapReducePipe, Monoid, Zero}
+import com.phasmid.majabigwaduce.dd.DataDefinition.IterableMonoid
+import com.phasmid.majabigwaduce.dd.LazyDD.joinMap
 import com.typesafe.config.{Config, ConfigFactory}
 import org.slf4j.{Logger, LoggerFactory}
 
