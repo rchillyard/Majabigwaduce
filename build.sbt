@@ -18,12 +18,12 @@ scalacOptions in (Compile,doc) ++= Seq("-groups", "-implicits", "-deprecation")
 resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
 
 libraryDependencies ++= Seq(
-	akkaGroup %% "akka-actor" % akkaVersion,
-	akkaGroup %% "akka-slf4j" % akkaVersion,
-	akkaGroup %% "akka-cluster" % akkaVersion,
-	akkaGroup %% "akka-remote" % akkaVersion,
-	akkaGroup %% "akka-cluster-metrics" % akkaVersion,
-	"com.typesafe" % "config" % configVersion,
+	akkaGroup %% "akka-actor" % akkaVersion withSources() withJavadoc(),
+	akkaGroup %% "akka-slf4j" % akkaVersion withSources() withJavadoc(),
+	akkaGroup %% "akka-cluster" % akkaVersion withSources() withJavadoc(),
+	akkaGroup %% "akka-remote" % akkaVersion withSources() withJavadoc(),
+	akkaGroup %% "akka-cluster-metrics" % akkaVersion withSources() withJavadoc(),
+	"com.typesafe" % "config" % configVersion withSources() withJavadoc(),
 	"ch.qos.logback" % "logback-classic" % logBackVersion % "runtime",
 	akkaGroup %% "akka-testkit" % akkaVersion % "test",
 	"org.scalatest" %% "scalatest" % scalaTestVersion % "test",

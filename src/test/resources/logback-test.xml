@@ -37,13 +37,9 @@
         <appender-ref ref="FILE-ROLLING"/>
     </appender>
 
-    <root level="INFO">
+    <root level="DEBUG">
         <appender-ref ref="STDOUT"/>
     </root>
-
-    <logger name="com.phasmid" level="DEBUG" additivity="false">
-        <appender-ref ref="FILE-ROLLING"/>
-    </logger>
 
     <root level="DEBUG">
         <appender-ref ref="FILE-ROLLING"/>
