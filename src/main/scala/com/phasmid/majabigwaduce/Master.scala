@@ -117,9 +117,9 @@ abstract class MasterBaseFirst[V1, K2, W, V2](config: Config, f: V1 => Try[(K2, 
 
   override def receive: PartialFunction[Any, Unit] = {
     case v1s: Seq[V1] =>
-      log.info(s"Master received Seq[V1]: with ${v1s.length} elements")
+      log.debug(s"Master received Seq[V1]: with ${v1s.length} elements")
       val caller = sender // XXX: this looks strange but it is required
-      doMapReduce(KeyValueSeq.sequence[Unit, V1](v1s)).onComplete {
+      doMapReduce(KeyValuePairs.sequence[Unit, V1](v1s)).onComplete {
         case Success(wXeK2m) => caller ! Response.create(wXeK2m)
         case Failure(x) => caller ! akka.actor.Status.Failure(x)
       }
@@ -129,7 +129,7 @@ abstract class MasterBaseFirst[V1, K2, W, V2](config: Config, f: V1 => Try[(K2, 
 }
 
 /**
-  * Note that logging the actual values received in the incoming message and other places can be VERY verbose.
+  * NOTE that logging the actual values received in the incoming message and other places can be VERY verbose.
   * It is therefore recommended practice to log the values as they pass through the mapper/reducer functions (f,g) which are
   * under the control of the application.
   * Therefore the various calls to maybeLog are commented out.
@@ -155,7 +155,7 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => Try[
 
   import context.dispatcher
 
-  // NOTE: the mapper and reducers should be terminated when this master is terminated.
+  // NOTE: the mapper and reducers will be terminated when this master is terminated.
   private val mapper = actors.createActor(context, Some(Master.sMpr), mapperProps)
   private val nReducers = config.getInt("reducers")
   log.debug(s"creating $nReducers reducers")
@@ -176,14 +176,11 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => Try[
     */
   def reducerProps(g: (V2, W) => V2, z: () => V2): Props
 
-  // CONSIDER reworking this so that there is only one possible valid message:
-  // either in Map[] form of Seq[()] form. I don't really like having both
   override def receive: PartialFunction[Any, Unit] = {
     case v1K1m: Map[K1, V1] =>
-      log.info(s"Master received Map[K1,V1]: with ${v1K1m.size} elements")
-      //      maybeLog("received: {}",v1K1m)
+      log.debug(s"Master received Map[K1,V1]: with ${v1K1m.size} elements")
       val caller = sender
-      doMapReduce(KeyValueSeq.map[K1, V1](v1K1m)).onComplete {
+      doMapReduce(KeyValuePairs.map[K1, V1](v1K1m)).onComplete {
         case Success(v2XeK2m) =>
           maybeLog("response: {}", v2XeK2m)
           caller ! Response.create(v2XeK2m)
@@ -192,10 +189,10 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => Try[
           caller ! akka.actor.Status.Failure(x)
       }
     case v1s: Seq[(K1, V1)]@unchecked =>
-      log.info(s"Master received Seq[(K1,V1)]: with ${v1s.length} elements")
+      log.debug(s"Master received Seq[(K1,V1)]: with ${v1s.length} elements")
       //      maybeLog("received: {}",v1s)
       val caller = sender
-      doMapReduce(KeyValueSeq[K1, V1](v1s)).onComplete {
+      doMapReduce(KeyValuePairs[K1, V1](v1s)).onComplete {
         case Success(v2XeK2m) => caller ! Response.create(v2XeK2m)
         case Failure(x) => caller ! akka.actor.Status.Failure(x)
       }
@@ -203,7 +200,16 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => Try[
       super.receive(q)
   }
 
-  def doMapReduce(i: KeyValueSeq[K1, V1]): Future[Map[K2, Either[Throwable, V2]]] = for {
+  /**
+    * The main map-reduce method.
+    * This takes a KeyValuePairs object and returns a map of K2 and either a Throwable or a V2, all wrapped in Future.
+    *
+    * CONSIDER why are we using Either[Throwable, V2] instead of Try[V2]?
+    *
+    * @param i the incoming KeyValuePairs.
+    * @return a Map[K2, Try[V2]\] wrapped in Future.
+    */
+  def doMapReduce(i: KeyValuePairs[K1, V1]): Future[Map[K2, Either[Throwable, V2]]] = for {
     wsK2m <- doMap(i)
     v2XeK2m <- doDistributeReduceCollate(wsK2m)
   } yield v2XeK2m
@@ -214,7 +220,7 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => Try[
     super.close()
   }
 
-  private def doMap(i: KeyValueSeq[K1, V1]): Future[Map[K2, Seq[W]]] = {
+  private def doMap(i: KeyValuePairs[K1, V1]): Future[Map[K2, Seq[W]]] = {
     // NOTE this involves a cast to the parametric type Z which can result in a ClassCastException
     def iToMapper[Z: ClassTag]: Future[Z] = (mapper ? i).mapTo[Z]
 
@@ -246,10 +252,16 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => Try[
   }
 
   private def logException(x: Throwable): Unit = actors.logException("mapper exception", x)
-
-  //    if (exceptionStack) log.error(x, "mapper exception") else log.warning("mapper exception {}", x.getLocalizedMessage)
 }
 
+/**
+  * Case class used to package a response from an actor.
+  *
+  * @param left  a map of key-value pairs where the value is a Throwable.
+  * @param right a map of key-value pairs where the value is a value.
+  * @tparam K the key type.
+  * @tparam V the value type.
+  */
 case class Response[K, V](left: Map[K, Throwable], right: Map[K, V]) {
   override def toString = s"left: $left; right: $right"
 

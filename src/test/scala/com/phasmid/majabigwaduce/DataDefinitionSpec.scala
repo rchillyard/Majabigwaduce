@@ -262,7 +262,7 @@ class DataDefinitionSpec extends flatspec.AnyFlatSpec with should.Matchers with 
     // given
     def mapper(w: String): Int = w.charAt(0).toInt - 'a'.toInt + 1
 
-    val target = DataDefinition(Seq("a", "b"), mapper, 0)
+    val target = DataDefinition(Seq("a", "b"), mapper, 1)
     // when
     val mf: Future[Map[Int, String]] = target()
     // then
@@ -274,12 +274,12 @@ class DataDefinitionSpec extends flatspec.AnyFlatSpec with should.Matchers with 
     // given
     def mapper(w: String): Int = w.charAt(0).toInt - 'a'.toInt + 1
 
-    val target = DataDefinition(Seq("a", "b"), mapper _)
+    val target = DataDefinition.create(Seq("a", "b"), mapper)
     // when
     val mf: Future[Map[Int, String]] = target()
     // then
     import scala.concurrent.duration._
-    implicit val timeout: Timeout = Timeout(5 seconds)
+    implicit val timeout: Timeout = Timeout(2 seconds)
     whenReady(mf) { m => m.toSeq.size shouldBe 2 }
     target.clean()
   }

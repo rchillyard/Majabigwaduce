@@ -175,7 +175,7 @@ object FP {
   def lift2[T1, T2, R](f: (T1, T2) => R): (Seq[T1], Seq[T2]) => Seq[R] = map2(_, _)(f)
 
   /**
-    * The map2 function for Seq
+    * CONSIDER eliminating this because it is just another way of doing a for-comprehension.
     *
     * @param t1y parameter 1 wrapped in Seq
     * @param t2y parameter 2 wrapped in Seq
@@ -192,6 +192,7 @@ object FP {
     } yield f(t1, t2)
 
   /**
+    * CONSIDER eliminating this because it is just another way of doing a for-comprehension.
     *
     * @param t1y parameter 1 wrapped in Try
     * @param t2y parameter 2 wrapped in Try
@@ -206,5 +207,66 @@ object FP {
     t2 <- t2y
   } yield f(t1, t2)
 
+  /**
+    * Method to invoke a function (T1,T2)=>R on a tuple (T1, T2).
+    *
+    * @param t the tuple.
+    * @param f the function.
+    * @tparam T1 the type of the first attribute of t.
+    * @tparam T2 the type of the second attribute of t.
+    * @tparam R  the type of the result.
+    * @return the result of invoking f on t.
+    */
   def invokeTupled[T1, T2, R](t: (T1, T2))(f: (T1, T2) => R): R = f.tupled(t)
+
+  /**
+    * Guard method (currently not used).
+    *
+    * @param g a function T => Try[T]
+    * @param f a function T => R
+    * @param t the input value.
+    * @tparam T the input type.
+    * @tparam R the output type.
+    * @return a value of R, wrapped in Try.
+    */
+  def guard[T, R](g: T => Try[T], f: T => R)(t: T): Try[R] = g(t) map f
+
+  /**
+    * Guard method (currently not used).
+    *
+    * @param g  a function (T1, T2) => Try[(T1, T2)]
+    * @param f  a function (T1, T2) => R
+    * @param t1 a T1 value.
+    * @param t2 a T2 value.
+    * @tparam T1 the type of the t1 parameter.
+    * @tparam T2 the type of the t2 parameter.
+    * @tparam R  the result type.
+    * @return a value of R, wrapped in Try.
+    */
+  def guard2[T1, T2, R](g: (T1, T2) => Try[(T1, T2)], f: (T1, T2) => R)(t1: T1, t2: T2): Try[R] = g(t1, t2) map f.tupled
+
+  /**
+    * Method to make a compatibility check on two vectors (not currently used).
+    * The result is successful if the vectors are of the same (non-zero) size.
+    *
+    * @param as a vector of As.
+    * @param bs a vector of Bs.
+    * @tparam A the underlying type of as.
+    * @tparam B the underlying type of bs.
+    * @return a tuple of the two vectors, all wrapped in Try.
+    */
+  def checkCompatible[A, B](as: Seq[A], bs: Seq[B]): Try[(Seq[A], Seq[B])] = if (as.size == bs.size && as.nonEmpty) Success((as, bs)) else Failure(IncompatibleLengthsException(as.size, bs.size))
+
+  /**
+    * Method to make a compatibility check on a vector and a 2-matrix (not currently used).
+    * The result is successful if the vectors are of the same (non-zero) size.
+    *
+    * @param as  a vector of As, represented as a Seq[A].
+    * @param bss a 2-matrix of Bs, represented as a Seq[Seq[B]\].
+    * @tparam A the underlying type of as.
+    * @tparam B the underlying type of bss.
+    * @return a tuple of the vector and the transpose of the 2-matrix, all wrapped in Try.
+    */
+  def checkCompatibleX[A, B](as: Seq[A], bss: Seq[Seq[B]]): Try[(Seq[A], Seq[Seq[B]])] = checkCompatible(as, bss.transpose)
+
 }
