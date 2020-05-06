@@ -130,8 +130,6 @@ abstract class BaseMatrix[X] extends Matrix[X] {
   protected def forRows[Z: Monoid](g: X => Z)(implicit ev: Monoid[X], atMost: Duration, cutoff: Dimensions): Seq[Z] =
     if (size < cutoff) for (t <- rows) yield g(t)
     else {
-      //      import scala.language.postfixOps
-
       Matrix.logger.info("forRows.1")
       val dd: DataDefinition[Int, X] = DataDefinition(for (t <- rows.zipWithIndex) yield t.swap)
       Matrix.logger.info("forRows.2")
