@@ -32,12 +32,12 @@ Majabigwaduce has a high-level API, something like that used by Spark.
 It is based on the concept of *DataDefinition*, essentially a lazy, partitionable, map of key-value pairs.
 _DataDefinition_ is a trait with two concrete sub-classes:
 
-* _LazyDD_ is a lazily-evaluated DataDefinition and which is the normal implementation of DataDefinition to be used.
-* _EagerDD_ is an eagerly (i.e. fully) evaluated DataDefinition which also implements _HasEvaluatedMap_ which provides
+* _LazyDD_ is a lazily-evaluated _DataDefinition_ and which is the normal implementation of _DataDefinition_ to be used.
+* _EagerDD_ is an eagerly (i.e. fully) evaluated _DataDefinition_ which also implements _HasEvaluatedMap_ which provides
 a method to yield directly the wrapped key-value map.
 In practice, a _LazyDD_ creates an _EagerDD_ when implementing its _apply_ method.
 
-A DataDefinition (in these cases a _LazyDD_) is normally created with a statement such as:
+A _DataDefinition_ (in these cases a _LazyDD_) is normally created with a statement such as:
 
     val dd = DataDefinition(map, partitions)
     
@@ -61,7 +61,7 @@ There are three types of "action" function:
 * _apply_ which yields a _Future\[Map\[K,V\]\]_
 * _reduce(f)_ which yields a _Future\[W\]_ where the function _f_ is the aggregation function
 of type _(W,V)=>W_ where _W_ is constrained by a context bound: _W: Zero_.
-* _count_ which yields the number of key-value pairs in the DataDefinition, wrapped in _Future_.
+* _count_ which yields the number of key-value pairs in the _DataDefinition_, wrapped in _Future_.
 
 An additional type _DDContext_ is used implicitly when calling the _apply_ methods of the _DataDefinition_ object.
 
@@ -70,16 +70,16 @@ For an example of using this higher-level API, please see the _Matrix_ class.
 Functional Map-Reduce (mid-level API)
 =====================
 
-The set of Master classes (lowest-level API) can be used by applications exactly as described below.
+The set of _Master_ classes (lowest-level API) can be used by applications exactly as described below.
 However, there is a more convenient, functional form based on the trait _MapReduce_ which is defined thus:
 
 	trait MapReduce[T,K2,V2] extends Seq[T] => Future[Map[K2,V2]] {
 	    def compose[K3,V3](mr: MapReduce[(K2,V2),K3,V3]): MapReduce[T,K3,V3] = MapReduceComposed(this,mr)
-	    def compose[S>:V2](r: Reduce[V2,S])(implicit executionContext: ExecutionContext): Function1[Seq[T],Future[S]]= { ts => for (v2K2m <- apply(ts); s = r.apply(v2K2m)) yield s }
+	    def compose[S>:V2](r: Reduce[V2,S])(implicit executionContext: ExecutionContext): Seq[T]=>Future[S]= { ts => for (v2K2m <- apply(ts); s = r.apply(v2K2m)) yield s }
 	    def ec: ExecutionContext
 	}
 
-This trait casts the map-reduce process as a simple function: one which takes a _Seq\[T\]_ and results in a
+This trait casts the map-reduce process as a simple function: one which takes a _Seq\[T]_ and results in a
 (future of) _Map\[K2,V2]_ where _T_ is either _V1_ in the case of the first stage of a map-reduce pipeline or
 _(Kn,Vn)_ in the case of the subsequent (nth) stage.
 There are four case classes which implement this trait (and which should be specified by the application programmer):
@@ -169,7 +169,7 @@ Of these, _W_ is not involved in messages going to or from the master--it is int
 And, again generally, the constructor for the _Master_ takes the following parameters:
 
 * _config: Config_
-* _f: (K1,V1)=>Try[(K2,W)]_
+* _f: (K1,V1)=>Try\[(K2,W)]_
 * _g: (V2,W)=>V2_
 * (optionally) _z: ()=>V2_
 
@@ -198,10 +198,10 @@ Thus, the non-"fold" variations require that _Z2_ be a super-type of _W_ (as req
 The "first" variations do not require a _K1_ to be defined (it defaults to _Unit_) and see below in _Mapper_
 for the difference in input message types.
 
-The __input message__ type for the "first" variations is: _Seq\[V1\]_ while the input message type for the non-"first"
-variations is _Map[K1,V1]_.
+The __input message__ type for the "first" variations is: _Seq\[V1]_ while the input message type for the non-"first"
+variations is _Map\[K1,V1]_.
     
-The __output message__ type is always _Response\[K2,V2\]_.
+The __output message__ type is always _Response\[K2,V2]_.
 The _Response_ type is defined thus:
 
 	case class Response[K,V](left: Map[K,Throwable], right: Map[K,V]) {
@@ -220,7 +220,7 @@ Mapper
 -----
 
 The _Mapper_ class is a sub-class of _Actor_.
-In general, the _Mapper_ takes the following polymorphic types: _\[K1,V1,K2,W\]_.
+In general, the _Mapper_ takes the following polymorphic types: _\[K1,V1,K2,W]_.
 
 The constructor takes a function _f_ of type _(K1,V1)=>Try\[(K2,W)]_,
 that's to say it is a function which transforms a _(K1,V1)_ tuple into a _Try_ of _(K2,W)_ tuple.
@@ -483,3 +483,4 @@ Revision History
 * 1.0.1 Version compatible with 2.13
 * 1.0.2 Code cleanup and issues fixes.
 * 1.0.3 More cleanup (TODOs, etc.)
+* 1.0.4 ?

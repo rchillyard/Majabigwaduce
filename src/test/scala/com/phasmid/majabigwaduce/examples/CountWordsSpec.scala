@@ -13,6 +13,9 @@ import org.scalatest.matchers.should
 import org.scalatest.time._
 
 class CountWordsSpec extends flatspec.AnyFlatSpec with should.Matchers with Futures with ScalaFutures with Inside with MockFactory {
+
+  // NOTE: Issue #17 This test (and others) causes the following warning in the logs:
+  // 2020-05-05 21:32:38,434 WARN  akka.stream.Materializer akka.stream.Log(akka://CountWords/system/Materializers/StreamSupervisor-1) - [outbound connection to [akka://ClusterSystem@127.0.0.1:2551], control stream] Upstream failed, cause: StreamTcpException: Tcp command [Connect(127.0.0.1:2551,None,List(),Some(5000 milliseconds),true)] failed because of java.net.ConnectException: Connection refused
   "CountWords" should "work for http://www.bbc.com/ http://www.cnn.com/ http://default/" in {
     val wBBC = "http://www.bbc.com/"
     val wCNN = "http://www.cnn.com/"
