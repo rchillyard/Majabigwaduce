@@ -450,7 +450,9 @@ class DataDefinitionSpec extends flatspec.AnyFlatSpec with should.Matchers with 
     val target2 = EagerDD(Map("a" -> 2.1, "b" -> 3.1))
     val target3 = EagerDD(Map("a" -> "Hello", "b" -> "World"))
     // when
-    val xf: Future[((Int, Double), String)] = target.join(target2).join(target3).reduce[((Int, Double), String)]((x, y) => ((x._1._1 + y._1._1, x._1._2 + y._1._2), x._2 + "," + y._2))
+    val joined = target.join(target2).join(target3)
+    type Triple = ((Int, Double), String)
+    val xf: Future[Triple] = joined.reduce[Triple]((x, y) => ((x._1._1 + y._1._1, x._1._2 + y._1._2), x._2 + "," + y._2))
     // then
     whenReady(xf) { x => x should matchPattern { case ((3, 5.2), ",Hello,World") => case ((3, 5.2), ",World,Hello") => } }
     target.clean()
