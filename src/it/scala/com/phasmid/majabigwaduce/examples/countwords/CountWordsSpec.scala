@@ -2,7 +2,7 @@
  * Copyright (c) 2018. Phasmid Software
  */
 
-package com.phasmid.majabigwaduce.examples
+package com.phasmid.majabigwaduce.examples.countwords
 
 import java.net.URI
 

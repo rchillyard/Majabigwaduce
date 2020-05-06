@@ -2,9 +2,8 @@
  * Copyright (c) 2018. Phasmid Software
  */
 
-package com.phasmid.majabigwaduce.examples
+package com.phasmid.majabigwaduce.examples.matrix
 
-import com.phasmid.majabigwaduce.examples.matrix.MatrixOperation
 import com.phasmid.majabigwaduce.{IncompatibleLengthsException, Matrix2}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest._
