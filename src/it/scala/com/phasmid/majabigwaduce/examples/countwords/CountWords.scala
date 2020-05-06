@@ -10,6 +10,7 @@ import akka.actor.ActorSystem
 import akka.event.LoggingAdapter
 import akka.util.Timeout
 import com.phasmid.majabigwaduce._
+import com.phasmid.majabigwaduce.core.{Actors, MapReduceFirstFold, MapReducePipe, Reduce, Zero}
 import com.typesafe.config.{Config, ConfigFactory}
 
 import scala.concurrent._

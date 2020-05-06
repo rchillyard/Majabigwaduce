@@ -9,6 +9,7 @@ import java.net.{URI, URL}
 import akka.actor.ActorSystem
 import akka.util.Timeout
 import com.phasmid.majabigwaduce._
+import com.phasmid.majabigwaduce.core.{Actors, MapReduce, MapReduceFirstFold, MapReducePipeFold, Reduce, Zero}
 import com.typesafe.config.{Config, ConfigFactory}
 
 import scala.concurrent._

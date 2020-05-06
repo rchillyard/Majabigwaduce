@@ -7,6 +7,7 @@ package com.phasmid.majabigwaduce
 import akka.actor.{ActorRef, Props}
 import akka.pattern.ask
 import akka.util.Timeout
+import com.phasmid.majabigwaduce.core.MapReduceActor
 import com.typesafe.config.Config
 
 import scala.concurrent._

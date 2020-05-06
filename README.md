@@ -29,6 +29,7 @@ High-level API
 DataDefinition
 -------------
 Majabigwaduce has a high-level API, something like that used by Spark.
+The classes for this API can be found in the _dd_ package.
 It is based on the concept of *DataDefinition*, essentially a lazy, partitionable, map of key-value pairs.
 _DataDefinition_ is a trait with two concrete sub-classes:
 
@@ -66,10 +67,12 @@ of type _(W,V)=>W_ where _W_ is constrained by a context bound: _W: Zero_.
 An additional type _DDContext_ is used implicitly when calling the _apply_ methods of the _DataDefinition_ object.
 
 For an example of using this higher-level API, please see the _Matrix_ class.
+Because this class is useful in its own right, it can be found in the main source area under the _matrix_ package.
 
 Functional Map-Reduce (mid-level API)
 =====================
 
+The classes for this API (and anything lower) can be found in the core package.
 The set of _Master_ classes (lowest-level API) can be used by applications exactly as described below.
 However, there is a more convenient, functional form based on the trait _MapReduce_ which is defined thus:
 
@@ -288,10 +291,19 @@ The components that are used by this project are:
 * Typesafe Configuration (1.4.x)
 * ...and dependencies thereof
 
+Testing
+=======
+
+There are two directories (under _src_) for testing: _test_ (unit tests/specifications) and _it_ (integration tests).
+By default, all tests are in the classpath.
+The example applications are in the _it_ directory, given that they are not really _unit_ tests.
+If you wish to suppress the integration tests temporarily, simply un-mark the _it/scala_ as a test source root.
+Or, you could comment out the appropriate entry (_unmanagedSourceDirectories_) in _build.sbt_.
+
 Examples
 ========
 
-There are several examples provided (in the "examples" directory):
+There are several examples provided (in the "src/it/scala/com/phasmid/majabigwaduce/examples" directory):
 
 * CountWords: a simple example which counts the words in documents and can provide a total word count of all documents.
 * WebCrawler: a more complex version of the same sort of thing.
@@ -483,4 +495,4 @@ Revision History
 * 1.0.1 Version compatible with 2.13
 * 1.0.2 Code cleanup and issues fixes.
 * 1.0.3 More cleanup (TODOs, etc.)
-* 1.0.4 ?
+* 1.0.4 Refactored package structure and moved _examples_ into _it_ directory.

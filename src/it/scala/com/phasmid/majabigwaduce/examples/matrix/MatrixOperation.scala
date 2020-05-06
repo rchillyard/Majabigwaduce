@@ -7,8 +7,9 @@ package com.phasmid.majabigwaduce.examples.matrix
 import akka.actor.ActorSystem
 import akka.event.LoggingAdapter
 import akka.util.Timeout
-import com.phasmid.majabigwaduce._
+import com.phasmid.majabigwaduce.core.{Actors, FP, MapReduceException, MapReduceFirstFold, Reduce, Zero}
 import com.phasmid.majabigwaduce.examples.countwords.CountWords.getTimeout
+import com.phasmid.majabigwaduce.matrix.{IncompatibleLengthsException, Matrix2}
 import com.typesafe.config.{Config, ConfigFactory}
 
 import scala.concurrent.duration._

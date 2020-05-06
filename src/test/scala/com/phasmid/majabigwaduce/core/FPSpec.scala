@@ -1,6 +1,6 @@
-package com.phasmid.majabigwaduce
+package com.phasmid.majabigwaduce.core
 
-import com.phasmid.majabigwaduce.FP._
+import com.phasmid.majabigwaduce.core.FP._
 import org.scalatest.{flatspec, matchers}
 
 import scala.util.{Failure, Success}

@@ -10,6 +10,7 @@ import akka.actor.{ActorSystem, Props}
 import akka.event.LoggingAdapter
 import akka.pattern._
 import akka.util.Timeout
+import com.phasmid.majabigwaduce.core._
 import com.typesafe.config.ConfigFactory
 import org.scalatest._
 import org.scalatest.concurrent._
@@ -46,6 +47,7 @@ class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with F
 
   it should "work for http://www.bbc.com/ http://www.cnn.com/ http://default/" in {
     logger.info(s"Starting $spec1:work for http://www.bbc.com/ http://www.cnn.com/ http://default/")
+
     def mapper(w: String): (URL, String) = MockURL(w).asTuple
 
     val props = Props.create(classOf[Master_First_Fold[String, URL, String, Seq[String]]], config, MapReduce.lift(mapper _), reducer _, init _)
@@ -66,6 +68,7 @@ class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with F
 
   it should "yield 556" in {
     logger.info(s"Starting $spec2:yield 556")
+
     def mapper(w: String, gs: Seq[String]): (String, Int) = (w, (for (g <- gs) yield g.split("""\s+""").length) reduce (_ + _))
 
     val props = Props.create(classOf[Master[String, Seq[String], String, Int, Int]], config, MapReduce.lift(mapper _), adder _)
@@ -87,6 +90,7 @@ class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with F
 
   `spec0` should "work for http://www.bbc.com/ http://www.cnn.com/ http://default/" in {
     logger.info(s"Starting $spec0:work for http://www.bbc.com/ http://www.cnn.com/ http://default/")
+
     def mapper1(w: String): (URL, String) = MockURL(w).asTuple
 
     def mapper2(w: URL, gs: Seq[String]): (URL, Int) = (w, (for (g <- gs) yield g.split("""\s+""").length) reduce (_ + _))
@@ -138,6 +142,7 @@ class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with F
 
   it should "work for word map" in {
     logger.info(s"Starting $spec3:work for word map")
+
     def mapper(w: String, us: Seq[URL]): (String, Int) = (w, us.length)
 
     val props = Props.create(classOf[Master[String, Seq[URL], String, Int, Int]], config, MapReduce.lift(mapper _), adder _)

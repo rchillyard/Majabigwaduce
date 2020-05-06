@@ -4,6 +4,8 @@
 
 package com.phasmid.majabigwaduce
 
+import com.phasmid.majabigwaduce.core.Monoid
+import com.phasmid.majabigwaduce.matrix.{Matrix, Matrix2, Product}
 import org.scalatest._
 import org.scalatest.concurrent._
 import org.scalatest.matchers.should
@@ -37,7 +39,8 @@ class MatrixFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with Futu
     productByIdentity(500)
   }
 
-  it should "implement product by identity correctly (N=1000)" taggedAs Slow in {
+  // NOTE: this test works OK, but it does take a long time to run so we ignore it for now.
+  ignore should "implement product by identity correctly (N=1000)" taggedAs Slow in {
     implicit val atMost: Duration = duration.FiniteDuration(5, "minute")
     productByIdentity(1000)
   }

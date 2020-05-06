@@ -5,6 +5,7 @@
 package com.phasmid.majabigwaduce
 
 import com.phasmid.majabigwaduce.FP._
+import com.phasmid.majabigwaduce.core.MapReduceActor
 
 import scala.util._
 

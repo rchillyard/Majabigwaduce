@@ -4,6 +4,7 @@ import akka.actor.{ActorSystem, Props}
 import akka.pattern.ask
 import akka.testkit.{ImplicitSender, TestActors, TestKit}
 import akka.util.Timeout
+import com.phasmid.majabigwaduce.core.{KeyValuePairs, MapReduceException, Mapper, Mapper_Forgiving}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should
 import org.scalatest.{BeforeAndAfterAll, wordspec}

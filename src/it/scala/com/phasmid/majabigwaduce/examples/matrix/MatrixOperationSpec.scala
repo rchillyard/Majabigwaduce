@@ -4,7 +4,7 @@
 
 package com.phasmid.majabigwaduce.examples.matrix
 
-import com.phasmid.majabigwaduce.{IncompatibleLengthsException, Matrix2}
+import com.phasmid.majabigwaduce.matrix.{IncompatibleLengthsException, Matrix2}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest._
 import org.scalatest.concurrent._

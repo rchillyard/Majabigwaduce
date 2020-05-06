@@ -2,8 +2,9 @@
  * Copyright (c) 2018. Phasmid Software
  */
 
-package com.phasmid.majabigwaduce
+package com.phasmid.majabigwaduce.core
 
+import com.phasmid.majabigwaduce.ASync
 import org.scalatest._
 import org.scalatest.concurrent._
 import org.scalatest.matchers.should
