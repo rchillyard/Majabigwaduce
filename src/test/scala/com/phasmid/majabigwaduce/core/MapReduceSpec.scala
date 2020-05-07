@@ -37,6 +37,16 @@ class MapReduceSpec extends flatspec.AnyFlatSpec with should.Matchers with Futur
 
   it should "compose correctly with &" in {
     val mr1 = MockMapReduce[Int, String, Int](xs => (for (x <- xs) yield (x.toString, x)).toMap)
+    val mr2 = MockMapReduce[(String, Int), Int, Int](wIs => (for (wi <- wIs) yield (wi._1.toInt, wi._2)).toMap)
+
+    val target: MapReduce[Int, Int, Int] = mr1 & mr2
+    val mf: Future[Map[Int, Int]] = target(Seq(1, 2))
+    val tf = mf map (_.unzip)
+    whenReady(tf) { u => u should matchPattern { case (Seq(1, 2), Seq(1, 2)) => } }
+  }
+
+  it should "compose correctly with :&" in {
+    val mr1 = MockMapReduce[Int, String, Int](xs => (for (x <- xs) yield (x.toString, x)).toMap)
 
     def mr2(wIs: Seq[(String, Int)]): Future[Map[Int, Int]] = Future((for (wi <- wIs) yield (wi._1.toInt, wi._2)).toMap)
 

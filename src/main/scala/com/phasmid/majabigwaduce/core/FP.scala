@@ -18,6 +18,7 @@ object FP {
     * @tparam X the underlying type
     * @return a future X
     */
+  // TEST
   def flatten[X](xyf: Future[Try[X]])(implicit executor: ExecutionContext): Future[X] = for (xy <- xyf; x <- asFuture(xy)) yield x
 
   /**
@@ -53,17 +54,6 @@ object FP {
   def sequence[X](xts: Seq[Try[X]]): Try[Seq[X]] = xts.foldLeft(Try(Seq[X]())) { (xst, xt) => for (xs <- xst; x <- xt) yield xs :+ x }
 
   /**
-    * Method sequence to separate out the left and right parts of a map of Either's.
-    *
-    * @param vXeKm a Map[K,Either[X,V]\]
-    * @tparam K the key type
-    * @tparam V the value type
-    * @tparam X the partition type
-    * @return a tuple of two maps, a Map[K,X] and a Map[K,V]
-    */
-  def sequence[K, V, X](vXeKm: Map[K, Either[X, V]]): (Map[K, X], Map[K, V]) = toMap(sequenceLeftRight(vXeKm))
-
-  /**
     * Method sequence to convert a tuple of A, Try[B] to a Try[(A, B)]
     *
     * @param t the tuple.
@@ -71,20 +61,11 @@ object FP {
     * @tparam B the underlying type of the _2 element of t.
     * @return a Try of (A, B).
     */
+  // TEST
   def sequence[A, B](t: (A, Try[B])): Try[(A, B)] = t match {
     case (a, Success(b)) => Success(a -> b)
     case (_, Failure(x)) => Failure(x)
   }
-
-  /**
-    * Method sequenceInverted to convert a tuple of Try[A], B to a Try[(A, B)]
-    *
-    * @param t the tuple.
-    * @tparam A the underlying type of the _1 element of t.
-    * @tparam B the underlying type of the _2 element of t.
-    * @return a Try of (A, B).
-    */
-  def sequenceInverted[A, B](t: (Try[A], B)): Try[(A, B)] = sequence(t.swap).map(_.swap)
 
   /**
     * Method sequenceLeftRight which, given a Map[K,Either[X,V]\], returns a tuple of sequenced maps (each with the same key type), with the X values on the left and the V values on the right.
@@ -146,64 +127,11 @@ object FP {
     */
   def tupleMap[L1, L2, R1, R2](fl: L1 => L2, fr: R1 => R2)(t: (L1, R1)): (L2, R2) = (fl(t._1), fr(t._2))
 
+  // TEST
   private def asFuture[X](xy: => Try[X]): Future[X] = xy match {
     case Success(s) => Future.successful(s)
     case Failure(e) => Future.failed(e)
   }
-
-  /**
-    * Lift function to transform a function f of type T=>R into a function of type Seq[T]=>Seq[R]
-    *
-    * @param f the function we start with, of type T=>R
-    * @tparam T the type of the parameter to f
-    * @tparam R the type of the result of f
-    * @return a function of type Seq[T]=>Seq[R]
-    */
-  def lift[T, R](f: T => R): Seq[T] => Seq[R] = _ map f
-
-  /**
-    * Lift function to transform a function f of type (T1,T2)=>R into a function of type (Seq[T1],Seq[T2])=>Seq[R]
-    *
-    * @param f the function we start with, of type (T1,T2)=>R
-    * @tparam T1 the type of the first parameter to f
-    * @tparam T2 the type of the second parameter to f
-    * @tparam R  the type of the result of f
-    * @return a function of type (Seq[T1],Seq[T2])=>Seq[R]
-    */
-  def lift2[T1, T2, R](f: (T1, T2) => R): (Seq[T1], Seq[T2]) => Seq[R] = map2(_, _)(f)
-
-  /**
-    * CONSIDER eliminating this because it is just another way of doing a for-comprehension.
-    *
-    * @param t1y parameter 1 wrapped in Seq
-    * @param t2y parameter 2 wrapped in Seq
-    * @param f   function that takes two parameters of types T1 and T2 and returns a value of R
-    * @tparam T1 the type of parameter 1
-    * @tparam T2 the type of parameter 2
-    * @tparam R  the type of the result of function f
-    * @return a value of R, wrapped in Seq
-    */
-  def map2[T1, T2, R](t1y: Seq[T1], t2y: Seq[T2])(f: (T1, T2) => R): Seq[R] =
-    for {
-      t1 <- t1y
-      t2 <- t2y
-    } yield f(t1, t2)
-
-  /**
-    * CONSIDER eliminating this because it is just another way of doing a for-comprehension.
-    *
-    * @param t1y parameter 1 wrapped in Try
-    * @param t2y parameter 2 wrapped in Try
-    * @param f   function that takes two parameters of types T1 and T2 and returns a value of R
-    * @tparam T1 the type of parameter 1
-    * @tparam T2 the type of parameter 2
-    * @tparam R  the type of the result of function f
-    * @return a value of R, wrapped in Try
-    */
-  def map2[T1, T2, R](t1y: Try[T1], t2y: Try[T2])(f: (T1, T2) => R): Try[R] = for {
-    t1 <- t1y
-    t2 <- t2y
-  } yield f(t1, t2)
 
   /**
     * Method to invoke a function (T1,T2)=>R on a tuple (T1, T2).
@@ -227,6 +155,7 @@ object FP {
     * @tparam R the output type.
     * @return a value of R, wrapped in Try.
     */
+  // TEST
   def guard[T, R](g: T => Try[T], f: T => R)(t: T): Try[R] = g(t) map f
 
   /**
@@ -241,6 +170,7 @@ object FP {
     * @tparam R  the result type.
     * @return a value of R, wrapped in Try.
     */
+  // TEST
   def guard2[T1, T2, R](g: (T1, T2) => Try[(T1, T2)], f: (T1, T2) => R)(t1: T1, t2: T2): Try[R] = g(t1, t2) map f.tupled
 
   /**

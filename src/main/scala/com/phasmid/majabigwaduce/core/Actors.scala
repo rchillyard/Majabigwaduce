@@ -34,8 +34,10 @@ case class Actors(system: ActorSystem, config: Config) extends AutoCloseable {
 
   private val suffix = (System.nanoTime().hashCode + Actors.getCount).toHexString
 
+  // TEST
   def logException(m: => String, x: Throwable = null): Unit = if (exceptionStack) system.log.error(x, m) else system.log.warning(s"$m: ${x.getLocalizedMessage}")
 
+  // TEST
   private lazy val exceptionStack = config.getBoolean("exceptionStack")
 
   def close(): Unit = {}

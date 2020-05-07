@@ -81,6 +81,7 @@ case class KeyValuePairs[K, V](m: Seq[(K, V)]) {
 object KeyValuePairs {
   def sequence[K, V](vs: Seq[V]): KeyValuePairs[K, V] = KeyValuePairs((vs zip LazyList.continually(null.asInstanceOf[K])).map(_.swap))
 
+  // CONSIDER eliminating this
   def map[K, V](vKm: Map[K, V]): KeyValuePairs[K, V] = KeyValuePairs(vKm.toSeq)
 }
 

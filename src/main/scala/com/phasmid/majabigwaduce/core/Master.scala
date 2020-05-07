@@ -177,6 +177,7 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => Try[
   def reducerProps(g: (V2, W) => V2, z: () => V2): Props
 
   override def receive: PartialFunction[Any, Unit] = {
+    // CONSIDER eliminate this unused code
     case v1K1m: Map[K1, V1] =>
       log.debug(s"Master received Map[K1,V1]: with ${v1K1m.size} elements")
       val caller = sender
@@ -215,6 +216,7 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => Try[
   } yield v2XeK2m
 
 
+  // TEST
   override def close(): Unit = {
     actors.close()
     super.close()
@@ -251,6 +253,7 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => Try[
     wsK2s zip rs
   }
 
+  // TEST
   private def logException(x: Throwable): Unit = actors.logException("mapper exception", x)
 }
 
