@@ -104,7 +104,7 @@ trait CleanerCollector[K, W] {
     val kWsm = mutable.HashMap[K, Seq[W]]() // mutable
     val xs = mutable.ListBuffer[Throwable]() // mutable
     for (kWy <- kWys) {
-      sequence(kWy) match {
+      toEither(kWy) match {
         case Right((k, w)) => kWsm put(k, w +: kWsm.getOrElse(k, Nil))
         case Left(x) => x +=: xs
       }

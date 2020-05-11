@@ -11,15 +11,28 @@ import scala.util.{Failure, Success, Try}
 object FP {
 
   /**
-    * Method flatten which, applied to a Future[Try[X]\], returns a Future[X]
+    * Method flatten which takes a Future[Try[X]\] and returns a Future[X].
     *
-    * @param xyf      the input
-    * @param executor the (implicit) execution context
-    * @tparam X the underlying type
-    * @return a future X
+    * @param xyf      a Future of Try of X.
+    * @param executor (implicit) the ExecutionContext
+    * @tparam X the underlying type.
+    * @return a Future[X], which will be successful if the Try was a success, otherwise a failure.
     */
-  // TEST
-  def flatten[X](xyf: Future[Try[X]])(implicit executor: ExecutionContext): Future[X] = for (xy <- xyf; x <- asFuture(xy)) yield x
+  def flatten[X](xyf: Future[Try[X]])(implicit executor: ExecutionContext): Future[X] =
+    for (xy <- xyf; x <- asFuture(xy)) yield x
+
+  /**
+    * Method to flatten a Try[Future[X]\] (not a common occurrence).
+    *
+    * @param xfy      a Try of Future of X.
+    * @param executor (implicit) the ExecutionContext
+    * @tparam X the underlying type.
+    * @return a Future[X], which will be successful if the Try was a success, otherwise a failure.
+    */
+  def flatten[X](xfy: Try[Future[X]])(implicit executor: ExecutionContext): Future[X] = xfy match {
+    case Success(xf) => for (x <- xf) yield x
+    case Failure(t) => Future.failed(t)
+  }
 
   /**
     * Method to take a Map[K,Either[X,V]\] and generated a tuple of two sequenced-maps, each of the same form as the input but containing only the left-values or right-values as appropriate.
@@ -39,7 +52,7 @@ object FP {
     * @tparam X the underlying type
     * @return : Either[Throwable,X]
     */
-  def sequence[X](xt: Try[X]): Either[Throwable, X] = xt match {
+  def toEither[X](xt: Try[X]): Either[Throwable, X] = xt match {
     case Success(s) => Right(s);
     case Failure(e) => Left(e)
   }
@@ -61,7 +74,6 @@ object FP {
     * @tparam B the underlying type of the _2 element of t.
     * @return a Try of (A, B).
     */
-  // TEST
   def sequence[A, B](t: (A, Try[B])): Try[(A, B)] = t match {
     case (a, Success(b)) => Success(a -> b)
     case (_, Failure(x)) => Failure(x)
@@ -127,8 +139,7 @@ object FP {
     */
   def tupleMap[L1, L2, R1, R2](fl: L1 => L2, fr: R1 => R2)(t: (L1, R1)): (L2, R2) = (fl(t._1), fr(t._2))
 
-  // TEST
-  private def asFuture[X](xy: => Try[X]): Future[X] = xy match {
+  def asFuture[X](xy: => Try[X]): Future[X] = xy match {
     case Success(s) => Future.successful(s)
     case Failure(e) => Future.failed(e)
   }
@@ -196,5 +207,4 @@ object FP {
     * @return a tuple of the vector and the transpose of the 2-matrix, all wrapped in Try.
     */
   def checkCompatibleX[A, B](as: Seq[A], bss: Seq[Seq[B]]): Try[(Seq[A], Seq[Seq[B]])] = checkCompatible(as, bss.transpose)
-
 }

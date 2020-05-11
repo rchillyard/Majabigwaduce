@@ -1,11 +1,16 @@
 package com.phasmid.majabigwaduce.core
 
+import java.net.URL
+
 import com.phasmid.majabigwaduce.core.FP._
-import org.scalatest.{flatspec, matchers}
+import org.scalatest.concurrent.{Futures, ScalaFutures}
+import org.scalatest._
 
-import scala.util.{Failure, Success}
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
+import scala.util.{Failure, Success, Try}
 
-class FPSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers {
+class FPSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers with Futures with ScalaFutures {
   behavior of "FP"
 
   it should "sequence" in {
@@ -60,5 +65,63 @@ class FPSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers {
     val xs = Seq(1, 2, 3)
     val yss = Seq(Seq(1, 2), Seq(1, 2), Seq(1, 2))
     checkCompatibleX(xs, yss) should matchPattern { case Failure(_) => }
+  }
+
+  "lift(Future[Try[T]])" should "succeed for http://www.google.com" in {
+    val uyf = Future(Try(new URL("http://www.google.com")))
+    val uf = flatten(uyf)
+    whenReady(uf) { u => u should matchPattern { case _: URL => } }
+  }
+
+  "lift(Try[Future[T]])" should "succeed for http://www.google.com" in {
+    val ufy: Try[Future[URL]] = Try(Future(new URL("http://www.google.com")))
+    val uf: Future[URL] = flatten(ufy)
+    whenReady(uf) { u => u should matchPattern { case _: URL => } }
+  }
+
+  "sequence(Seq[Future[T]])" should "succeed for http://www.google.com, etc." in {
+    val ws = List("http://www.google.com", "http://www.microsoft.com")
+    val ufs: Seq[Future[URL]] = for {w <- ws; uf = Future(new URL(w))} yield uf
+    val usf: Future[Seq[URL]] = Future.sequence(ufs)
+    whenReady(usf) { us => Assertions.assert(us.length == 2) }
+  }
+
+  behavior of "sequence(Seq[Try[T]])"
+  it should "succeed for http://www.google.com, etc." in {
+    val ws = List("http://www.google.com", "http://www.microsoft.com")
+    val uys = for {w <- ws; url = Try(new URL(w))} yield url
+    sequence(uys) match {
+      case Success(us) => Assertions.assert(us.length == 2)
+      case _ => Failed
+    }
+  }
+  it should "fail for www.google.com, etc." in {
+    val ws = List("www.google.com", "http://www.microsoft.com")
+    val uys = for {w <- ws; uy = Try(new URL(w))} yield uy
+    sequence(uys) match {
+      case Failure(_) => Succeeded
+      case _ => Failed
+    }
+  }
+  it should "succeed for empty list" in {
+    val uys = for {w <- List[String](); uy = Try(new URL(w))} yield uy
+    sequence(uys) match {
+      case Success(us) => Assertions.assert(us.isEmpty)
+      case _ => Failed
+    }
+  }
+
+  "lift" should "succeed" in {
+    def double(x: Int) = 2 * x
+
+    Success(1) map double should matchPattern { case Success(2) => }
+    Failure(new Exception("bad")) map double should matchPattern { case Failure(_) => }
+  }
+
+  "asFuture" should "succeed" in {
+
+    val eventualInt: Future[Int] = asFuture(Success(1))
+    whenReady(eventualInt) { x => x should matchPattern { case 1 => } }
+    //    whenReady(toFuture(Failure[Int](new Exception("bad")))) { x => p shouldBe new Exception("bad")}
   }
 }

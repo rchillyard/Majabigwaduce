@@ -18,7 +18,6 @@ import scala.util.Random
 
 class MatrixFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with Futures with Inside {
 
-  // TODO why does this not get satisfied from Matrix1 and Matrix2 objects?
   implicit val atMost: Duration = duration.FiniteDuration(1, "minute")
 
   trait DoubleProduct extends Product[Double] {
@@ -48,8 +47,7 @@ class MatrixFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with Futu
   private def productByIdentity(N: Int)(implicit atMost: Duration): Unit = {
     val r = Random
     val size = N
-    // CONSIDER removing the toVector as it doesn't really seem to make any difference
-    val array = for (_ <- (1 to size).toVector) yield for (_ <- (1 to size).toVector) yield r.nextDouble()
+    val array = for (_ <- 1 to size) yield for (_ <- 1 to size) yield r.nextDouble()
     //given
     val target = Matrix2(array)
     // when
