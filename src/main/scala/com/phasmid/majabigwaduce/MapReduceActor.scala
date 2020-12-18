@@ -101,7 +101,7 @@ trait CleanerCollector[K, W] {
     * @return the output of type (Map[K, Seq of W], Seq of Throwable).
     */
   def cleanAndCollect(kWys: Seq[Try[(K, W)]]): (Map[K, Seq[W]], Seq[Throwable]) = {
-    val kWsm = mutable.HashMap[K, Seq[W]]() // mutable
+    val kWsm = mutable.LinkedHashMap[K, Seq[W]]() // mutable
     val xs = mutable.ListBuffer[Throwable]() // mutable
     for (kWy <- kWys) {
       sequence(kWy) match {
