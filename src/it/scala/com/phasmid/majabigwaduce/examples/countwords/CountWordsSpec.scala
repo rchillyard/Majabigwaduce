@@ -4,13 +4,13 @@
 
 package com.phasmid.majabigwaduce.examples.countwords
 
-import java.net.URI
-
 import org.scalamock.scalatest.MockFactory
 import org.scalatest._
 import org.scalatest.concurrent._
 import org.scalatest.matchers.should
 import org.scalatest.time._
+
+import java.net.URI
 
 class CountWordsSpec extends flatspec.AnyFlatSpec with should.Matchers with Futures with ScalaFutures with Inside with MockFactory {
 

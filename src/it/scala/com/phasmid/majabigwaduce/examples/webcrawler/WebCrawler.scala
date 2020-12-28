@@ -4,13 +4,12 @@
 
 package com.phasmid.majabigwaduce.examples.webcrawler
 
-import java.net.{URI, URL}
-
 import akka.actor.ActorSystem
 import akka.util.Timeout
 import com.phasmid.majabigwaduce.core._
 import com.typesafe.config.{Config, ConfigFactory}
 
+import java.net.{URI, URL}
 import scala.concurrent._
 import scala.concurrent.duration._
 import scala.io.Source

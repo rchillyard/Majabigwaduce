@@ -4,8 +4,6 @@
 
 package com.phasmid.majabigwaduce
 
-import java.net.URL
-
 import akka.actor.{ActorSystem, Props}
 import akka.event.LoggingAdapter
 import akka.pattern._
@@ -17,6 +15,7 @@ import org.scalatest.concurrent._
 import org.scalatest.matchers.should
 import org.scalatest.time._
 
+import java.net.URL
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.util._

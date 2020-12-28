@@ -24,6 +24,7 @@ import scala.util._
   * @param f      the mapper function which takes a V1 and creates a key-value tuple of type (K2,W), wrapped in Try
   * @param g      the reducer function which combines two values (an V2 and a W) into one V2
   */
+//noinspection EmptyParenMethodAccessedAsParameterless
 class Master[K1, V1, K2, W, V2 >: W](config: Config, f: (K1, V1) => Try[(K2, W)], g: (V2, W) => V2) extends MasterBase[K1, V1, K2, W, V2](config, f, g, Master.zero) with ByReduce[K1, V1, K2, W, V2]
 
 /**
@@ -48,6 +49,7 @@ class Master_Fold[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => Try[(K2, W)]
   * @param f      the mapper function which takes a V1 and creates a key-value tuple of type (K2,W), wrapped in Try
   * @param g      the reducer function which combines two values (an V2 and a W) into one V2
   */
+//noinspection EmptyParenMethodAccessedAsParameterless
 class Master_First[V1, K2, W, V2 >: W](config: Config, f: V1 => Try[(K2, W)], g: (V2, W) => V2) extends MasterBaseFirst[V1, K2, W, V2](config, f, g, Master.zero) with ByReduce[Unit, V1, K2, W, V2]
 
 /**

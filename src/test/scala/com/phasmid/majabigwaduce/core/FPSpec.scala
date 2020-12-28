@@ -1,11 +1,10 @@
 package com.phasmid.majabigwaduce.core
 
-import java.net.URL
-
 import com.phasmid.majabigwaduce.core.FP._
-import org.scalatest.concurrent.{Futures, ScalaFutures}
 import org.scalatest._
+import org.scalatest.concurrent.{Futures, ScalaFutures}
 
+import java.net.URL
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}

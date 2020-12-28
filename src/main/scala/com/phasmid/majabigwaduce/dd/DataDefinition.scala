@@ -425,10 +425,10 @@ object LazyDD {
       vKf._1 -> (vKf._2, g(k, x)._2)
   }
 
-  private def joinMap2[K, V, L, W, X](map1: Map[K, V], map2: Map[K, W], f: ((K, V)) => (L, X)): Map[K, (V, W)]= {
+  private def joinMap2[K, V, L, W, X](map1: Map[K, V], map2: Map[K, W], f: ((K, V)) => (L, X)): Map[K, (V, W)] = {
     val commonKeys = map1.map(f).asInstanceOf[Map[K, V]].keySet intersect map2.keySet
     val validMap = map1.filter(x => commonKeys.contains(f.apply(x).asInstanceOf[(K, V)]._1))
-    (for ((k, v) <- validMap) yield (k, (map1(k), map2(f.apply(k, v).asInstanceOf[(K, V)]._1))))
+    for ((k, v) <- validMap) yield (k, (map1(k), map2(f.apply(k, v).asInstanceOf[(K, V)]._1)))
   }
 
   val logger: Logger = LoggerFactory.getLogger(LazyDD.getClass)

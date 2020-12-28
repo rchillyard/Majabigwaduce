@@ -4,14 +4,13 @@
 
 package com.phasmid.majabigwaduce.examples.countwords
 
-import java.net.URI
-
 import akka.actor.ActorSystem
 import akka.event.LoggingAdapter
 import akka.util.Timeout
 import com.phasmid.majabigwaduce.core._
 import com.typesafe.config.{Config, ConfigFactory}
 
+import java.net.URI
 import scala.concurrent._
 import scala.concurrent.duration._
 import scala.language.postfixOps

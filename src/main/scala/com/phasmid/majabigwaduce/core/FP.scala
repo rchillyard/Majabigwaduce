@@ -42,7 +42,7 @@ object FP {
     * @tparam V the value type
     * @tparam X the partition type
     * @return a tuple of Map[K,Either[X,V]\] maps in sequenced form.
-    **/
+    * */
   def partition[K, V, X](vXeKm: Map[K, Either[X, V]]): (Seq[(K, Either[X, V])], Seq[(K, Either[X, V])]) = vXeKm.toSeq.partition({ case (_, v) => v.isLeft })
 
   /**
