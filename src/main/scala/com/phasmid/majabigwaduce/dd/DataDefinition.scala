@@ -224,7 +224,7 @@ case class LazyDD[K, V, L, W: Monoid]
   def join[M >: L, X: Monoid](other: DataDefinition[M, X]): DataDefinition[M, (W, X)] = other match {
     case ldd: LazyDD[K, X, M, X]@unchecked =>
       import LazyDD._
-      LazyDD[K, (V, X), M, (W, X)](joinMap(kVs.toMap, ldd.kVs.toMap).toSeq, joinFunction(f, ldd.f))(partitions)
+      LazyDD[K, (V, X), M, (W, X)](joinMap2(kVs.toMap, ldd.kVs.toMap, f).toSeq, joinFunction(f, ldd.f))(partitions)
     case edd: EagerDD[M, X] => join(LazyDD[M, X, M, X](edd.kVs, identity)(partitions))
     case _ => throw DataDefinitionException("join not supported for Lazy and Base DataDefinition objects")
   }
@@ -423,6 +423,12 @@ object LazyDD {
     case (k, (v, x)) =>
       val vKf = f(k, v)
       vKf._1 -> (vKf._2, g(k, x)._2)
+  }
+
+  private def joinMap2[K, V, L, W, X](map1: Map[K, V], map2: Map[K, W], f: ((K, V)) => (L, X)): Map[K, (V, W)]= {
+    val commonKeys = map1.map(f).asInstanceOf[Map[K, V]].keySet intersect map2.keySet
+    val validMap = map1.filter(x => commonKeys.contains(f.apply(x).asInstanceOf[(K, V)]._1))
+    (for ((k, v) <- validMap) yield (k, (map1(k), map2(f.apply(k, v).asInstanceOf[(K, V)]._1))))
   }
 
   val logger: Logger = LoggerFactory.getLogger(LazyDD.getClass)
