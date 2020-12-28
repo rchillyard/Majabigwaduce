@@ -222,7 +222,16 @@ class DataDefinitionSpec extends flatspec.AnyFlatSpec with should.Matchers with 
 
   //The join only works when key is never changed, this test won't work since key changes
   // FIXME Issue #7
-  ignore should "mapKeyAndValue/join/apply correctly with single partition" in {
+  //Resolution:
+  // Issue 1: For the issue of the sequence not being maintained, changed the type of kWsm from mutable.HashMap
+  // to mutable.LinkedHashMap. HashMap fails to preserve the order when the keys are updated. LinkedHashMap preserves the sequence.
+  // Issue 2: When the two LazyDDs, A and B, were joined and one of the LazyDD has undergone a change in key, lets say A,
+  // the join used to take place on the original keys of both the LazyDDs A and B and not between the updated key of A and original key of B.
+  // This was resolved by adding a new function "joinMap2" which joins the two LazyDDs on the basis of new keys, but stores
+  // the resultant LazyDD with the old keys. This has been done because in function apply(), we call the function evaluate
+  // which uses the combination of two anonymous functions given by the function "joinFunction". If the keys in resultant RDD
+  // had new keys, it would be rerunning the same function.
+  it should "mapKeyAndValue/join/apply correctly with single partition" in {
     // given
     val target = DataDefinition(Map("a" -> 1, "b" -> 2, "c" -> 3), 0)
     val target2 = DataDefinition(Map("a1" -> 2.1, "b1" -> 3.1), 0)
