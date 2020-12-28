@@ -15,9 +15,11 @@ val logBackVersion = "1.2.3"
 val scalaXMLVersion = "1.3.0"
 scalacOptions in (Compile,doc) ++= Seq("-groups", "-implicits", "-deprecation")
 
-resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
+resolvers += "Typesafe Repository" at "https://repo.typesafe.com/typesafe/releases/"
+//resolvers += "releases" at "https://oss.sonatype.org/service/local/staging/deploy/maven2/comphasmidsoftware-1001"
 
 libraryDependencies ++= Seq(
+	"com.phasmidsoftware" %% "comparer" % "1.0.8",
 	akkaGroup %% "akka-actor" % akkaVersion withSources() withJavadoc(),
 	akkaGroup %% "akka-slf4j" % akkaVersion withSources() withJavadoc(),
 	akkaGroup %% "akka-cluster" % akkaVersion withSources() withJavadoc(),

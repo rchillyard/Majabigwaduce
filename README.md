@@ -55,7 +55,7 @@ There are three types of transformation function currently supported:
  
 * _map_ which, as expected, takes a function which maps a key-value pair into a new key-value pair.
 * _filter_ which, as expected, takes a predicate (i.e. a boolean function) which tests each key-value pair.
-* _join_ which implements an inner join of two _DataDefinition_s.
+* _join_ which implements an inner join of two _DataDefinitions_.
 
 There are three types of "action" function:
  
@@ -155,8 +155,8 @@ Or some other criterion with a view to load-balancing.
 However, this project does not currently make any such decisions, so the _shuffle_ phase is really non-existent:
 messages (one per key) are simply sent out to reducers in sequence.
 
-Details
-=======
+Low-level Details
+=================
 
 Master
 ------
