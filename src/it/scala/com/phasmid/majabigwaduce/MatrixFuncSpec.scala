@@ -34,8 +34,8 @@ class MatrixFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with Futu
 
   behavior of "Matrix2"
 
-  it should "implement product by identity correctly (N=500)" taggedAs Slow in {
-    productByIdentity(500)
+  it should "implement product by identity correctly (N=250)" taggedAs Slow in {
+    productByIdentity(250)
   }
 
   // NOTE: this test works OK, but it does take a long time to run so we ignore it for now.
