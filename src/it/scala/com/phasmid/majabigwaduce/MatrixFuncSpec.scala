@@ -38,7 +38,12 @@ class MatrixFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with Futu
     productByIdentity(250)
   }
 
-  // NOTE: this test works OK, but it does take a long time to run so we ignore it for now.
+  // NOTE Issue #21
+  ignore should "implement product by identity correctly (N=500)" taggedAs Slow in {
+    productByIdentity(500)
+  }
+
+  // NOTE Issue #21
   ignore should "implement product by identity correctly (N=1000)" taggedAs Slow in {
     implicit val atMost: Duration = duration.FiniteDuration(5, "minute")
     productByIdentity(1000)
