@@ -2,11 +2,12 @@
  * Copyright (c) 2018. Phasmid Software
  */
 
-package com.phasmid.majabigwaduce
+package com.phasmid.majabigwaduce.core
 
 import akka.actor.Props
 import akka.pattern.ask
 import akka.util.Timeout
+import com.phasmid.majabigwaduce.{ASync, RF}
 
 import scala.concurrent._
 import scala.util.Try
@@ -101,6 +102,7 @@ object MapReduceFirst {
   //noinspection SpellCheckingInspection
   val sMrfMstr: String = "mrf-mstr"
 }
+
 /**
   * A later-stage MapReduce class where the result type V1 is a super-type of the intermediate type W
   *

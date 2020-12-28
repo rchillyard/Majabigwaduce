@@ -1,4 +1,4 @@
-package com.phasmid.majabigwaduce
+package com.phasmid.majabigwaduce.core
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should
@@ -54,7 +54,9 @@ class LazySequenceSpec extends AnyFlatSpec with should.Matchers {
     val l = LazyMonad(list123)
     var count = 0
 
-    def doubleIt(x: Int): Int = { count = count + 1; x * 2 }
+    def doubleIt(x: Int): Int = {
+      count = count + 1; x * 2
+    }
 
     val z = l.map(doubleIt)
     // Now, check that map was truly lazy.
@@ -67,7 +69,9 @@ class LazySequenceSpec extends AnyFlatSpec with should.Matchers {
     val l = LazyMonad(list123)
     var count = 0
 
-    def isEven(x: Int): Boolean = { count = count + 1; x % 2 == 0 }
+    def isEven(x: Int): Boolean = {
+      count = count + 1; x % 2 == 0
+    }
 
     val z = l.preFilter(isEven)
     // Now, check that filter was actually lazy.
@@ -80,7 +84,9 @@ class LazySequenceSpec extends AnyFlatSpec with should.Matchers {
     val l = LazyMonad(list123)
     var count = 0
 
-    def isEven(x: Int): Boolean = { count = count + 1; x % 2 == 0 }
+    def isEven(x: Int): Boolean = {
+      count = count + 1; x % 2 == 0
+    }
 
     val z = l.filter(isEven)
     count shouldBe 0

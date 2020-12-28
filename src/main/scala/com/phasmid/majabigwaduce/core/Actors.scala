@@ -1,4 +1,4 @@
-package com.phasmid.majabigwaduce
+package com.phasmid.majabigwaduce.core
 
 import akka.actor.{ActorRef, ActorRefFactory, ActorSystem, Props}
 import com.typesafe.config.Config
@@ -34,8 +34,10 @@ case class Actors(system: ActorSystem, config: Config) extends AutoCloseable {
 
   private val suffix = (System.nanoTime().hashCode + Actors.getCount).toHexString
 
+  // TEST
   def logException(m: => String, x: Throwable = null): Unit = if (exceptionStack) system.log.error(x, m) else system.log.warning(s"$m: ${x.getLocalizedMessage}")
 
+  // TEST
   private lazy val exceptionStack = config.getBoolean("exceptionStack")
 
   def close(): Unit = {}
@@ -44,5 +46,9 @@ case class Actors(system: ActorSystem, config: Config) extends AutoCloseable {
 object Actors {
   // NOTE: consciously using var here.
   var count: Int = 0
-  def getCount: Int = {count+=1; count}
+
+  def getCount: Int = {
+    count += 1
+    count
+  }
 }

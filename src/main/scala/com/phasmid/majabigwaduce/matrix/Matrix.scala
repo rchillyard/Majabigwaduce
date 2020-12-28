@@ -2,9 +2,11 @@
  * Copyright (c) 2018. Phasmid Software
  */
 
-package com.phasmid.majabigwaduce
+package com.phasmid.majabigwaduce.matrix
 
-import com.phasmid.majabigwaduce.DataDefinition._
+import com.phasmid.majabigwaduce.core.Monoid
+import com.phasmid.majabigwaduce.dd.DataDefinition
+import com.phasmid.majabigwaduce.dd.DataDefinition._
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.concurrent.duration.Duration

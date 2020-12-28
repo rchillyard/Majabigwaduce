@@ -2,16 +2,15 @@
  * Copyright (c) 2018. Phasmid Software
  */
 
-package com.phasmid.majabigwaduce.examples
-
-import java.net.URI
+package com.phasmid.majabigwaduce.examples.countwords
 
 import akka.actor.ActorSystem
 import akka.event.LoggingAdapter
 import akka.util.Timeout
-import com.phasmid.majabigwaduce._
+import com.phasmid.majabigwaduce.core._
 import com.typesafe.config.{Config, ConfigFactory}
 
+import java.net.URI
 import scala.concurrent._
 import scala.concurrent.duration._
 import scala.language.postfixOps
@@ -89,6 +88,7 @@ object CountWords {
   }
 
   // TODO try to combine this with the same method in MapReduceActor
+  // TODO make this more visible (it is used in matrix package also)
   def getTimeout(t: String): Timeout = {
     val durationR = """(\d+)\s*(\w+)""".r
     t match {

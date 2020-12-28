@@ -1,4 +1,4 @@
-package com.phasmid.majabigwaduce
+package com.phasmid.majabigwaduce.core
 
 import akka.actor.{ActorSystem, Props}
 import akka.pattern.ask

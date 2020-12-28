@@ -2,7 +2,7 @@
  * Copyright (c) 2018. Phasmid Software
  */
 
-package com.phasmid.majabigwaduce
+package com.phasmid.majabigwaduce.core
 
 import akka.actor.{ActorRef, Props}
 import akka.pattern.ask
@@ -24,6 +24,7 @@ import scala.util._
   * @param f      the mapper function which takes a V1 and creates a key-value tuple of type (K2,W), wrapped in Try
   * @param g      the reducer function which combines two values (an V2 and a W) into one V2
   */
+//noinspection EmptyParenMethodAccessedAsParameterless
 class Master[K1, V1, K2, W, V2 >: W](config: Config, f: (K1, V1) => Try[(K2, W)], g: (V2, W) => V2) extends MasterBase[K1, V1, K2, W, V2](config, f, g, Master.zero) with ByReduce[K1, V1, K2, W, V2]
 
 /**
@@ -48,6 +49,7 @@ class Master_Fold[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => Try[(K2, W)]
   * @param f      the mapper function which takes a V1 and creates a key-value tuple of type (K2,W), wrapped in Try
   * @param g      the reducer function which combines two values (an V2 and a W) into one V2
   */
+//noinspection EmptyParenMethodAccessedAsParameterless
 class Master_First[V1, K2, W, V2 >: W](config: Config, f: V1 => Try[(K2, W)], g: (V2, W) => V2) extends MasterBaseFirst[V1, K2, W, V2](config, f, g, Master.zero) with ByReduce[Unit, V1, K2, W, V2]
 
 /**
@@ -177,6 +179,7 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => Try[
   def reducerProps(g: (V2, W) => V2, z: () => V2): Props
 
   override def receive: PartialFunction[Any, Unit] = {
+    // CONSIDER eliminate this unused code
     case v1K1m: Map[K1, V1] =>
       log.debug(s"Master received Map[K1,V1]: with ${v1K1m.size} elements")
       val caller = sender
@@ -215,6 +218,7 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => Try[
   } yield v2XeK2m
 
 
+  // TEST
   override def close(): Unit = {
     actors.close()
     super.close()
@@ -251,6 +255,7 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => Try[
     wsK2s zip rs
   }
 
+  // TEST
   private def logException(x: Throwable): Unit = actors.logException("mapper exception", x)
 }
 

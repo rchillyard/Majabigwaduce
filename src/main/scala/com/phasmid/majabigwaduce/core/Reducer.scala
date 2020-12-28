@@ -2,9 +2,9 @@
  * Copyright (c) 2018. Phasmid Software
  */
 
-package com.phasmid.majabigwaduce
+package com.phasmid.majabigwaduce.core
 
-import com.phasmid.majabigwaduce.FP._
+import com.phasmid.majabigwaduce.core.FP._
 
 import scala.util._
 
@@ -62,7 +62,7 @@ abstract class ReducerBase[K2, W, V2] extends MapReduceActor {
   override def receive: PartialFunction[Any, Unit] = {
     case i: Intermediate[K2, W] =>
       log.debug(s"Reducer received $i")
-      sender ! (i.k2, sequence(Try(getValue(i.ws))))
+      sender ! (i.k2, toEither(Try(getValue(i.ws))))
     case q =>
       super.receive(q)
   }

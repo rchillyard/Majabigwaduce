@@ -2,8 +2,9 @@
  * Copyright (c) 2018. Phasmid Software
  */
 
-package com.phasmid.majabigwaduce
+package com.phasmid.majabigwaduce.matrix
 
+import com.phasmid.majabigwaduce.core.Monoid
 import org.scalatest._
 import org.scalatest.concurrent._
 import org.scalatest.matchers.should
