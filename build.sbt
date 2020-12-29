@@ -4,7 +4,7 @@ name := "Majabigwaduce"
 
 version := "1.0.4"
 
-scalaVersion := "2.13.1"
+scalaVersion := "2.13.4"
 
 val akkaGroup = "com.typesafe.akka"
 val akkaVersion = "2.6.5"
