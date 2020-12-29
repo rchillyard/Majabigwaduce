@@ -6,3 +6,4 @@
 *.iml
 metastore_db
 /logs/
+/.bsp/
