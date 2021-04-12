@@ -32,11 +32,14 @@ object TwoSum extends App {
                    key: Int)
                   (low: Int = 0,
                    high: Int = arr.length - 1): Int = {
-    if (low > high) return -1
-    val middle = low + (high - low) / 2
-    val cf = arr(middle).value.compareTo(key)
-    if (cf == 0) arr(middle).index
-    else if (cf > 0) binarySearch(arr, key)(low, middle - 1)
-    else binarySearch(arr, key)(middle + 1, high)
+    if (low > high) -1
+    else {
+      val middle = low + (high - low) / 2
+      arr(middle).value.compareTo(key) match {
+        case 0 => arr(middle).index
+        case x if x > 0 => binarySearch(arr, key)(low, middle - 1)
+        case _ => binarySearch(arr, key)(middle + 1, high)
+      }
+    }
   }
 }
