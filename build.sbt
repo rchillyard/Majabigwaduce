@@ -2,24 +2,25 @@ organization := "com.phasmidsoftware"
 
 name := "Majabigwaduce"
 
-version := "1.0.4"
+version := "1.0.5"
 
-scalaVersion := "2.13.4"
+scalaVersion := "2.13.6"
 
 val akkaGroup = "com.typesafe.akka"
-val akkaVersion = "2.6.5"
-val scalaTestVersion = "3.1.1"
-val configVersion = "1.4.0"
-val scalaMockVersion = "4.4.0"
-val logBackVersion = "1.2.3"
-val scalaXMLVersion = "1.3.0"
+val akkaVersion = "2.6.16"
+val scalaTestVersion = "3.2.9"
+val configVersion = "1.4.1"
+val scalaMockVersion = "5.1.0"
+val logBackVersion = "1.2.6"
+val scalaXMLVersion = "2.0.1"
 scalacOptions in (Compile,doc) ++= Seq("-groups", "-implicits", "-deprecation")
 
 resolvers += "Typesafe Repository" at "https://repo.typesafe.com/typesafe/releases/"
 //resolvers += "releases" at "https://oss.sonatype.org/service/local/staging/deploy/maven2/comphasmidsoftware-1001"
 
 libraryDependencies ++= Seq(
-	"com.phasmidsoftware" %% "comparer" % "1.0.8",
+	"com.phasmidsoftware" %% "comparer" % "1.0.9" withSources() withJavadoc(),
+	"com.phasmidsoftware" %% "flog" % "1.0.8" withSources() withJavadoc(),
 	akkaGroup %% "akka-actor" % akkaVersion withSources() withJavadoc(),
 	akkaGroup %% "akka-slf4j" % akkaVersion withSources() withJavadoc(),
 	akkaGroup %% "akka-cluster" % akkaVersion withSources() withJavadoc(),
