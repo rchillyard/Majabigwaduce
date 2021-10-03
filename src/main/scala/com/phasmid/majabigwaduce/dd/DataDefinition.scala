@@ -9,6 +9,7 @@ import akka.util.Timeout
 import com.phasmid.majabigwaduce.core.{Actors, MapReducePipe, Monoid, Zero}
 import com.phasmid.majabigwaduce.dd.DataDefinition.IterableMonoid
 import com.phasmid.majabigwaduce.dd.LazyDD.joinMap
+import com.phasmidsoftware.flog.Flog
 import com.typesafe.config.{Config, ConfigFactory}
 import org.slf4j.{Logger, LoggerFactory}
 
@@ -193,7 +194,10 @@ case class LazyDD[K, V, L, W: Monoid]
   private implicit val to: Timeout = context.timeout
   private implicit val ec: ExecutionContext = context.ec
 
-  LazyDD.logger.info(s"created LazyDD with kVs=$kVs and partitions=$partitions")
+  val flog = Flog(LazyDD.logger)
+  import flog._
+
+  s"created LazyDD with kVs=$kVs and partitions" !! partitions
 
   /**
     * Method to form a new DataDefinition where the resulting values derive from applying the function f to the original values
