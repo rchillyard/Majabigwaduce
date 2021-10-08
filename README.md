@@ -132,7 +132,7 @@ So, the input to the map stage is, in general:
 
     Map[K1,V1]
     
-For the first stage, there is usually no appropriate key so instead we pass in a message of the following form
+For the first stage, there is usually no appropriate key, so instead we pass in a message of the following form
 (which is more or less equivalent to _Map\[Unit,V1]_):
 
 	Seq[V1]
