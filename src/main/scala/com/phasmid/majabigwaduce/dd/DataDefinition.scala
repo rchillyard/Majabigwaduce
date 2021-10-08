@@ -9,7 +9,7 @@ import akka.util.Timeout
 import com.phasmid.majabigwaduce.core.{Actors, MapReducePipe, Monoid, Zero}
 import com.phasmid.majabigwaduce.dd.DataDefinition.IterableMonoid
 import com.phasmid.majabigwaduce.dd.LazyDD.joinMap
-import com.phasmidsoftware.flog.Flog
+import com.phasmidsoftware.flog.{Flog, Loggable}
 import com.typesafe.config.{Config, ConfigFactory}
 import org.slf4j.{Logger, LoggerFactory}
 
@@ -194,10 +194,13 @@ case class LazyDD[K, V, L, W: Monoid]
   private implicit val to: Timeout = context.timeout
   private implicit val ec: ExecutionContext = context.ec
 
-  val flog = Flog(LazyDD.logger)
+  private val flog = Flog(LazyDD.logger)
+
   import flog._
 
-  s"created LazyDD with kVs=$kVs and partitions" !! partitions
+  implicit val kVloggable: Loggable[(K, V)] = (t: (K, V)) => s"${t._1} -> ${t._2}"
+  s"created LazyDD with number of partitions" !? partitions
+  s"... and with kVs" !? kVs
 
   /**
     * Method to form a new DataDefinition where the resulting values derive from applying the function f to the original values
@@ -292,7 +295,7 @@ abstract class BaseDD[K, V](implicit ec: ExecutionContext) extends DataDefinitio
     *
     * @return a map of key-value pairs wrapped in Future
     */
-  override def apply: Future[Map[K, V]] = evaluate map (_.evalMap)
+  override def apply(): Future[Map[K, V]] = evaluate map (_.evalMap)
 
   /**
     * Evaluate this BaseDD as a Future[HasEvaluatedMap[K, V]
@@ -309,14 +312,14 @@ abstract class BaseDD[K, V](implicit ec: ExecutionContext) extends DataDefinitio
     * @tparam X the underlying type of the result.
     * @return an X value, wrapped in Future.
     */
-  def reduce[X: Zero](wVWf: (X, V) => X): Future[X] = for (kVm <- apply) yield kVm.values.foldLeft(implicitly[Zero[X]].zero)(wVWf)
+  def reduce[X: Zero](wVWf: (X, V) => X): Future[X] = for (kVm <- apply()) yield kVm.values.foldLeft(implicitly[Zero[X]].zero)(wVWf)
 
   /**
     * Evaluate the number of elements in this DataDefinition
     *
     * @return the number of k-v pairs
     */
-  def count: Future[Int] = for (kVm <- apply) yield kVm.size
+  def count: Future[Int] = for (kVm <- apply()) yield kVm.size
 }
 
 /**

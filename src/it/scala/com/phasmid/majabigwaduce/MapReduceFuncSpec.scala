@@ -44,15 +44,15 @@ class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with F
 
   behavior of spec1
 
-  it should "work for http://www.bbc.com/ http://www.cnn.com/ http://default/" in {
-    logger.info(s"Starting $spec1:work for http://www.bbc.com/ http://www.cnn.com/ http://default/")
+  it should "work for https://www.bbc.com/ https://www.cnn.com/ https://default/" in {
+    logger.info(s"Starting $spec1:work for https://www.bbc.com/ https://www.cnn.com/ https://default/")
 
     def mapper(w: String): (URL, String) = MockURL(w).asTuple
 
     val props = Props.create(classOf[Master_First_Fold[String, URL, String, Seq[String]]], config, MapReduce.lift(mapper _), reducer _, init _)
     //noinspection SpellCheckingInspection
     val master = system.actorOf(props, s"""mstr-$spec1""")
-    val futureResponse = master.ask(Seq("http://www.bbc.com/", "http://www.cnn.com/", "http://default/"))
+    val futureResponse = master.ask(Seq("https://www.bbc.com/", "https://www.cnn.com/", "https://default/"))
     val wsUrf = futureResponse.mapTo[Response[URL, Seq[String]]]
     whenReady(wsUrf, timeout(Span(6, Seconds))) {
       wsUr =>
@@ -72,23 +72,23 @@ class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with F
 
     val props = Props.create(classOf[Master[String, Seq[String], String, Int, Int]], config, MapReduce.lift(mapper _), adder _)
     val master = system.actorOf(props, s"""master-$spec2""")
-    val part1result = Map[String, Seq[String]]("http://www.bbc.com/" -> Seq(MapReduceFuncSpec.bbcText),
-      "http://www.cnn.com/" -> Seq(MapReduceFuncSpec.cnnText),
-      "http://default/" -> Seq(MapReduceFuncSpec.defaultText))
+    val part1result = Map[String, Seq[String]]("https://www.bbc.com/" -> Seq(MapReduceFuncSpec.bbcText),
+      "https://www.cnn.com/" -> Seq(MapReduceFuncSpec.cnnText),
+      "https://default/" -> Seq(MapReduceFuncSpec.defaultText))
     val iSrf = master.ask(part1result).mapTo[Response[String, Int]]
     whenReady(iSrf, timeout(Span(6, Seconds))) {
       iSr =>
         assert(iSr.size == 3)
-        assert(iSr.right.get("http://www.bbc.com/") match { case Some(94) => true; case _ => false })
-        assert(iSr.right.get("http://www.cnn.com/") match { case Some(135) => true; case _ => false })
-        assert(iSr.right.get("http://default/") match { case Some(327) => true; case _ => false })
+        assert(iSr.right.get("https://www.bbc.com/") match { case Some(94) => true; case _ => false })
+        assert(iSr.right.get("https://www.cnn.com/") match { case Some(135) => true; case _ => false })
+        assert(iSr.right.get("https://default/") match { case Some(327) => true; case _ => false })
         assert(iSr.right.values.sum == 556)
     }
     system.stop(master)
   }
 
-  `spec0` should "work for http://www.bbc.com/ http://www.cnn.com/ http://default/" in {
-    logger.info(s"Starting $spec0:work for http://www.bbc.com/ http://www.cnn.com/ http://default/")
+  `spec0` should "work for https://www.bbc.com/ https://www.cnn.com/ https://default/" in {
+    logger.info(s"Starting $spec0:work for https://www.bbc.com/ https://www.cnn.com/ https://default/")
 
     def mapper1(w: String): (URL, String) = MockURL(w).asTuple
 
@@ -98,20 +98,21 @@ class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with F
     val master1 = system.actorOf(props1, s"WC-1-master")
     val props2 = Props.create(classOf[Master[URL, Seq[String], URL, Int, Int]], config, MapReduce.lift(mapper2 _), adder _)
     val master2 = system.actorOf(props2, s"WC-2-master")
-    val wsUrf = master1.ask(Seq("http://www.bbc.com/", "http://www.cnn.com/", "http://default/")).mapTo[Response[URL, Seq[String]]]
+    val wsUrf = master1.ask(Seq("https://www.bbc.com/", "https://www.cnn.com/", "https://default/")).mapTo[Response[URL, Seq[String]]]
     val iUrf = wsUrf flatMap { wsUr => val wsUm = wsUr.right; master2.ask(wsUm).mapTo[Response[URL, Int]] }
     whenReady(iUrf, timeout(Span(6, Seconds))) {
       iUr =>
         assert(iUr.size == 3)
-        assert(iUr.right.get(new URL("http://www.bbc.com/")) match { case Some(94) => true; case _ => false })
-        assert(iUr.right.get(new URL("http://www.cnn.com/")) match { case Some(135) => true; case _ => false })
-        assert(iUr.right.get(new URL("http://default/")) match { case Some(327) => true; case _ => false })
+        assert(iUr.right.get(new URL("https://www.bbc.com/")) match { case Some(94) => true; case _ => false })
+        assert(iUr.right.get(new URL("https://www.cnn.com/")) match { case Some(135) => true; case _ => false })
+        assert(iUr.right.get(new URL("https://default/")) match { case Some(327) => true; case _ => false })
         assert(iUr.right.values.sum == 556)
     }
     system.stop(master1)
     system.stop(master2)
   }
 
+  // NOTE: this is the cause of the ClassCastError which is logged. Don't worry, it's supposed to be like this.
   it should "fail because mapper is incorrectly defined" in {
     logger.info(s"Starting $spec0:fail because mapper is incorrectly defined")
     implicit val timeout: Timeout = Timeout(60 seconds) // We need a longer timeout for this one to work correctly.
@@ -124,7 +125,7 @@ class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with F
     val master1 = system.actorOf(props1, s"WC-1b-master")
     val props2 = Props.create(classOf[Master[URL, Seq[String], URL, Int, Int]], config, mapper2 _, adder _)
     val master2 = system.actorOf(props2, s"WC-2b-master")
-    val wsUrf = master1.ask(Seq("http://www.bbc.com/", "http://www.cnn.com/", "http://default/")).mapTo[Response[URL, Seq[String]]]
+    val wsUrf = master1.ask(Seq("https://www.bbc.com/", "https://www.cnn.com/", "https://default/")).mapTo[Response[URL, Seq[String]]]
     val iUrf = wsUrf flatMap { wsUr => val wsUm = wsUr.right; master2.ask(wsUm).mapTo[Response[URL, Int]] }
     iUrf.onComplete {
       case Failure(x: AskTimeoutException) => fail(s"should throw MapReduceException, not $x")
@@ -146,9 +147,9 @@ class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with F
 
     val props = Props.create(classOf[Master[String, Seq[URL], String, Int, Int]], config, MapReduce.lift(mapper _), adder _)
     val master = system.actorOf(props, s"TF2-master")
-    val bbc = new URL("http://www.bbc.com/")
-    val cnn = new URL("http://www.cnn.com/")
-    val other = new URL("http://default/")
+    val bbc = new URL("https://www.bbc.com/")
+    val cnn = new URL("https://www.cnn.com/")
+    val other = new URL("https://default/")
     val occurrences = Map("the" -> Seq(bbc, cnn, other), "Syria" -> Seq(bbc, cnn))
     val iSrf = master.ask(occurrences).mapTo[Response[String, Int]]
     whenReady(iSrf, timeout(Span(6, Seconds)))(iSr =>
