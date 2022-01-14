@@ -16,7 +16,6 @@ val scalaXMLVersion = "2.0.1"
 scalacOptions in (Compile,doc) ++= Seq("-groups", "-implicits", "-deprecation")
 
 resolvers += "Typesafe Repository" at "https://repo.typesafe.com/typesafe/releases/"
-//resolvers += "releases" at "https://oss.sonatype.org/service/local/staging/deploy/maven2/comphasmidsoftware-1001"
 
 libraryDependencies ++= Seq(
 	"com.phasmidsoftware" %% "comparer" % "1.0.9" withSources() withJavadoc(),

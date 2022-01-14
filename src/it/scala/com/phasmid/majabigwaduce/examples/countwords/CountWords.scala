@@ -8,6 +8,7 @@ import akka.actor.ActorSystem
 import akka.event.LoggingAdapter
 import akka.util.Timeout
 import com.phasmid.majabigwaduce.core._
+import com.phasmidsoftware.flog.{Loggable, Loggables}
 import com.typesafe.config.{Config, ConfigFactory}
 
 import java.net.URI
@@ -44,7 +45,11 @@ case class CountWords(resourceFunc: String => Resource)(implicit system: ActorSy
 
     implicit val actors: Actors = Actors(implicitly[ActorSystem], implicitly[Config])
 
-    val stage1 = MapReduceFirstFold.create({ w: String => val u = resourceFunc(w); logger.debug(s"stage1 map: $w"); (u.getServer, u.getContent) }, appendString)(actors, timeout)
+    //    val flog = Flog[CountWords]
+    //    import flog._
+
+    //    val stage1 = MapReduceFirstFold.create({ w: String => val u = resourceFunc("stage1 map" !! w); (u.getServer, u.getContent) }, appendString)(actors, timeout)
+    val stage1 = MapReduceFirstFold.create({ w: String => val u = resourceFunc(w); (u.getServer, u.getContent) }, appendString)(actors, timeout)
 
     val stage2 = MapReducePipe.create[URI, Strings, URI, Int, Int](
       (w, gs) => w -> (countFields(gs) reduce addInts),
@@ -64,17 +69,19 @@ case class CountWords(resourceFunc: String => Resource)(implicit system: ActorSy
 }
 
 /**
-  * CountWords: an example application of the MapReduce framework.
-  * This application is a three-stage map-reduce process (the final stage is a pure reduce process).
-  * Stage 1 takes a list of Strings representing URIs, converts to URIs, opens each as a stream, reading the contents and finally returns a map of URI->Seq[String]
-  * where the key is the URI of a server, and the Strings are the contents of each of the documents retrieved from that server.
-  * Stage 2 takes the map of URI->Seq[String] resulting from stage 1 and adds the lengths of the documents (in words) to each other. The final result is a map of
-  * URI->Int where the value is the total number of words read from the server represented by the key.
-  * Stage 3 then sums these values together to yield a grand total.
-  *
-  * @author scalaprof
-  */
-object CountWords {
+ * CountWords: an example application of the MapReduce framework.
+ * This application is a three-stage map-reduce process (the final stage is a pure reduce process).
+ * Stage 1 takes a list of Strings representing URIs, converts to URIs, opens each as a stream, reading the contents and finally returns a map of URI->Seq[String]
+ * where the key is the URI of a server, and the Strings are the contents of each of the documents retrieved from that server.
+ * Stage 2 takes the map of URI->Seq[String] resulting from stage 1 and adds the lengths of the documents (in words) to each other. The final result is a map of
+ * URI->Int where the value is the total number of words read from the server represented by the key.
+ * Stage 3 then sums these values together to yield a grand total.
+ *
+ * @author scalaprof
+ */
+object CountWords extends App with Loggables {
+
+
   def apply(hc: HttpClient, args: Array[String]): Future[Int] = {
     implicit val config: Config = ConfigFactory.load.getConfig("CountWords")
     implicit val system: ActorSystem = ActorSystem(config.getString("name"))
@@ -83,7 +90,13 @@ object CountWords {
     import ExecutionContext.Implicits.global
     //    import Init._
 
-    val ws = if (args.length > 0) args.toSeq else Seq("http://www.bbc.com/doc1", "http://www.cnn.com/doc2", "http://default/doc3", "http://www.bbc.com/doc2", "http://www.bbc.com/doc3")
+    //    val flog: Flog = Flog[CountWords.type]
+    //    import flog._
+
+    implicit val iterableLoggable: Loggable[Iterable[String]] = new Loggables {}.iterableLoggable[String]()
+
+    val ws = if (args.length > 0) args.toSeq else Seq("https://www.bbc.com/doc1", "https://www.cnn.com/doc2", "https://default/doc3", "https://www.bbc.com/doc2", "https://www.bbc.com/doc3")
+    //    "starting domains:" !! ws
     CountWords(hc.getResource).apply(ws)
   }
 
