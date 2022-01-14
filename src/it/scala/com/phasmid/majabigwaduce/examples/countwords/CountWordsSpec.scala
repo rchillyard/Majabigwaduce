@@ -16,10 +16,10 @@ class CountWordsSpec extends flatspec.AnyFlatSpec with should.Matchers with Futu
 
   // NOTE: Issue #17 This test (and others) causes the following warning in the logs:
   // 2020-05-05 21:32:38,434 WARN  akka.stream.Materializer akka.stream.Log(akka://CountWords/system/Materializers/StreamSupervisor-1) - [outbound connection to [akka://ClusterSystem@127.0.0.1:2551], control stream] Upstream failed, cause: StreamTcpException: Tcp command [Connect(127.0.0.1:2551,None,List(),Some(5000 milliseconds),true)] failed because of java.net.ConnectException: Connection refused
-  "CountWords" should "work for http://www.bbc.com/ http://www.cnn.com/ http://default/" in {
-    val wBBC = "http://www.bbc.com/"
-    val wCNN = "http://www.cnn.com/"
-    val wDef = "http://default/"
+  "CountWords" should "work for https://www.bbc.com/ https://www.cnn.com/ https://default/" in {
+    val wBBC = "https://www.bbc.com/"
+    val wCNN = "https://www.cnn.com/"
+    val wDef = "https://default/"
     val uBBC = new URI(wBBC)
     val uCNN = new URI(wCNN)
     val uDef = new URI(wDef)
