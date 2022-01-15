@@ -1,5 +1,11 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/1d777e04503246a991b88b9da4aea9ff)](https://app.codacy.com/manual/scalaprof/Majabigwaduce?utm_source=github.com&utm_medium=referral&utm_content=rchillyard/Majabigwaduce&utm_campaign=Badge_Grade_Dashboard)
 [![CircleCI](https://circleci.com/gh/rchillyard/Majabigwaduce.svg?style=svg)](https://circleci.com/gh/rchillyard/Majabigwaduce)
+![GitHub Top Languages](https://img.shields.io/github/languages/top/rchillyard/Majabigwaduce)
+![GitHub](https://img.shields.io/github/license/rchillyard/Majabigwaduce)
+![GitHub last commit](https://img.shields.io/github/last-commit/rchillyard/Majabigwaduce)
+![GitHub issues](https://img.shields.io/github/issues-raw/rchillyard/Majabigwaduce)
+![GitHub issues by-label](https://img.shields.io/github/issues/rchillyard/Majabigwaduce/bug)
+
 
 Majabigwaduce
 =============
@@ -126,7 +132,7 @@ So, the input to the map stage is, in general:
 
     Map[K1,V1]
     
-For the first stage, there is usually no appropriate key so instead we pass in a message of the following form
+For the first stage, there is usually no appropriate key, so instead we pass in a message of the following form
 (which is more or less equivalent to _Map\[Unit,V1]_):
 
 	Seq[V1]
@@ -496,3 +502,4 @@ Revision History
 * 1.0.2 Code cleanup and issues fixes.
 * 1.0.3 More cleanup (TODOs, etc.)
 * 1.0.4 Refactored package structure and moved _examples_ into _it_ directory.
+* 1.0.5 Upgraded dependencies, added Flog, added more badges.

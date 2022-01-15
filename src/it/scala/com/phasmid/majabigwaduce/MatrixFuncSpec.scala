@@ -14,11 +14,9 @@ import org.scalatest.tagobjects.Slow
 import scala.concurrent.duration
 import scala.concurrent.duration.Duration
 import scala.language.postfixOps
-import scala.util.Random
+import scala.util.{Random, Try}
 
 class MatrixFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with Futures with Inside {
-
-  implicit val atMost: Duration = duration.FiniteDuration(1, "minute")
 
   trait DoubleProduct extends Product[Double] {
     def product[X: Numeric, Y: Numeric](x: X, y: Y): Double = implicitly[Numeric[X]].toDouble(x) * implicitly[Numeric[Y]].toDouble(y)
@@ -35,21 +33,24 @@ class MatrixFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with Futu
   behavior of "Matrix2"
 
   it should "implement product by identity correctly (N=250)" taggedAs Slow in {
+    implicit val atMost: Duration = duration.FiniteDuration(1, "minute")
     productByIdentity(250)
   }
 
-  // NOTE Issue #21
-  ignore should "implement product by identity correctly (N=500)" taggedAs Slow in {
+  it should "implement product by identity correctly (N=500)" taggedAs Slow in {
+    implicit val atMost: Duration = duration.FiniteDuration(1, "minute")
     productByIdentity(500)
   }
 
-  // NOTE Issue #21
+  // NOTE In order to be confident of this executing in time, we should set the overall timeout (in application.conf) to be 5 minutes
+  // FIXME Issue #27
+  // NOTE that this does not appear to fail--that needs fixing, too.
   ignore should "implement product by identity correctly (N=1000)" taggedAs Slow in {
     implicit val atMost: Duration = duration.FiniteDuration(5, "minute")
     productByIdentity(1000)
   }
 
-  private def productByIdentity(N: Int)(implicit atMost: Duration): Unit = {
+  private def productByIdentity(N: Int)(implicit atMost: Duration): Unit = Try {
     val r = Random
     val size = N
     val array = for (_ <- 1 to size) yield for (_ <- 1 to size) yield r.nextDouble()
@@ -63,7 +64,8 @@ class MatrixFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with Futu
     // then
     rows shouldBe array
     println(s"time to multiply matrix of size $size by $size by the identity matrix is: ${end - start} mSecs")
-  }
+  }.isSuccess shouldBe true
+
 }
 
 
