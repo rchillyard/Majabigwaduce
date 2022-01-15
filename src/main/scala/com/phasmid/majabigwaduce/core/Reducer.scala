@@ -62,7 +62,7 @@ abstract class ReducerBase[K2, W, V2] extends MapReduceActor {
   override def receive: PartialFunction[Any, Unit] = {
     case i: Intermediate[K2, W] =>
       log.debug(s"Reducer received $i")
-      sender ! (i.k2, toEither(Try(getValue(i.ws))))
+      sender() ! (i.k2, toEither(Try(getValue(i.ws))))
     case q =>
       super.receive(q)
   }

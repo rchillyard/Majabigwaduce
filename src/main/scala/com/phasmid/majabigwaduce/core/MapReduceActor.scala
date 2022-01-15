@@ -17,11 +17,11 @@ import scala.util._
 abstract class MapReduceActor extends Actor with ActorLogging with AutoCloseable {
   override def preStart(): Unit = {
     log.debug("is starting")
-    super.preStart
+    super.preStart()
   }
 
   override def postStop(): Unit = {
-    super.postStop
+    super.postStop()
     log.debug("has shut down")
   }
 

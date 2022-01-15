@@ -51,7 +51,7 @@ case class WebCrawler(depth: Int)(implicit system: ActorSystem, config: Config, 
   val stage3: Reduce[URI, Strings, Strings] = Reduce[URI, Strings, Strings](_ ++ _)
   val crawler: Strings => Future[Strings] = stage1 & stage2 | stage3
 
-  override def apply(ws: Strings): Future[Int] = doCrawl(ws, Nil, depth) transform( { n => val z = n.length; system.terminate; z }, { x => system.log.error(x, "Map/reduce error (typically in map function)"); x })
+  override def apply(ws: Strings): Future[Int] = doCrawl(ws, Nil, depth) transform( { n => val z = n.length; system.terminate(); z }, { x => system.log.error(x, "Map/reduce error (typically in map function)"); x })
 
   private def doCrawl(ws: Strings, all: Strings, depth: Int): Future[Strings] =
     if (depth < 0) Future((all ++ ws).distinct)

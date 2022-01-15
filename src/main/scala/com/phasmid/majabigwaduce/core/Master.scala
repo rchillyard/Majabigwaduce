@@ -120,7 +120,7 @@ abstract class MasterBaseFirst[V1, K2, W, V2](config: Config, f: V1 => Try[(K2, 
   override def receive: PartialFunction[Any, Unit] = {
     case v1s: Seq[V1] =>
       log.debug(s"Master received Seq[V1]: with ${v1s.length} elements")
-      val caller = sender // XXX: this looks strange but it is required
+      val caller = sender() // XXX: this looks strange but it is required
       doMapReduce(KeyValuePairs.sequence[Unit, V1](v1s)).onComplete {
         case Success(wXeK2m) => caller ! Response.create(wXeK2m)
         case Failure(x) => caller ! akka.actor.Status.Failure(x)
@@ -182,7 +182,7 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => Try[
     // CONSIDER eliminate this unused code
     case v1K1m: Map[K1, V1] =>
       log.debug(s"Master received Map[K1,V1]: with ${v1K1m.size} elements")
-      val caller = sender
+      val caller = sender()
       doMapReduce(KeyValuePairs.map[K1, V1](v1K1m)).onComplete {
         case Success(v2XeK2m) =>
           maybeLog("response: {}", v2XeK2m)
@@ -193,7 +193,7 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => Try[
       }
     case v1s: Seq[(K1, V1)]@unchecked =>
       log.debug(s"Master received Seq[(K1,V1)]: with ${v1s.length} elements")
-      val caller = sender
+      val caller = sender()
       doMapReduce(KeyValuePairs[K1, V1](v1s)).onComplete {
         case Success(v2XeK2m) => caller ! Response.create(v2XeK2m)
         case Failure(x) => caller ! akka.actor.Status.Failure(x)

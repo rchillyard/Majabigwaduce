@@ -7,11 +7,11 @@ version := "1.0.5"
 scalaVersion := "2.13.6"
 
 val akkaGroup = "com.typesafe.akka"
-val akkaVersion = "2.6.16"
+val akkaVersion = "2.6.18"
 val scalaTestVersion = "3.2.9"
 val configVersion = "1.4.1"
-val scalaMockVersion = "5.1.0"
-val logBackVersion = "1.2.6"
+val scalaMockVersion = "5.2.0"
+val logBackVersion = "1.2.10"
 val scalaXMLVersion = "2.0.1"
 scalacOptions in (Compile,doc) ++= Seq("-groups", "-implicits", "-deprecation")
 
@@ -35,7 +35,6 @@ libraryDependencies ++= Seq(
 	"org.ccil.cowan.tagsoup" % "tagsoup" % "1.2.1" % "test"
 )
 
-unmanagedSourceDirectories in Test += baseDirectory.value / "src/it/scala"
-unmanagedResourceDirectories in Test += baseDirectory.value / "src/it/resources"
-
-parallelExecution in Test := false
+Test / unmanagedSourceDirectories += baseDirectory.value / "src/it/scala"
+Test / unmanagedResourceDirectories += baseDirectory.value / "src/it/resources"
+Test / parallelExecution := false
