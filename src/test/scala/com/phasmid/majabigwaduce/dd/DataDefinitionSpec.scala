@@ -220,8 +220,8 @@ class DataDefinitionSpec extends flatspec.AnyFlatSpec with should.Matchers with 
     target.clean()
   }
 
+  // Closed issue #7
   //The join only works when key is never changed, this test won't work since key changes
-  // FIXME Issue #7
   //Resolution:
   // Issue 1: For the issue of the sequence not being maintained, changed the type of kWsm from mutable.HashMap
   // to mutable.LinkedHashMap. HashMap fails to preserve the order when the keys are updated. LinkedHashMap preserves the sequence.

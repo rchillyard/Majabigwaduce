@@ -81,13 +81,6 @@ case class MatrixOperation[X: Numeric](keyFunc: Int => Int)(implicit system: Act
   */
 object MatrixOperation extends App {
 
-  // TODO This is appears to be redundant
-  trait DoubleZero$ extends Zero[Double] {
-    def zero: Double = 0
-  }
-
-  implicit object DoubleZero$ extends DoubleZero$
-
   /**
     * Method to yield the dot product of two vectors.
     *

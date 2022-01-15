@@ -17,17 +17,19 @@ import scala.language.postfixOps
 import scala.util.{Failure, Success, Try, Using}
 
 /**
-  * WebCrawler: an example application of the MapReduce framework.
-  * This application is a three-stage map-reduce process (the final stage is a pure reduce process).
-  * Stage 1 takes a list of Strings representing URIs, converts to URIs, opens each as a stream, reading the contents and finally returns a map of URI->Seq[String]
-  * where the key is the URI of a server, and the Strings are the links retrieved from all the documents read on that server.
-  * Stage 2 takes the map of URI->Seq[String] resulting from stage 1 and combines the lists of links.
-  * Stage 3 then combines these altogether.
-  *
-  * This pipeline of stages 1 through 3 is then executed recursively to a given depth. The final output is the list of URLs which have been visited.
-  *
-  * @author scalaprof
-  */
+ * WebCrawler: an example application of the MapReduce framework.
+ * This application is a three-stage map-reduce process (the final stage is a pure reduce process).
+ * Stage 1 takes a list of Strings representing URIs, converts to URIs, opens each as a stream, reading the contents and finally returns a map of URI->Seq[String]
+ * where the key is the URI of a server, and the Strings are the links retrieved from all the documents read on that server.
+ * Stage 2 takes the map of URI->Seq[String] resulting from stage 1 and combines the lists of links.
+ * Stage 3 then combines these altogether.
+ *
+ * TODO this web crawler is a depth-first algorithm -- change it to breadth-first
+ *
+ * This pipeline of stages 1 through 3 is then executed recursively to a given depth. The final output is the list of URLs which have been visited.
+ *
+ * @author scalaprof
+ */
 case class WebCrawler(depth: Int)(implicit system: ActorSystem, config: Config, timeout: Timeout, ec: ExecutionContext) extends (Strings => Future[Int]) {
 
   trait StringsZero$ extends Zero[Strings] {

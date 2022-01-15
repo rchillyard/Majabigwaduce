@@ -193,7 +193,6 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => Try[
       }
     case v1s: Seq[(K1, V1)]@unchecked =>
       log.debug(s"Master received Seq[(K1,V1)]: with ${v1s.length} elements")
-      //      maybeLog("received: {}",v1s)
       val caller = sender
       doMapReduce(KeyValuePairs[K1, V1](v1s)).onComplete {
         case Success(v2XeK2m) => caller ! Response.create(v2XeK2m)
