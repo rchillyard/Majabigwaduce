@@ -82,7 +82,7 @@ object CountWords extends App with Loggables {
 
 
   def apply(hc: HttpClient, args: Array[String]): Future[Int] = {
-    implicit val config: Config = ConfigFactory.load.getConfig("CountWords")
+    implicit val config: Config = ConfigFactory.load.getConfig("majabigwaduce.CountWords")
     implicit val system: ActorSystem = ActorSystem(config.getString("name"))
     implicit val timeout: Timeout = getTimeout(config.getString("timeout"))
     implicit val logger: LoggingAdapter = system.log

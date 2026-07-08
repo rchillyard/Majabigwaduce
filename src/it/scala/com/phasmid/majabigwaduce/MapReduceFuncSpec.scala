@@ -35,7 +35,7 @@ class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with F
 
   private val logger: LoggingAdapter = system.log
 
-  private val config = ConfigFactory.load()
+  private val config = ConfigFactory.load().getConfig("majabigwaduce")
   val spec0 = "WC"
   val spec1 = "WC-1"
   val spec2 = "WC-2"

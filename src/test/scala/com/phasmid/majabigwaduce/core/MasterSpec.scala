@@ -33,7 +33,7 @@ class MasterSpec
       val _5seconds = FiniteDuration(5L, scala.concurrent.duration.SECONDS)
       implicit val timeout: Timeout = Timeout(_5seconds)
       implicit val executionContext: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
-      implicit val config: Config = ConfigFactory.load.getConfig("Matrix")
+      implicit val config: Config = ConfigFactory.load.getConfig("majabigwaduce.Matrix")
       implicit val actors: Actors = Actors(system, config)
       val mr: MapReduceFirst[String, String, String, String] = MapReduceFirst.create(v => (v, v), (v1, _) => v1)
       val rf: Future[Map[String, String]] = mr.apply(Seq("Hello", "Goodbye"))
@@ -61,7 +61,7 @@ class MasterSpec
       val _5seconds = FiniteDuration(5L, scala.concurrent.duration.SECONDS)
       implicit val timeout: Timeout = Timeout(_5seconds)
       implicit val executionContext: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
-      implicit val config: Config = ConfigFactory.load.getConfig("Matrix")
+      implicit val config: Config = ConfigFactory.load.getConfig("majabigwaduce.Matrix")
       implicit val actors: Actors = Actors(system, config)
       val f: (String, String) => Try[(String, String)] = (k, v) => Success((k, v))
       val g: (String, String) => Try[String] = (v1, _) => Success(v1)

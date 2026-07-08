@@ -26,7 +26,7 @@ class WebCrawlerSpec extends flatspec.AnyFlatSpec with should.Matchers with Futu
   // CONSIDER moving to it since this requires an internet connection
   // But sometimes when run with all the specs in Majabigwaduce, this runs -- but in the logs we see exceptions thrown
   "crawl" should "work" in {
-    implicit val config: Config = ConfigFactory.load.getConfig("WebCrawler")
+    implicit val config: Config = ConfigFactory.load.getConfig("majabigwaduce.WebCrawler")
     implicit val system: ActorSystem = ActorSystem(config.getString("name"))
     implicit val to: Timeout = WebCrawler.getTimeout(config.getString("timeout"))
     import ExecutionContext.Implicits.global
@@ -35,5 +35,12 @@ class WebCrawlerSpec extends flatspec.AnyFlatSpec with should.Matchers with Futu
     val xf = crawler(ws)
     whenReady(xf, timeout(Span(300, Seconds)))( // The actual number is approximate and will vary (currently 9)
       i => assert(i > 5 && i < 200))
+  }
+
+  "webCrawlerApp main program" should "work" in {
+    given config: Config = ConfigFactory.load.getConfig("majabigwaduce.WebCrawler")
+    given system: ActorSystem = ActorSystem(config.getString("name"))
+    given timeout: Timeout = WebCrawler.getTimeout(config.getString("timeout"))
+    webCrawlerApp()
   }
 }

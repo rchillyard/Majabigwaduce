@@ -116,7 +116,7 @@ object MatrixOperation {
   */
 @main def matrixOperationApp(): Unit = {
 
-  implicit val config: Config = ConfigFactory.load.getConfig("Matrix")
+  implicit val config: Config = ConfigFactory.load.getConfig("majabigwaduce.Matrix")
   implicit val system: ActorSystem = ActorSystem(config.getString("name"))
   implicit val timeout: Timeout = CountWords.getTimeout(config.getString("timeout"))
   val rows = config.getInt("rows")

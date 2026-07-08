@@ -7,19 +7,19 @@ package com.phasmid.majabigwaduce
 import akka.actor.ActorSystem
 import akka.event.LoggingAdapter
 import akka.util.Timeout
-import com.phasmid.majabigwaduce.examples.matrix.MatrixOperation
+import com.phasmid.majabigwaduce.examples.matrix.{MatrixOperation, matrixOperationApp}
 import com.typesafe.config.{Config, ConfigFactory}
-import org.scalatest._
-import org.scalatest.concurrent._
+import org.scalatest.*
+import org.scalatest.concurrent.*
 import org.scalatest.matchers.should
 import org.scalatest.time.{Seconds, Span}
 
-import scala.concurrent.duration._
+import scala.concurrent.duration.*
 import scala.concurrent.{Await, ExecutionContext, Future}
 
 class MatrixOperationFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with Futures with ScalaFutures with Inside {
   "MatrixOperation" should "apply vector" in {
-    implicit val config: Config = ConfigFactory.load.getConfig("Matrix")
+    implicit val config: Config = ConfigFactory.load.getConfig("majabigwaduce.Matrix")
     implicit val system: ActorSystem = ActorSystem(config.getString("name"))
     implicit val to: Timeout = getTimeout(config.getString("timeout"))
     implicit val logger: LoggingAdapter = system.log
@@ -39,7 +39,7 @@ class MatrixOperationFuncSpec extends flatspec.AnyFlatSpec with should.Matchers 
   }
 
   it should "create product of matrices" in {
-    implicit val config: Config = ConfigFactory.load.getConfig("Matrix")
+    implicit val config: Config = ConfigFactory.load.getConfig("majabigwaduce.Matrix")
     implicit val system: ActorSystem = ActorSystem(config.getString("name"))
     implicit val to: Timeout = getTimeout(config.getString("timeout"))
     implicit val logger: LoggingAdapter = system.log
@@ -54,6 +54,13 @@ class MatrixOperationFuncSpec extends flatspec.AnyFlatSpec with should.Matchers 
     }
 
     Await.ready(system.terminate(), 5.seconds)
+  }
+  
+  "main program" should "work" in {
+    given config: Config = ConfigFactory.load.getConfig("majabigwaduce.Matrix")
+    given system: ActorSystem = ActorSystem(config.getString("name"))
+    given timeout: Timeout = getTimeout(config.getString("timeout"))
+    matrixOperationApp()
   }
 
   def getTimeout(t: String): Timeout = {
