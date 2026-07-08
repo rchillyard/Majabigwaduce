@@ -2,14 +2,16 @@ organization := "com.phasmidsoftware"
 
 name := "Majabigwaduce"
 
-version := "1.0.6"
+version := "1.0.7"
 
 scalaVersion := "3.3.8"
 
+val flogVersion = "1.0.15"
 val akkaGroup = "com.typesafe.akka"
 val akkaVersion = "2.8.8"
 val scalaTestVersion = "3.2.20"
 val configVersion = "1.4.9"
+val tagSoupVersion = "1.2.1"
 val scalaMockVersion = "7.5.5"
 val logBackVersion = "1.5.37"
 val scalaXMLVersion = "2.4.0"
@@ -18,7 +20,7 @@ Compile / doc / scalacOptions ++= Seq("-deprecation")
 resolvers += "Typesafe Repository" at "https://repo.typesafe.com/typesafe/releases/"
 
 libraryDependencies ++= Seq(
-	"com.phasmidsoftware" %% "flog" % "1.0.15" withSources() withJavadoc(),
+	"com.phasmidsoftware" %% "flog" % flogVersion withSources() withJavadoc(),
 	akkaGroup %% "akka-actor" % akkaVersion withSources() withJavadoc(),
 	akkaGroup %% "akka-slf4j" % akkaVersion withSources() withJavadoc(),
 	akkaGroup %% "akka-cluster" % akkaVersion withSources() withJavadoc(),
@@ -31,7 +33,7 @@ libraryDependencies ++= Seq(
 	"org.scalamock" %% "scalamock" % scalaMockVersion % "test",
 // NOTE: xml and tagsoup are for WebCrawler exemplar
   "org.scala-lang.modules" %% "scala-xml" % scalaXMLVersion % "test",
-	"org.ccil.cowan.tagsoup" % "tagsoup" % "1.2.1" % "test"
+	"org.ccil.cowan.tagsoup" % "tagsoup" % tagSoupVersion % "test"
 )
 
 Test / unmanagedSourceDirectories += baseDirectory.value / "src/it/scala"
