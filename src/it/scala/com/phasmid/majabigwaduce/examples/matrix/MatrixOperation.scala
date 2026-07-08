@@ -74,12 +74,8 @@ case class MatrixOperation[X: Numeric](keyFunc: Int => Int)(implicit system: Act
 /**
   * This object includes methods that do not themselves need to parallelize their operations.
   * Instead, these methods are invoked in the (remote) actors which are defined in the MatrixOperation case class.
-  *
-  * Additionally, this object is an App which will test the multiplication of matrices of size defined in the configuration file.
-  *
-  * CONSIDER eliminating this App aspect of the object.
   */
-object MatrixOperation extends App {
+object MatrixOperation {
 
   /**
     * Method to yield the dot product of two vectors.
@@ -109,6 +105,16 @@ object MatrixOperation extends App {
   def product[X: Numeric](as: Seq[X], bss: Seq[Seq[X]]): Try[Seq[X]] = FP.sequence(for (bs <- bss.transpose) yield dot(as, bs))
 
   def getException[X](t: (Seq[X], Seq[X])): Try[X] = Failure(IncompatibleLengthsException(t._1.size, t._2.size))
+}
+
+/**
+  * This app will test the multiplication of matrices of size defined in the configuration file.
+  *
+  * NOTE: this is kept separate from the MatrixOperation object so that referencing MatrixOperation's pure methods
+  * (e.g. from tests) does not trigger this side-effecting computation, and so that the mapper callbacks run by the
+  * actors below (which call back into MatrixOperation) never race against this object's own initialization.
+  */
+@main def matrixOperationApp(): Unit = {
 
   implicit val config: Config = ConfigFactory.load.getConfig("Matrix")
   implicit val system: ActorSystem = ActorSystem(config.getString("name"))

@@ -13,7 +13,6 @@ import java.net.{URI, URL}
 import scala.concurrent._
 import scala.concurrent.duration._
 import scala.io.Source
-import scala.language.postfixOps
 import scala.util.{Failure, Success, Try, Using}
 
 /**
@@ -102,26 +101,32 @@ case class WebCrawler(depth: Int)(implicit system: ActorSystem, config: Config, 
 }
 
 
-object WebCrawler extends App {
-
-  implicit val config: Config = ConfigFactory.load.getConfig("WebCrawler")
-  implicit val system: ActorSystem = ActorSystem(config.getString("name"))
-  implicit val timeout: Timeout = getTimeout(config.getString("timeout"))
-
-  import ExecutionContext.Implicits.global
-
-  val ws = if (args.length > 0) args.toSeq else Seq(config.getString("start"))
-  val crawler = WebCrawler(config.getInt("depth"))
-  private val xf = crawler(ws)
-  xf foreach (x => println(s"total links: $x"))
-  Await.ready(xf, 10.minutes)
-
+object WebCrawler {
   // TODO try to combine this with the same method in MapReduceActor
-  def getTimeout(t: String) = {
+  def getTimeout(t: String): Timeout = {
     val durationR = """(\d+)\s*(\w+)""".r
     t match {
       case durationR(n, s) => new Timeout(FiniteDuration(n.toLong, s))
-      case _ => Timeout(10 seconds)
+      case _ => Timeout(10.seconds)
     }
   }
+}
+
+/**
+ * NOTE: this is kept separate from the WebCrawler object so that referencing WebCrawler's pure methods
+ * (e.g. from tests) does not trigger this side-effecting computation.
+ */
+@main def webCrawlerApp(args: String*): Unit = {
+
+  implicit val config: Config = ConfigFactory.load.getConfig("WebCrawler")
+  implicit val system: ActorSystem = ActorSystem(config.getString("name"))
+  implicit val timeout: Timeout = WebCrawler.getTimeout(config.getString("timeout"))
+
+  import ExecutionContext.Implicits.global
+
+  val ws = if (args.nonEmpty) args else Seq(config.getString("start"))
+  val crawler = WebCrawler(config.getInt("depth"))
+  val xf = crawler(ws)
+  xf foreach (x => println(s"total links: $x"))
+  Await.ready(xf, 10.minutes)
 }

@@ -151,7 +151,7 @@ case class MapReduceFirstFold[V0, K1, W, V1: Zero](f: V0 => Try[(K1, W)], g: (V1
   // The following constructor allows for a f which needs to be lifted to T=>Try[R]
   // CONSIDER implementing an apply method in MapReduce for this signature
   //  def this(fy: V0 => (K1, W), g: (V1, W) => V1)(actors: Actors, timeout: Timeout) = this(MapReduce.lift(fy), g)(actors, timeout)
-  def createProps: Props = Props(new Master_First_Fold(actors.config, f, g, implicitly[Zero[V1]].zero _))
+  def createProps: Props = Props(new Master_First_Fold(actors.config, f, g, () => implicitly[Zero[V1]].zero))
 
   override def createName: Option[String] = Some(MapReduceFirstFold.sMrffMstr)
 }
@@ -181,7 +181,7 @@ object MapReduceFirstFold {
 case class MapReducePipeFold[K0, V0, K1, W, V1: Zero](f: (K0, V0) => Try[(K1, W)], g: (V1, W) => V1, n: Int)(actors: Actors, timeout: Timeout) extends MapReduce_LoggingBase[(K0, V0), K1, V1](actors)(timeout) {
   // The following constructor allows for a f which needs to be lifted to T=>Try[R]
   //  def this(fy: (K0, V0) => (K1, W), g: (V1, W) => V1, n: Int)(actors: Actors, timeout: Timeout) = this(MapReduce.lift(fy), g, n)(actors, timeout)
-  def createProps: Props = Props(new Master_Fold(actors.config, f, g, implicitly[Zero[V1]].zero _))
+  def createProps: Props = Props(new Master_Fold(actors.config, f, g, () => implicitly[Zero[V1]].zero))
 
   override def createName: Option[String] = Some(s"""${MapReducePipeFold.sMRPFMaster}-$n""")
 }

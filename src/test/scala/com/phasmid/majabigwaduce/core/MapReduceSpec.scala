@@ -10,7 +10,6 @@ import org.scalatest.concurrent._
 import org.scalatest.matchers.should
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.language.postfixOps
 
 class MapReduceSpec extends flatspec.AnyFlatSpec with should.Matchers with Futures with ScalaFutures with Inside {
 

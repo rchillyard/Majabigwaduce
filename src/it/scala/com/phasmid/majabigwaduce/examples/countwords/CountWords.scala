@@ -14,16 +14,15 @@ import com.typesafe.config.{Config, ConfigFactory}
 import java.net.URI
 import scala.concurrent._
 import scala.concurrent.duration._
-import scala.language.postfixOps
 
 trait HttpClient {
   def getResource(w: String): Resource
 }
 
 trait Resource {
-  def getServer: URI
+  def getServer(): URI
 
-  def getContent: String
+  def getContent(): String
 }
 
 case class CountWords(resourceFunc: String => Resource)(implicit system: ActorSystem, logger: LoggingAdapter, config: Config, timeout: Timeout, ec: ExecutionContext) extends (Seq[String] => Future[Int]) {
@@ -49,7 +48,7 @@ case class CountWords(resourceFunc: String => Resource)(implicit system: ActorSy
     //    import flog._
 
     //    val stage1 = MapReduceFirstFold.create({ w: String => val u = resourceFunc("stage1 map" !! w); (u.getServer, u.getContent) }, appendString)(actors, timeout)
-    val stage1 = MapReduceFirstFold.create({ w: String => val u = resourceFunc(w); (u.getServer, u.getContent) }, appendString)(actors, timeout)
+    val stage1 = MapReduceFirstFold.create({ (w: String) => val u = resourceFunc(w); (u.getServer(), u.getContent()) }, appendString)(actors, timeout)
 
     val stage2 = MapReducePipe.create[URI, Strings, URI, Int, Int](
       (w, gs) => w -> (countFields(gs) reduce addInts),
@@ -106,7 +105,7 @@ object CountWords extends App with Loggables {
     val durationR = """(\d+)\s*(\w+)""".r
     t match {
       case durationR(n, s) => new Timeout(FiniteDuration(n.toLong, s))
-      case _ => Timeout(10 seconds)
+      case _ => Timeout(10.seconds)
     }
   }
 }

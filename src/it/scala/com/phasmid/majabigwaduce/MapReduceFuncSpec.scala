@@ -17,7 +17,6 @@ import org.scalatest.time._
 
 import java.net.URL
 import scala.concurrent.duration._
-import scala.language.postfixOps
 import scala.util._
 
 case class MockURL(w: String) {
@@ -30,7 +29,7 @@ case class MockURL(w: String) {
 
 class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with Futures with ScalaFutures with Inside {
   implicit val system: ActorSystem = ActorSystem("MapReduceFuncSpec")
-  implicit val timeout: Timeout = Timeout(5 seconds)
+  implicit val timeout: Timeout = Timeout(5.seconds)
 
   import system.dispatcher
 
@@ -115,7 +114,7 @@ class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with F
   // NOTE: this is the cause of the ClassCastError which is logged. Don't worry, it's supposed to be like this.
   it should "fail because mapper is incorrectly defined" in {
     logger.info(s"Starting $spec0:fail because mapper is incorrectly defined")
-    implicit val timeout: Timeout = Timeout(60 seconds) // We need a longer timeout for this one to work correctly.
+    implicit val timeout: Timeout = Timeout(60.seconds) // We need a longer timeout for this one to work correctly.
 
     def mapper1(w: String): (URL, String) = MockURL(w).asTuple
 
@@ -160,7 +159,7 @@ class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with F
 
   private def reducer(a: Seq[String], v: String) = a :+ v
 
-  private def init = Seq[String]()
+  private def init() = Seq[String]()
 
   def adder(x: Int, y: Int): Int = x + y
 }

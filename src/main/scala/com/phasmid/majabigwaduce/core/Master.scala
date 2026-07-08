@@ -126,8 +126,10 @@ abstract class MasterBaseFirst[V1, K2, W, V2](config: Config, f: V1 => Try[(K2, 
         case Failure(x) => caller ! akka.actor.Status.Failure(x)
       }
     case q =>
-      super.receive(q)
+      baseReceive(q)
   }
+
+  private def baseReceive: PartialFunction[Any, Unit] = super.receive
 }
 
 /**

@@ -12,7 +12,6 @@ import org.scalatest.matchers.should
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.language.postfixOps
 
 class DataDefinitionSpec extends flatspec.AnyFlatSpec with should.Matchers with Futures with ScalaFutures with Inside {
 
@@ -34,7 +33,7 @@ class DataDefinitionSpec extends flatspec.AnyFlatSpec with should.Matchers with 
     val mf: Future[Map[String, Int]] = target()
     // then
     import scala.concurrent.duration._
-    implicit val timeout: Timeout = Timeout(5 seconds)
+    implicit val timeout: Timeout = Timeout(5.seconds)
     whenReady(mf) { m => m.toSeq.size shouldBe 2 }
     target.clean()
   }
@@ -261,7 +260,7 @@ class DataDefinitionSpec extends flatspec.AnyFlatSpec with should.Matchers with 
     val mf: Future[Map[String, Int]] = target.map(tupleLift(_ * 2)).apply()
     // then
     import scala.concurrent.duration._
-    implicit val timeout: Timeout = Timeout(5 seconds)
+    implicit val timeout: Timeout = Timeout(5.seconds)
     whenReady(mf) { m => m.values.sum shouldBe 6 }
     target.clean()
   }
@@ -288,7 +287,7 @@ class DataDefinitionSpec extends flatspec.AnyFlatSpec with should.Matchers with 
     val mf: Future[Map[Int, String]] = target()
     // then
     import scala.concurrent.duration._
-    implicit val timeout: Timeout = Timeout(2 seconds)
+    implicit val timeout: Timeout = Timeout(2.seconds)
     whenReady(mf) { m => m.toSeq.size shouldBe 2 }
     target.clean()
   }
@@ -311,7 +310,7 @@ class DataDefinitionSpec extends flatspec.AnyFlatSpec with should.Matchers with 
     val mf: Future[Map[String, Int]] = target()
     // then
     import scala.concurrent.duration._
-    implicit val timeout: Timeout = Timeout(5 seconds)
+    implicit val timeout: Timeout = Timeout(5.seconds)
     whenReady(mf) { m => m.toSeq.size shouldBe 2 }
     target.clean()
   }
@@ -521,7 +520,7 @@ class DataDefinitionSpec extends flatspec.AnyFlatSpec with should.Matchers with 
     val mf: Future[Map[String, Int]] = target.map(tupleLift(_ * 2)).apply()
     // then
     import scala.concurrent.duration._
-    implicit val timeout: Timeout = Timeout(5 seconds)
+    implicit val timeout: Timeout = Timeout(5.seconds)
     whenReady(mf) { m => m.values.sum shouldBe 6 }
     target.clean()
   }

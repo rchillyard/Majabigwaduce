@@ -11,7 +11,6 @@ import org.scalatest.matchers.should
 
 import scala.concurrent.duration
 import scala.concurrent.duration.Duration
-import scala.language.postfixOps
 
 class MatrixSpec extends flatspec.AnyFlatSpec with should.Matchers with Futures with Inside {
 

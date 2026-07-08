@@ -13,7 +13,6 @@ import org.scalatest.tagobjects.Slow
 
 import scala.concurrent.duration
 import scala.concurrent.duration.Duration
-import scala.language.postfixOps
 import scala.util.{Random, Try}
 
 class MatrixFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with Futures with Inside {
