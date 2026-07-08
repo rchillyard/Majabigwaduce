@@ -25,7 +25,7 @@ trait Resource {
   def getContent(): String
 }
 
-case class CountWords(resourceFunc: String => Resource)(implicit system: ActorSystem, logger: LoggingAdapter, config: Config, timeout: Timeout, ec: ExecutionContext) extends (Seq[String] => Future[Int]) {
+case class CountWords(resourceFunc: String => Resource)(using system: ActorSystem, logger: LoggingAdapter, config: Config, timeout: Timeout, ec: ExecutionContext) extends (Seq[String] => Future[Int]) {
   type Strings = Seq[String]
 
   trait StringsZeros extends Zero[Strings] {
@@ -40,13 +40,8 @@ case class CountWords(resourceFunc: String => Resource)(implicit system: ActorSy
 
   implicit object IntZeros extends IntZeros
 
-  override def apply(ws: Strings): Future[Int] = {
-
+  override def apply(ws: Strings): Future[Int] =
     given actors: Actors = Actors(summon[ActorSystem], summon[Config])
-
-    //    val flog = Flog[CountWords]
-    //    import flog._
-
     //    val stage1 = MapReduceFirstFold.create({ w: String => val u = resourceFunc("stage1 map" !! w); (u.getServer, u.getContent) }, appendString)(actors, timeout)
     val stage1 = MapReduceFirstFold.create({ (w: String) => val u = resourceFunc(w); (u.getServer(), u.getContent()) }, appendString)(actors, timeout)
 
@@ -58,7 +53,6 @@ case class CountWords(resourceFunc: String => Resource)(implicit system: ActorSy
     val stage3 = Reduce[URI, Int, Int](addInts)
     val mr = stage1 & stage2 | stage3
     mr(ws)
-  }
 
   private def countFields(gs: Strings) = for (g <- gs) yield g.split("""\s+""").length
 
@@ -78,8 +72,7 @@ case class CountWords(resourceFunc: String => Resource)(implicit system: ActorSy
  *
  * @author scalaprof
  */
-object CountWords extends App with Loggables {
-
+object CountWords extends App with Loggables:
 
   def apply(hc: HttpClient, args: Array[String]): Future[Int] = {
     given config: Config = ConfigFactory.load.getConfig("majabigwaduce.CountWords")
@@ -104,11 +97,9 @@ object CountWords extends App with Loggables {
 
   // TODO try to combine this with the same method in MapReduceActor
   // TODO make this more visible (it is used in matrix package also)
-  def getTimeout(t: String): Timeout = {
+  def getTimeout(t: String): Timeout =
     val durationR = """(\d+)\s*(\w+)""".r
     t match {
       case durationR(n, s) => new Timeout(FiniteDuration(n.toLong, s))
       case _ => Timeout(10.seconds)
     }
-  }
-}
