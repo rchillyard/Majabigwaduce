@@ -14,6 +14,7 @@ import org.scalatest._
 import org.scalatest.concurrent._
 import org.scalatest.matchers.should
 import org.scalatest.time._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 import java.net.URL
 import scala.concurrent.duration._
@@ -29,9 +30,8 @@ case class MockURL(w: String) {
 
 class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with Futures with ScalaFutures with Inside {
   given system: ActorSystem = ActorSystem("MapReduceFuncSpec")
-  given timeout: Timeout = Timeout(5.seconds)
 
-  import system.dispatcher
+  given timeout: Timeout = Timeout(5.seconds)
 
   private val logger: LoggingAdapter = system.log
 
@@ -86,7 +86,8 @@ class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with F
     system.stop(master)
   }
 
-  `spec0` should "work for https://www.bbc.com/ https://www.cnn.com/ https://default/" in {
+    `spec0` should
+  "work for https://www.bbc.com/ https://www.cnn.com/ https://default/" in {
     logger.info(s"Starting $spec0:work for https://www.bbc.com/ https://www.cnn.com/ https://default/")
 
     def mapper1(w: String): (URL, String) = MockURL(w).asTuple
@@ -169,7 +170,7 @@ object MapReduceFuncSpec {
   //noinspection SpellCheckingInspection,SpellCheckingInspection
   // there are 556 words in total between the three extracts
   val bbcText =
-  """The US military has delivered more than 45 tonnes of ammunition to rebels fighting the jihadist group Islamic State (IS) in north-eastern Syria.
+    """The US military has delivered more than 45 tonnes of ammunition to rebels fighting the jihadist group Islamic State (IS) in north-eastern Syria.
 C-17 transport aircraft, accompanied by fighter escorts, dropped pallets of supplies overnight in Hassakeh province, a Pentagon spokesman said.
 The consignment reportedly comprised small arms, ammunition and grenades.
 It comes days after the US abandoned a $500m (£326m) plan to train thousands of "moderate" rebels to fight IS.

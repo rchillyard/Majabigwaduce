@@ -182,6 +182,7 @@ class MatrixSpec extends flatspec.AnyFlatSpec with should.Matchers with Futures 
   it should "implement product correctly using actors" in {
     //given
     given cutoff: Dimensions = Dimensions(Seq(1, 1))
+
     //given
     val target = Matrix2(Seq(Seq(8, 3, 2), Seq(1, -2, 4), Seq(6, 0, 5)))
     // when

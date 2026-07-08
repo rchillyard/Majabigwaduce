@@ -16,11 +16,11 @@ import org.scalatest.{Inside, flatspec}
 import scala.concurrent.ExecutionContext
 
 /**
-  * NOTE: this is more of a Functional test rather than a unit test.
-  * Feel free to ignore this test if it's taking up too much time.
-  *
-  * Created by scalaprof on 6/28/16.
-  */
+ * NOTE: this is more of a Functional test rather than a unit test.
+ * Feel free to ignore this test if it's taking up too much time.
+ *
+ * Created by scalaprof on 6/28/16.
+ */
 class WebCrawlerSpec extends flatspec.AnyFlatSpec with should.Matchers with Futures with ScalaFutures with Inside with MockFactory {
   // CONSIDER when run alone, this works just fine.
   // CONSIDER moving to it since this requires an internet connection
@@ -41,8 +41,11 @@ class WebCrawlerSpec extends flatspec.AnyFlatSpec with should.Matchers with Futu
 
   "webCrawlerApp main program" should "work" in {
     given config: Config = ConfigFactory.load.getConfig("majabigwaduce.WebCrawler")
+
     given system: ActorSystem = ActorSystem(config.getString("name"))
+
     given timeout: Timeout = WebCrawler.getTimeout(config.getString("timeout"))
+
     webCrawlerApp()
   }
 }

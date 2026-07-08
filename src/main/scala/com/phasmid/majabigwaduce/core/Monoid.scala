@@ -5,31 +5,31 @@
 package com.phasmid.majabigwaduce.core
 
 /**
-  * @tparam X the type which we want to create a monoid value for.
-  *
-  *           Created by scalaprof on 10/5/16.
-  */
+ * @tparam X the type which we want to create a monoid value for.
+ *
+ *           Created by scalaprof on 10/5/16.
+ */
 trait Monoid[X] extends Zero[X]:
   /**
-    * This is the "op" method of a Monoid, the one that associates any two instances of the monoid type.
-    *
-    * @param x the left-hand operand
-    * @param y the right-hand operand
-    * @return the result of combining x and y
-    */
+   * This is the "op" method of a Monoid, the one that associates any two instances of the monoid type.
+   *
+   * @param x the left-hand operand
+   * @param y the right-hand operand
+   * @return the result of combining x and y
+   */
   def combine(x: X, y: X): X
 
 /**
-  * Type-class Zero is used to add behavior of initialization (or zeroing) of X.
-  *
-  * @tparam X the type which we want to create a zero value for.
-  */
+ * Type-class Zero is used to add behavior of initialization (or zeroing) of X.
+ *
+ * @tparam X the type which we want to create a zero value for.
+ */
 trait Zero[X]:
   /**
-    * Method to create a zero/empty/nothing value of X
-    *
-    * @return an X which is zero (empty, etc.)
-    */
+   * Method to create a zero/empty/nothing value of X
+   *
+   * @return an X which is zero (empty, etc.)
+   */
   def zero: X
 
 /**

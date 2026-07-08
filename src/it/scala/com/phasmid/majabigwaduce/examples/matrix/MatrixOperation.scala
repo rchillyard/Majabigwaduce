@@ -18,20 +18,20 @@ import scala.language.postfixOps
 import scala.util.{Failure, Random, Try}
 
 /**
-  * This case class is a framework for performing matrix operations.
-  * It requires an key-mapping function whose purpose is to partition the work (for parallelization) according to row and/or column numbers.
-  * It also requires an actor system, a logger, configuration, etc. (these are implicit parameters).
-  *
-  * CONSIDER moving the main features of this code into the main Scala code.
-  *
-  * @param keyFunc the key-mapping function.
-  * @param system  (implicit) the actor system.
-  * @param logger  (implicit) the logger.
-  * @param config  (implicit) the configuration.
-  * @param timeout (implicit) the timeout value.
-  * @param ec      (implicit) the execution context.
-  * @tparam X the underlying type of the matrices (requires evidence of Numeric[X]).
-  */
+ * This case class is a framework for performing matrix operations.
+ * It requires an key-mapping function whose purpose is to partition the work (for parallelization) according to row and/or column numbers.
+ * It also requires an actor system, a logger, configuration, etc. (these are implicit parameters).
+ *
+ * CONSIDER moving the main features of this code into the main Scala code.
+ *
+ * @param keyFunc the key-mapping function.
+ * @param system  (implicit) the actor system.
+ * @param logger  (implicit) the logger.
+ * @param config  (implicit) the configuration.
+ * @param timeout (implicit) the timeout value.
+ * @param ec      (implicit) the execution context.
+ * @tparam X the underlying type of the matrices (requires evidence of Numeric[X]).
+ */
 case class MatrixOperation[X: Numeric](keyFunc: Int => Int)(using system: ActorSystem, logger: LoggingAdapter, config: Config, timeout: Timeout, ec: ExecutionContext) extends ((Seq[Seq[X]], Seq[X]) => Future[Seq[X]]):
 
   self =>
@@ -68,19 +68,19 @@ case class MatrixOperation[X: Numeric](keyFunc: Int => Int)(using system: ActorS
     else Failure(MapReduceException(s"mapVectorToXS: incorrect count: ${keys.size}, $n"))
 
 /**
-  * This object includes methods that do not themselves need to parallelize their operations.
-  * Instead, these methods are invoked in the (remote) actors which are defined in the MatrixOperation case class.
-  */
+ * This object includes methods that do not themselves need to parallelize their operations.
+ * Instead, these methods are invoked in the (remote) actors which are defined in the MatrixOperation case class.
+ */
 object MatrixOperation:
 
   /**
-    * Method to yield the dot product of two vectors.
-    *
-    * @param as the first vector.
-    * @param bs the second vector.
-    * @tparam X the underlying type of both vectors (must be numeric).
-    * @return the dot product of as and bs, wrapped in Try.
-    */
+   * Method to yield the dot product of two vectors.
+   *
+   * @param as the first vector.
+   * @param bs the second vector.
+   * @tparam X the underlying type of both vectors (must be numeric).
+   * @return the dot product of as and bs, wrapped in Try.
+   */
   def dot[X: Numeric](as: Seq[X], bs: Seq[X]): Try[X] =
     def product(ab: (X, X)): X = Numeric[X].times(ab._1, ab._2)
 
@@ -89,13 +89,13 @@ object MatrixOperation:
     else Failure(IncompatibleLengthsException(as.length, bs.length))
 
   /**
-    * Method to yield the product of a vector and a 2-matrix.
-    *
-    * @param as  the vector expressed as a Seq[X].
-    * @param bss the 2-matrix expressed as a Seq[Seq[X]\].
-    * @tparam X the underlying type of the elements.
-    * @return a vector which is the product of as and bss (wrapped in Try).
-    */
+   * Method to yield the product of a vector and a 2-matrix.
+   *
+   * @param as  the vector expressed as a Seq[X].
+   * @param bss the 2-matrix expressed as a Seq[Seq[X]\].
+   * @tparam X the underlying type of the elements.
+   * @return a vector which is the product of as and bss (wrapped in Try).
+   */
   def product[X: Numeric](as: Seq[X], bss: Seq[Seq[X]]): Try[Seq[X]] =
     FP.sequence(for bs <- bss.transpose yield dot(as, bs))
 
@@ -110,12 +110,12 @@ object MatrixOperation:
     Failure(IncompatibleLengthsException(t._1.size, t._2.size))
 
 /**
-  * This app will test the multiplication of matrices of size defined in the configuration file.
-  *
-  * NOTE: this is kept separate from the MatrixOperation object so that referencing MatrixOperation's pure methods
-  * (e.g. from tests) does not trigger this side-effecting computation, and so that the mapper callbacks run by the
-  * actors below (which call back into MatrixOperation) never race against this object's own initialization.
-  */
+ * This app will test the multiplication of matrices of size defined in the configuration file.
+ *
+ * NOTE: this is kept separate from the MatrixOperation object so that referencing MatrixOperation's pure methods
+ * (e.g. from tests) does not trigger this side-effecting computation, and so that the mapper callbacks run by the
+ * actors below (which call back into MatrixOperation) never race against this object's own initialization.
+ */
 @main def matrixOperationApp(): Unit =
 
   given config: Config = ConfigFactory.load.getConfig("majabigwaduce.Matrix")
@@ -123,6 +123,7 @@ object MatrixOperation:
   given system: ActorSystem = ActorSystem(config.getString("name"))
 
   given timeout: Timeout = CountWords.getTimeout(config.getString("timeout"))
+
   val rows = config.getInt("rows")
   val cols = config.getInt("columns")
   val modulus = config.getInt("modulus")

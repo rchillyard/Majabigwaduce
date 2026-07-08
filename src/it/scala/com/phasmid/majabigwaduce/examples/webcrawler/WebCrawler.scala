@@ -119,7 +119,7 @@ case class WebCrawler(depth: Int)(implicit system: ActorSystem, config: Config, 
  *
  * Notes:
  * - The parsing of timeout strings involves validating and transforming input formats
- * into the required Timeout object.
+ *   into the required Timeout object.
  * - Any invalid formats will result in a default timeout of 10 seconds being applied.
  *
  * Methods:
@@ -141,7 +141,9 @@ object WebCrawler:
 @main def webCrawlerApp(args: String*): Unit =
 
   given config: Config = ConfigFactory.load.getConfig("majabigwaduce.WebCrawler")
+
   given system: ActorSystem = ActorSystem(config.getString("name"))
+
   given timeout: Timeout = WebCrawler.getTimeout(config.getString("timeout"))
 
   import ExecutionContext.Implicits.global

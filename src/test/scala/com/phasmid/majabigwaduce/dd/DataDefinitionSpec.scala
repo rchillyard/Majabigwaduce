@@ -34,6 +34,7 @@ class DataDefinitionSpec extends flatspec.AnyFlatSpec with should.Matchers with 
     // then
     import scala.concurrent.duration.*
     given timeout: Timeout = Timeout(5.seconds)
+
     whenReady(mf) { m => m.toSeq.size shouldBe 2 }
     target.clean()
   }
@@ -261,6 +262,7 @@ class DataDefinitionSpec extends flatspec.AnyFlatSpec with should.Matchers with 
     // then
     import scala.concurrent.duration.*
     given timeout: Timeout = Timeout(5.seconds)
+
     whenReady(mf) { m => m.values.sum shouldBe 6 }
     target.clean()
   }
@@ -288,6 +290,7 @@ class DataDefinitionSpec extends flatspec.AnyFlatSpec with should.Matchers with 
     // then
     import scala.concurrent.duration.*
     given timeout: Timeout = Timeout(2.seconds)
+
     whenReady(mf) { m => m.toSeq.size shouldBe 2 }
     target.clean()
   }
@@ -311,6 +314,7 @@ class DataDefinitionSpec extends flatspec.AnyFlatSpec with should.Matchers with 
     // then
     import scala.concurrent.duration.*
     given timeout: Timeout = Timeout(5.seconds)
+
     whenReady(mf) { m => m.toSeq.size shouldBe 2 }
     target.clean()
   }
@@ -521,6 +525,7 @@ class DataDefinitionSpec extends flatspec.AnyFlatSpec with should.Matchers with 
     // then
     import scala.concurrent.duration.*
     given timeout: Timeout = Timeout(5.seconds)
+
     whenReady(mf) { m => m.values.sum shouldBe 6 }
     target.clean()
   }

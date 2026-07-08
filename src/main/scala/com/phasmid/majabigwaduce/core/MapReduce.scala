@@ -13,84 +13,84 @@ import scala.concurrent.*
 import scala.util.Try
 
 /**
-  * MapReduce is a trait, with case classes, which implements a functional API for the map-reduce classes in this package.
-  *
-  * @author scalaprof
-  * @tparam T  the input type of the MapReduce function: T may be V1 for a first stage, or (K1,V1) for a subsequent stage.
-  * @tparam K1 the key type of the returned map
-  * @tparam V1 the value type of the returned map
-  */
+ * MapReduce is a trait, with case classes, which implements a functional API for the map-reduce classes in this package.
+ *
+ * @author scalaprof
+ * @tparam T  the input type of the MapReduce function: T may be V1 for a first stage, or (K1,V1) for a subsequent stage.
+ * @tparam K1 the key type of the returned map
+ * @tparam V1 the value type of the returned map
+ */
 trait MapReduce[T, K1, V1] extends ASync[Seq[T], Map[K1, V1]] with AutoCloseable:
 
   self =>
 
   /**
-    * Compose this MapReduce object with mr, yielding a new MapReduce object.
-    *
-    * @tparam K2 the key type of the composed MapReduce object
-    * @tparam V2 the value type of the composed MapReduce object
-    * @param f a function of type ASync[Seq[(K1, V1)], Map[K2, V2], i.e. Seq[(K1, V1)]=>Future[Map[K2, V2]
-    * @return a new MapReduceComposed object
-    */
+   * Compose this MapReduce object with mr, yielding a new MapReduce object.
+   *
+   * @tparam K2 the key type of the composed MapReduce object
+   * @tparam V2 the value type of the composed MapReduce object
+   * @param f a function of type ASync[Seq[(K1, V1)], Map[K2, V2], i.e. Seq[(K1, V1)]=>Future[Map[K2, V2]
+   * @return a new MapReduceComposed object
+   */
   def :&[K2, V2](f: ASync[Seq[(K1, V1)], Map[K2, V2]]): MapReduce[T, K2, V2] =
     MapReduceComposed(self, f)(self.ec)
 
   /**
-    * Alternative formulation for compose method (:&)
-    *
-    * @param mr the other MapReduce object
-    * @tparam K2 the key type of the composed MapReduce object
-    * @tparam V2 the value type of the composed MapReduce object
-    * @return a new MapReduceComposed object
-    */
+   * Alternative formulation for compose method (:&)
+   *
+   * @param mr the other MapReduce object
+   * @tparam K2 the key type of the composed MapReduce object
+   * @tparam V2 the value type of the composed MapReduce object
+   * @return a new MapReduceComposed object
+   */
   def &[K2, V2](mr: MapReduce[(K1, V1), K2, V2]): MapReduce[T, K2, V2] = :&(mr)
 
   /**
-    * terminate this MapReduce object with r, a reducer which yields a simple value
-    *
-    * @param r                the Reduce object
-    * @param executionContext (implicit)
-    * @tparam S the return type, which is a super-class of V1 (for sum, or sigma)
-    * @return an Async function of Seq[T]=>Future[S] type S.
-    */
+   * terminate this MapReduce object with r, a reducer which yields a simple value
+   *
+   * @param r                the Reduce object
+   * @param executionContext (implicit)
+   * @tparam S the return type, which is a super-class of V1 (for sum, or sigma)
+   * @return an Async function of Seq[T]=>Future[S] type S.
+   */
   def :|[S](r: RF[K1, V1, S])(implicit executionContext: ExecutionContext): ASync[Seq[T], S] =
     ts => for (v2K2m <- self(ts); s = r(v2K2m)) yield s
 
   /**
-    * alternative name to terminate
-    *
-    * @param r                the Reduce object
-    * @param executionContext (implicit)
-    * @tparam S the return type, which is a super-class of V1 (for sum, or sigma)
-    * @return an Async function of Seq[T]=>Future[S] type S.
-    */
+   * alternative name to terminate
+   *
+   * @param r                the Reduce object
+   * @param executionContext (implicit)
+   * @tparam S the return type, which is a super-class of V1 (for sum, or sigma)
+   * @return an Async function of Seq[T]=>Future[S] type S.
+   */
   def |[S](r: RF[K1, V1, S])(implicit executionContext: ExecutionContext): ASync[Seq[T], S] =
     :|(r)(executionContext)
 
   /**
-    * @return a suitable execution context
-    */
+   * @return a suitable execution context
+   */
   def ec: ExecutionContext
 
 /**
-  * A first-stage MapReduce class where the result type V1 is a super-type of the intermediate type W
-  *
-  * @tparam V0 input value type
-  * @tparam K1 output key type
-  * @tparam W  intermediate type
-  * @tparam V1 output value type (super-type of W)
-  * @param f       the mapper function which takes a V0 instance and creates a key-value tuple of type (K1,W)
-  * @param g       the reducer function which combines two values (an V1 and a W) into one V1
-  * @param actors  an instance of Actors
-  * @param timeout the value of timeout to be used
-  */
+ * A first-stage MapReduce class where the result type V1 is a super-type of the intermediate type W
+ *
+ * @tparam V0 input value type
+ * @tparam K1 output key type
+ * @tparam W  intermediate type
+ * @tparam V1 output value type (super-type of W)
+ * @param f       the mapper function which takes a V0 instance and creates a key-value tuple of type (K1,W)
+ * @param g       the reducer function which combines two values (an V1 and a W) into one V1
+ * @param actors  an instance of Actors
+ * @param timeout the value of timeout to be used
+ */
 case class MapReduceFirst[V0, K1, W, V1 >: W](f: V0 => Try[(K1, W)], g: (V1, W) => V1)(actors: Actors, timeout: Timeout) extends MapReduce_LoggingBase[V0, K1, V1](actors)(timeout):
   /**
-    * Method to create a Props value for this class.
-    * CONSIDER this looks dangerous, although this class does not extend Actor so maybe it's OK.
-    *
-    * @return a Props based on a new instance of Master_First
-    */
+   * Method to create a Props value for this class.
+   * CONSIDER this looks dangerous, although this class does not extend Actor so maybe it's OK.
+   *
+   * @return a Props based on a new instance of Master_First
+   */
   def createProps: Props = Props(new Master_First(actors.config, f, g))
 
   /**
@@ -113,19 +113,19 @@ object MapReduceFirst:
   val sMrfMstr: String = "mrf-mstr"
 
 /**
-  * A later-stage MapReduce class where the result type V1 is a super-type of the intermediate type W
-  *
-  * @tparam K0 input key type
-  * @tparam V0 input value type
-  * @tparam K1 output key type
-  * @tparam W  intermediate type
-  * @tparam V1 output value type (super-type of W)
-  * @param f       the mapper function which takes a K0,V0 pair and creates a key-value tuple of type (K1,W)
-  * @param g       the reducer function which combines two values (an V1 and a W) into one V1
-  * @param n       the stage number of this map-reduce stage.
-  * @param actors  an instance of Actors
-  * @param timeout the value of timeout to be used
-  */
+ * A later-stage MapReduce class where the result type V1 is a super-type of the intermediate type W
+ *
+ * @tparam K0 input key type
+ * @tparam V0 input value type
+ * @tparam K1 output key type
+ * @tparam W  intermediate type
+ * @tparam V1 output value type (super-type of W)
+ * @param f       the mapper function which takes a K0,V0 pair and creates a key-value tuple of type (K1,W)
+ * @param g       the reducer function which combines two values (an V1 and a W) into one V1
+ * @param n       the stage number of this map-reduce stage.
+ * @param actors  an instance of Actors
+ * @param timeout the value of timeout to be used
+ */
 case class MapReducePipe[K0, V0, K1, W, V1 >: W](f: (K0, V0) => Try[(K1, W)], g: (V1, W) => V1, n: Int)(implicit actors: Actors, timeout: Timeout) extends MapReduce_LoggingBase[(K0, V0), K1, V1](actors)(timeout):
   /**
    * Creates a Props instance for the Master actor, initialized with the configuration,
@@ -169,19 +169,19 @@ object MapReducePipe:
 
 
 /**
-  * A first-stage MapReduce class
-  *
-  * @tparam V0 input value type.
-  * @tparam K1 output key type.
-  * @tparam W  intermediate type.
-  * @tparam V1 output value type (must support type class Init).
-  * @param f       the mapper function which takes a V0 instance and creates a key-value tuple of type (K1,W) (wrapped in Try, but see alternative constructor).
-  * @param g       the reducer function which combines two values (an V1 and a W) into one V1.
-  * @param actors  an instance of Actors.
-  * @param timeout the value of timeout to be used.
-  *
-  *                CONSIDER why is config parameter set not implicit?
-  */
+ * A first-stage MapReduce class
+ *
+ * @tparam V0 input value type.
+ * @tparam K1 output key type.
+ * @tparam W  intermediate type.
+ * @tparam V1 output value type (must support type class Init).
+ * @param f       the mapper function which takes a V0 instance and creates a key-value tuple of type (K1,W) (wrapped in Try, but see alternative constructor).
+ * @param g       the reducer function which combines two values (an V1 and a W) into one V1.
+ * @param actors  an instance of Actors.
+ * @param timeout the value of timeout to be used.
+ *
+ *                CONSIDER why is config parameter set not implicit?
+ */
 //noinspection SpellCheckingInspection
 case class MapReduceFirstFold[V0, K1, W, V1: Zero](f: V0 => Try[(K1, W)], g: (V1, W) => V1)(actors: Actors, timeout: Timeout) extends MapReduce_LoggingBase[V0, K1, V1](actors)(timeout):
   // The following constructor allows for a f which needs to be lifted to T=>Try[R]
@@ -217,19 +217,19 @@ object MapReduceFirstFold:
   private val sMrffMstr = "mrff-mstr"
 
 /**
-  * A later-stage MapReduce class
-  *
-  * @tparam K0 input key type
-  * @tparam V0 input value type
-  * @tparam K1 output key type
-  * @tparam W  intermediate type
-  * @tparam V1 output value type (must support type class Init)
-  * @param f       the mapper function which takes a V0 instance and creates a key-value tuple of type (K1,W)
-  * @param g       the reducer function which combines two values (an V1 and a W) into one V1
-  * @param n       the stage number of this map-reduce stage.
-  * @param actors  an instance of Actors.
-  * @param timeout the value of timeout to be used
-  */
+ * A later-stage MapReduce class
+ *
+ * @tparam K0 input key type
+ * @tparam V0 input value type
+ * @tparam K1 output key type
+ * @tparam W  intermediate type
+ * @tparam V1 output value type (must support type class Init)
+ * @param f       the mapper function which takes a V0 instance and creates a key-value tuple of type (K1,W)
+ * @param g       the reducer function which combines two values (an V1 and a W) into one V1
+ * @param n       the stage number of this map-reduce stage.
+ * @param actors  an instance of Actors.
+ * @param timeout the value of timeout to be used
+ */
 case class MapReducePipeFold[K0, V0, K1, W, V1: Zero](f: (K0, V0) => Try[(K1, W)], g: (V1, W) => V1, n: Int)(actors: Actors, timeout: Timeout) extends MapReduce_LoggingBase[(K0, V0), K1, V1](actors)(timeout):
   /**
    * Creates and returns a `Props` instance for the `Master_Fold` actor.
@@ -268,10 +268,8 @@ object MapReducePipeFold:
    *
    * @param f       the mapper function that transforms an input key-value pair of type (K0, V0)
    *                into an intermediate key-value pair of type (K1, W)
-   *
    * @param g       the reducer function that combines a value of type V1 with a value of type W
    *                to produce a new value of type V1
-   *
    * @param n       the stage number for this map-reduce operation
    * @param actors  an instance of Actors used for managing the actor system
    * @param timeout the timeout configuration for the operation
@@ -284,15 +282,15 @@ object MapReducePipeFold:
   private val sMRPFMaster = "mrpf-mstr"
 
 /**
-  * A composition MapReduce class which represents a MapReduce "pipeline" with two stages.
-  *
-  * @tparam T  the input type of the MapReduce function: T may be V1 for a first stage, or (K1,V1) for a subsequent stage.
-  * @tparam K1 intermediate key type
-  * @tparam V1 intermediate value type
-  * @tparam K2 output key type
-  * @tparam V2 output value type
-  * @param f1 an instance of MapReduce which will become the first of two stages of the resulting MapReduce instance .
-  * @param f2 an ASync[Seq[(K1, V1)], Map[K2, V2] instance (functionally equivalent to MapReduce) which will become the second of the two stages.
+ * A composition MapReduce class which represents a MapReduce "pipeline" with two stages.
+ *
+ * @tparam T  the input type of the MapReduce function: T may be V1 for a first stage, or (K1,V1) for a subsequent stage.
+ * @tparam K1 intermediate key type
+ * @tparam V1 intermediate value type
+ * @tparam K2 output key type
+ * @tparam V2 output value type
+ * @param f1 an instance of MapReduce which will become the first of two stages of the resulting MapReduce instance .
+ * @param f2 an ASync[Seq[(K1, V1)], Map[K2, V2] instance (functionally equivalent to MapReduce) which will become the second of the two stages.
  */
 case class MapReduceComposed[T, K1, V1, K2, V2](f1: MapReduce[T, K1, V1], f2: ASync[Seq[(K1, V1)], Map[K2, V2]])(implicit val ec: ExecutionContext) extends MapReduce[T, K2, V2]:
   /**
@@ -313,32 +311,32 @@ case class MapReduceComposed[T, K1, V1, K2, V2](f1: MapReduce[T, K1, V1], f2: AS
   def close(): Unit = f1.close()
 
 /**
-  * A reduce function which can be composed (on the right) with a MapReduce object.
-  *
-  * @param f the function which will combine the current result with each element of an input set
-  * @tparam T the input (free) type of this reduction
-  * @tparam S the output (derived) type of this reduction
+ * A reduce function which can be composed (on the right) with a MapReduce object.
+ *
+ * @param f the function which will combine the current result with each element of an input set
+ * @tparam T the input (free) type of this reduction
+ * @tparam S the output (derived) type of this reduction
  */
 case class Reduce[K, T, S: Zero](f: (S, T) => S) extends RF[K, T, S]:
   /**
-    * This method cannot use reduce because, logically, reduce is not able to process an empty collection.
-    * Note that we ignore the keys of the input map (m)
-    *
-    * @param m the input map (keys will be ignored)
-    * @return the result of combining all values of m, using the f function.
-    *         An empty map will result in the value of z() being returned.
+   * This method cannot use reduce because, logically, reduce is not able to process an empty collection.
+   * Note that we ignore the keys of the input map (m)
+   *
+   * @param m the input map (keys will be ignored)
+   * @return the result of combining all values of m, using the f function.
+   *         An empty map will result in the value of z() being returned.
    */
   def apply(m: Map[K, T]): S =
     m.values.foldLeft(summon[Zero[S]].zero)(f)
 
 /**
-  * An abstract base class which extends MapReduce_Base and which implements the logException method with non-trivial logging.
-  *
-  * @tparam T  the input type of the MapReduce function: T may be V1 for a first stage, or (K1,V1) for a subsequent stage.
-  * @tparam K1 intermediate key type
-  * @tparam V1 intermediate value type
-  * @param actors  an instance of Actors
-  * @param timeout the value of timeout to be used
+ * An abstract base class which extends MapReduce_Base and which implements the logException method with non-trivial logging.
+ *
+ * @tparam T  the input type of the MapReduce function: T may be V1 for a first stage, or (K1,V1) for a subsequent stage.
+ * @tparam K1 intermediate key type
+ * @tparam V1 intermediate value type
+ * @param actors  an instance of Actors
+ * @param timeout the value of timeout to be used
  */
 abstract class MapReduce_LoggingBase[T, K1, V1](actors: Actors)(timeout: Timeout) extends MapReduce_Base[T, K1, V1](actors)(timeout):
   /**
@@ -352,7 +350,7 @@ abstract class MapReduce_LoggingBase[T, K1, V1](actors: Actors)(timeout: Timeout
     actors.logException(m, x)
 
 /**
-  * An abstract base class for MapReduce classes (other than MapReduceComposed).
+ * An abstract base class for MapReduce classes (other than MapReduceComposed).
  */
 abstract class MapReduce_Base[T, K, V](actors: Actors)(implicit timeout: Timeout) extends MapReduce[T, K, V]:
   implicit def ec: ExecutionContextExecutor = actors.system.dispatcher
@@ -378,10 +376,10 @@ abstract class MapReduce_Base[T, K, V](actors: Actors)(implicit timeout: Timeout
   def createProps: Props
 
   /**
-    * This probably ought to be configured according to whether or not we are debugging
-    *
-    * @return
-    */
+   * This probably ought to be configured according to whether or not we are debugging
+   *
+   * @return
+   */
   def createName: Option[String] = None
 
   /**

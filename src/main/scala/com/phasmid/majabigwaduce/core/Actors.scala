@@ -4,23 +4,23 @@ import akka.actor.{ActorRef, ActorRefFactory, ActorSystem, Props}
 import com.typesafe.config.Config
 
 /**
-  * Case class to deal with the construction and configuration of actors.
-  *
-  * CONSIDER eliminating this class and calling actorOf directly from context or system. See Issue #13.
-  *
-  * @param system the actor system.
-  * @param config the configuration for this set of actors.
-  */
+ * Case class to deal with the construction and configuration of actors.
+ *
+ * CONSIDER eliminating this class and calling actorOf directly from context or system. See Issue #13.
+ *
+ * @param system the actor system.
+ * @param config the configuration for this set of actors.
+ */
 case class Actors(system: ActorSystem, config: Config) extends AutoCloseable:
 
   /**
-    * Create a new actor, using the appropriate factory (based on either system or context).
-    *
-    * @param factory   the appropriate actor ref factory.
-    * @param maybeName an optional name.
-    * @param props     the appropriate Props.
-    * @return an ActorRef.
-    */
+   * Create a new actor, using the appropriate factory (based on either system or context).
+   *
+   * @param factory   the appropriate actor ref factory.
+   * @param maybeName an optional name.
+   * @param props     the appropriate Props.
+   * @return an ActorRef.
+   */
   def createActor(factory: ActorRefFactory, maybeName: Option[String], props: Props): ActorRef =
     val actorName = maybeName match
       case Some(name) => name
