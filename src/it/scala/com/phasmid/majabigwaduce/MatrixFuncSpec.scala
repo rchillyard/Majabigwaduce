@@ -6,8 +6,8 @@ package com.phasmid.majabigwaduce
 
 import com.phasmid.majabigwaduce.core.Monoid
 import com.phasmid.majabigwaduce.matrix.{Matrix, Matrix2, Product}
-import org.scalatest._
-import org.scalatest.concurrent._
+import org.scalatest.*
+import org.scalatest.concurrent.*
 import org.scalatest.matchers.should
 import org.scalatest.tagobjects.Slow
 
@@ -18,7 +18,7 @@ import scala.util.{Random, Try}
 class MatrixFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with Futures with Inside {
 
   trait DoubleProduct extends Product[Double] {
-    def product[X: Numeric, Y: Numeric](x: X, y: Y): Double = implicitly[Numeric[X]].toDouble(x) * implicitly[Numeric[Y]].toDouble(y)
+    def product[X: Numeric, Y: Numeric](x: X, y: Y): Double = summon[Numeric[X]].toDouble(x) * summon[Numeric[Y]].toDouble(y)
   }
 
   implicit object DoubleProduct extends DoubleProduct
@@ -32,13 +32,13 @@ class MatrixFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with Futu
   behavior of "Matrix2"
 
   it should "implement product by identity correctly (N=250)" taggedAs Slow in {
-    implicit val atMost: Duration = duration.FiniteDuration(1, "minute")
+    given atMost: Duration = duration.FiniteDuration(1, "minute")
     productByIdentity(250)
   }
 
   // NOTE we choose to ignore this just because it takes a while to run.
   ignore should "implement product by identity correctly (N=500)" taggedAs Slow in {
-    implicit val atMost: Duration = duration.FiniteDuration(1, "minute")
+    given atMost: Duration = duration.FiniteDuration(1, "minute")
     productByIdentity(500)
   }
 
@@ -46,7 +46,7 @@ class MatrixFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with Futu
   // FIXME Issue #27
   // NOTE that this does not appear to fail--that needs fixing, too.
   ignore should "implement product by identity correctly (N=1000)" taggedAs Slow in {
-    implicit val atMost: Duration = duration.FiniteDuration(5, "minute")
+    given atMost: Duration = duration.FiniteDuration(5, "minute")
     productByIdentity(1000)
   }
 

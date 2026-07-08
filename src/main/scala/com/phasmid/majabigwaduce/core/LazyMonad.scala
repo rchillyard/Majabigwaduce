@@ -1,6 +1,13 @@
 package com.phasmid.majabigwaduce.core
 
-trait LazyMonad[T, U] extends Iterable[U] {
+/**
+ * A trait that defines a lazy monad, which wraps an Iterable and provides
+ * functionality for applying transformations and filters in a lazy manner.
+ *
+ * @tparam T the type of elements in the wrapped iterable before transformation.
+ * @tparam U the type of elements in the wrapped iterable after transformation.
+ */
+trait LazyMonad[T, U] extends Iterable[U]:
 
   /**
     * An iterable which forms the (initial) wrapped value of this lazy monad.
@@ -38,7 +45,8 @@ trait LazyMonad[T, U] extends Iterable[U] {
     * @tparam V the underlying iterator type of the resulting LazyMonad.
     * @return a LazyMonad[T, V]
     */
-  override def map[V](g: U => V): LazyMonad[T, V] = build(ts)(f andThen g, p)
+  override def map[V](g: U => V): LazyMonad[T, V] =
+    build(ts)(f andThen g, p)
 
   /**
     * Method to pre-filter the wrapped iterable.
@@ -46,7 +54,8 @@ trait LazyMonad[T, U] extends Iterable[U] {
     * @param q a predicate of type T => Boolean
     * @return a new LazyMonad[T, U].
     */
-  def preFilter(q: T => Boolean): LazyMonad[T, U] = build(ts)(f, t => p(t) && q(t))
+  def preFilter(q: T => Boolean): LazyMonad[T, U] =
+    build(ts)(f, t => p(t) && q(t))
 
   /**
     * Method defined by Iterable[U].
@@ -54,7 +63,8 @@ trait LazyMonad[T, U] extends Iterable[U] {
     * @param q a predicate of type U => Boolean
     * @return a new LazyMonad[T, U] in the form of an Iterable[U].
     */
-  override def filter(q: U => Boolean): Iterable[U] = build(ts)(f, f andThen q)
+  override def filter(q: U => Boolean): Iterable[U] =
+    build(ts)(f, f andThen q)
 
   /**
     * Method defined by Iterable[U] which eagerly evaluates this LazySequence.
@@ -63,10 +73,27 @@ trait LazyMonad[T, U] extends Iterable[U] {
     */
   def iterator: Iterator[U] = applyFilterAndMap.iterator
 
-  protected def applyFilterAndMap: Iterable[U] = ts.filter(p).map(f)
-}
+  /**
+   * Applies a filter and a mapping operation to the wrapped iterable.
+   * The filter operation removes elements of the iterable that do not satisfy a given predicate.
+   * The mapping operation applies a transformation function to the remaining elements.
+   *
+   * @return An Iterable[U] containing elements that satisfy the predicate and have been transformed by the mapping function.
+   */
+  private def applyFilterAndMap: Iterable[U] =
+    ts.filter(p).map(f)
 
-case class LazySequence[T, U](ts: Iterable[T], f: T => U, p: T => Boolean) extends LazyMonad[T, U] {
+/**
+ * A case class that extends LazyMonad and provides a mechanism to lazily transform and filter an iterable collection.
+ * The transformation and filtering are performed using a mapping function and a predicate respectively.
+ *
+ * @param ts the initial iterable collection of type T.
+ * @param f  the mapping function T => U to transform elements of the collection.
+ * @param p  the predicate T => Boolean to pre-filter elements in the collection before applying the mapping function.
+ * @tparam T the type of the elements in the initial collection.
+ * @tparam U the type of the elements in the resulting collection after applying the mapping function.
+ */
+case class LazySequence[T, U](ts: Iterable[T], f: T => U, p: T => Boolean) extends LazyMonad[T, U]:
 
   /**
     * Non-instance method to construct a new LazySequence based on the parameters: iterable, g, and q.
@@ -78,25 +105,14 @@ case class LazySequence[T, U](ts: Iterable[T], f: T => U, p: T => Boolean) exten
     * @tparam B the underlying type of the iterator.
     * @return a LazyMonad[A, B].
     */
-  def build[A, B](iterable: Iterable[A])(g: A => B, q: A => Boolean): LazyMonad[A, B] = LazySequence(iterable, g, q)
+  def build[A, B](iterable: Iterable[A])(g: A => B, q: A => Boolean): LazyMonad[A, B] =
+    LazySequence(iterable, g, q)
 
-  //  /**
-  //    * The flatMap method.
-  //    *
-  //    * @param g the function U => V which will be applied to the values of the wrapped iterable.
-  //    * @tparam V the underlying iterator type of the resulting LazyMonad.
-  //    * @return a LazyMonad[T, V]
-  //    */
-  //  override def flatMap[V](g: U => LazyMonad[T, V]): LazyMonad[T, V] =
-  //  {
-  //    val r: LazyMonad[T, LazyMonad[T, V]] = map(g)
-  //    val s: Iterable[LazyMonad[T, V]] = r.applyFilterAndMap
-  //    val k: Iterable[V] = s.flatten
-  //    val p: LazyMonad[V, V] = build(k)(identity, _ => true)
-  //  }
-}
-
-object LazyMonad {
+/**
+ * Companion object for the LazyMonad type.
+ * Provides factory methods to create instances of LazySequence, which is a concrete implementation of LazyMonad.
+ */
+object LazyMonad:
   /**
     * Method to construct a new LazySequence from an iterable with, effectively, no filter nor predicate.
     *
@@ -107,7 +123,8 @@ object LazyMonad {
     * @tparam U the underlying type of the resulting Iterable.
     * @return a new LazySequence based on ts.
     */
-  def apply[T, U](ts: Iterable[T], f: T => U, p: T => Boolean): LazyMonad[T, U] = new LazySequence[T, U](ts, f, p)
+  def apply[T, U](ts: Iterable[T], f: T => U, p: T => Boolean): LazyMonad[T, U] =
+    new LazySequence[T, U](ts, f, p)
 
   /**
     * Method to construct a new LazySequence from an iterable with, effectively, no filter nor predicate.
@@ -127,7 +144,8 @@ object LazyMonad {
     * @tparam U the underlying type of the resulting Iterable.
     * @return a LazyMonad[T, U] based on ts and f (with no filtration).
     */
-  def apply[T, U](ts: Iterable[T], f: T => U): LazyMonad[T, U] = LazySequence(ts, f, _ => true)
+  def apply[T, U](ts: Iterable[T], f: T => U): LazyMonad[T, U] =
+    LazySequence(ts, f, _ => true)
 
   /**
     * Method to construct a new LazySequence from an iterable with a filter but no function.
@@ -137,5 +155,5 @@ object LazyMonad {
     * @tparam T the underlying type of ts.
     * @return a new LazySequence[T, T]
     */
-  def withFilter[T](ts: Iterable[T], p: T => Boolean): LazyMonad[T, T] = LazySequence[T, T](ts, identity, p)
-}
+  def withFilter[T](ts: Iterable[T], p: T => Boolean): LazyMonad[T, T] =
+    LazySequence[T, T](ts, identity, p)

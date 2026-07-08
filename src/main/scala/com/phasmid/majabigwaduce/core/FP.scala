@@ -11,6 +11,36 @@ import scala.util.{Failure, Success, Try}
 object FP:
 
   /**
+   * Lifts a function `f` of type `T => R` into a function of type `T => Try[R]`.
+   * This allows the application of `f` to a value of type `T` while capturing
+   * any exceptions that may be thrown during its execution as a `Failure`.
+   * If the function executes successfully, the result is wrapped in a `Success`.
+   *
+   * @param f the function to be lifted, of type `T => R`.
+   * @tparam T the input type of the function.
+   * @tparam R the output type of the function.
+   * @return a new function of type `T => Try[R]` that applies the original function
+   *         and wraps its result in a `Try`.
+   */
+  def lift[T, R](f: T => R): T => Try[R] =
+    t => Try(f(t))
+
+  /**
+   * Lifts a binary function `(T1, T2) => R` into a function 
+   * that returns a `Try[R]`, capturing any exceptions that 
+   * might occur during its execution.
+   *
+   * @param f the binary function to be lifted, of type `(T1, T2) => R`.
+   * @tparam T1 the type of the first input parameter of the function.
+   * @tparam T2 the type of the second input parameter of the function.
+   * @tparam R  the return type of the function.
+   * @return a new function of type `(T1, T2) => Try[R]` that applies 
+   *         the original function and wraps its result in a `Try`.
+   */
+  def lift[T1, T2, R](f: (T1, T2) => R): (T1, T2) => Try[R] =
+    (t1, t2) => Try(f(t1, t2))
+
+  /**
     * Method flatten which takes a Future[Try[X]\] and returns a Future[X].
     *
     * @param xyf      a Future of Try of X.
@@ -45,7 +75,8 @@ object FP:
     * @tparam X the partition type
     * @return a tuple of Map[K,Either[X,V]\] maps in sequenced form.
     * */
-  def partition[K, V, X](vXeKm: Map[K, Either[X, V]]): (Seq[(K, Either[X, V])], Seq[(K, Either[X, V])]) = vXeKm.toSeq.partition({ case (_, v) => v.isLeft })
+  def partition[K, V, X](vXeKm: Map[K, Either[X, V]]): (Seq[(K, Either[X, V])], Seq[(K, Either[X, V])]) =
+    vXeKm.toSeq.partition({ case (_, v) => v.isLeft })
 
   /**
     * Method sequence which applied to a Try[X] returns an Either[Throwable,X].
@@ -66,7 +97,8 @@ object FP:
     * @tparam X the underlying type
     * @return : Try[Seq[X]\]
     */
-  def sequence[X](xts: Seq[Try[X]]): Try[Seq[X]] = xts.foldLeft(Try(Seq[X]())) { (xst, xt) => for (xs <- xst; x <- xt) yield xs :+ x }
+  def sequence[X](xts: Seq[Try[X]]): Try[Seq[X]] =
+    xts.foldLeft(Try(Seq[X]())) { (xst, xt) => for (xs <- xst; x <- xt) yield xs :+ x }
 
   /**
     * Method sequence to convert a tuple of A, Try[B] to a Try[(A, B)]
@@ -89,7 +121,8 @@ object FP:
     * @tparam X the partition type
     * @return the separated maps as a tuple of sequenced maps
     */
-  def sequenceLeftRight[K, V, X](vXeKm: Map[K, Either[X, V]]): (Seq[(K, X)], Seq[(K, V)]) = tupleMap[Seq[(K, Either[X, V])], Seq[(K, X)], Seq[(K, Either[X, V])], Seq[(K, V)]](sequenceLeft, sequenceRight)(partition(vXeKm))
+  def sequenceLeftRight[K, V, X](vXeKm: Map[K, Either[X, V]]): (Seq[(K, X)], Seq[(K, V)]) =
+    tupleMap[Seq[(K, Either[X, V])], Seq[(K, X)], Seq[(K, Either[X, V])], Seq[(K, V)]](sequenceLeft, sequenceRight)(partition(vXeKm))
 
   /**
     * Method sequenceLeft which, given a Map[K,Either[X,V]\] (in sequential form), returns a Map[K,X] (also in sequential form) for those elements of the input map which are a (left) X (as opposed to a (right) V).

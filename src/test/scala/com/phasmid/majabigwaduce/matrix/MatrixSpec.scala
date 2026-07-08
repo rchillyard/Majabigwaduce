@@ -5,8 +5,8 @@
 package com.phasmid.majabigwaduce.matrix
 
 import com.phasmid.majabigwaduce.core.Monoid
-import org.scalatest._
-import org.scalatest.concurrent._
+import org.scalatest.*
+import org.scalatest.concurrent.*
 import org.scalatest.matchers.should
 
 import scala.concurrent.duration
@@ -15,10 +15,10 @@ import scala.concurrent.duration.Duration
 class MatrixSpec extends flatspec.AnyFlatSpec with should.Matchers with Futures with Inside {
 
   // TODO why does this not get satisfied from Matrix1 and Matrix2 objects?
-  implicit val atMost: Duration = duration.FiniteDuration(1, "second")
+  given atMost: Duration = duration.FiniteDuration(1, "second")
 
   trait IntProduct extends Product[Int] {
-    def product[X: Numeric, Y: Numeric](x: X, y: Y): Int = implicitly[Numeric[X]].toInt(x) * implicitly[Numeric[Y]].toInt(y)
+    def product[X: Numeric, Y: Numeric](x: X, y: Y): Int = summon[Numeric[X]].toInt(x) * summon[Numeric[Y]].toInt(y)
   }
 
   implicit object IntProduct extends IntProduct
@@ -181,7 +181,7 @@ class MatrixSpec extends flatspec.AnyFlatSpec with should.Matchers with Futures 
 
   it should "implement product correctly using actors" in {
     //given
-    implicit val cutoff: Dimensions = Dimensions(Seq(1, 1))
+    given cutoff: Dimensions = Dimensions(Seq(1, 1))
     //given
     val target = Matrix2(Seq(Seq(8, 3, 2), Seq(1, -2, 4), Seq(6, 0, 5)))
     // when

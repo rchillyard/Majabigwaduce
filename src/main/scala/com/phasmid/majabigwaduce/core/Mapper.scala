@@ -4,7 +4,7 @@
 
 package com.phasmid.majabigwaduce.core
 
-import scala.util._
+import scala.util.*
 
 /**
   * The purpose of this mapper is to convert a sequence of objects into several sequences, each of which is
@@ -39,18 +39,27 @@ import scala.util._
   * @tparam V1 (input) value type
   * @tparam W  (output) value type
   */
-class Mapper[K1, V1, K2, W](f: (K1, V1) => Try[(K2, W)]) extends MapReduceActor with Responder[K2, W] with CleanerCollector[K2, W] {
+class Mapper[K1, V1, K2, W](f: (K1, V1) => Try[(K2, W)]) extends MapReduceActor with Responder[K2, W] with CleanerCollector[K2, W]:
 
-  override def receive: PartialFunction[Any, Unit] = {
-    case i: KeyValuePairs[K1, V1] =>
+  /**
+   * Handles incoming messages for the actor and processes them based on the message type.
+   *
+   * For messages of type `KeyValuePairs`, it applies the provided function `f` to the key-value pairs in the message,
+   * logs the received message, processes the key-value pairs into a sequence of `Try` tuples, and sends a formatted response
+   * back to the sender.
+   * For other message types, forwards them to the parent class's `receive` method.
+   *
+   * @return A partial function that defines behavior for processing incoming messages of type `Any`. It processes `KeyValuePairs`
+   *         to apply transformations and generate a response, while delegating unhandled types to the superclass handler.
+   */
+  override def receive: PartialFunction[Any, Unit] =
+    case i: KeyValuePairs[K1, V1] @unchecked =>
       log.debug(s"Mapper received $i") // NOTE: this only logs the number of elements, not their values.
       // CONSIDER using a form of groupBy to perform this operation
-      val wk2ts: Seq[Try[(K2, W)]] = for ((k1, v1) <- i.m) yield f(k1, v1)
+      val wk2ts: Seq[Try[(K2, W)]] = for (k1, v1) <- i.m yield f(k1, v1)
       sendReply(sender(), prepareResponse[Map[K2, Seq[W]]](wk2ts))
     case q =>
       super.receive(q)
-  }
-}
 
 /**
   * This sub-class of Mapper is more forgiving (and retains any exceptions thrown).
@@ -63,9 +72,8 @@ class Mapper[K1, V1, K2, W](f: (K1, V1) => Try[(K2, W)]) extends MapReduceActor 
   * @tparam V1 (input) value type
   * @tparam W  (output) value type
   */
-class Mapper_Forgiving[K1, V1, K2, W](f: (K1, V1) => Try[(K2, W)]) extends Mapper[K1, V1, K2, W](f) {
+class Mapper_Forgiving[K1, V1, K2, W](f: (K1, V1) => Try[(K2, W)]) extends Mapper[K1, V1, K2, W](f):
   override val isStrict: Boolean = false
-}
 
 /**
   * Case class to package a map of key-value pairs for the purpose of sending to an actor.
@@ -74,15 +82,15 @@ class Mapper_Forgiving[K1, V1, K2, W](f: (K1, V1) => Try[(K2, W)]) extends Mappe
   * @tparam K the key type.
   * @tparam V the value type.
   */
-case class KeyValuePairs[K, V](m: Seq[(K, V)]) {
+case class KeyValuePairs[K, V](m: Seq[(K, V)]):
   override def toString = s"KeyValuePairs: with ${m.size} elements"
-}
 
-object KeyValuePairs {
-  def sequence[K, V](vs: Seq[V]): KeyValuePairs[K, V] = KeyValuePairs((vs zip LazyList.continually(null.asInstanceOf[K])).map(_.swap))
+object KeyValuePairs:
+  def sequence[K, V](vs: Seq[V]): KeyValuePairs[K, V] =
+    KeyValuePairs((vs zip LazyList.continually(null.asInstanceOf[K])).map(_.swap))
 
   // CONSIDER eliminating this
-  def map[K, V](vKm: Map[K, V]): KeyValuePairs[K, V] = KeyValuePairs(vKm.toSeq)
-}
+  def map[K, V](vKm: Map[K, V]): KeyValuePairs[K, V] =
+    KeyValuePairs(vKm.toSeq)
 
 

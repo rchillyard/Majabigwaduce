@@ -7,13 +7,13 @@ package com.phasmid.majabigwaduce.examples.countwords
 import akka.actor.ActorSystem
 import akka.event.LoggingAdapter
 import akka.util.Timeout
-import com.phasmid.majabigwaduce.core._
+import com.phasmid.majabigwaduce.core.*
 import com.phasmidsoftware.flog.{Loggable, Loggables}
 import com.typesafe.config.{Config, ConfigFactory}
 
 import java.net.URI
-import scala.concurrent._
-import scala.concurrent.duration._
+import scala.concurrent.*
+import scala.concurrent.duration.*
 
 trait HttpClient {
   def getResource(w: String): Resource
@@ -42,7 +42,7 @@ case class CountWords(resourceFunc: String => Resource)(implicit system: ActorSy
 
   override def apply(ws: Strings): Future[Int] = {
 
-    implicit val actors: Actors = Actors(implicitly[ActorSystem], implicitly[Config])
+    given actors: Actors = Actors(summon[ActorSystem], summon[Config])
 
     //    val flog = Flog[CountWords]
     //    import flog._
@@ -82,17 +82,20 @@ object CountWords extends App with Loggables {
 
 
   def apply(hc: HttpClient, args: Array[String]): Future[Int] = {
-    implicit val config: Config = ConfigFactory.load.getConfig("majabigwaduce.CountWords")
-    implicit val system: ActorSystem = ActorSystem(config.getString("name"))
-    implicit val timeout: Timeout = getTimeout(config.getString("timeout"))
-    implicit val logger: LoggingAdapter = system.log
+    given config: Config = ConfigFactory.load.getConfig("majabigwaduce.CountWords")
+
+    given system: ActorSystem = ActorSystem(config.getString("name"))
+
+    given timeout: Timeout = getTimeout(config.getString("timeout"))
+
+    given logger: LoggingAdapter = system.log
     import ExecutionContext.Implicits.global
     //    import Init._
 
     //    val flog: Flog = Flog[CountWords.type]
     //    import flog._
 
-    implicit val iterableLoggable: Loggable[Iterable[String]] = new Loggables {}.iterableLoggable[String]()
+    given iterableLoggable: Loggable[Iterable[String]] = new Loggables {}.iterableLoggable[String]()
 
     val ws = if (args.length > 0) args.toSeq else Seq("https://www.bbc.com/doc1", "https://www.cnn.com/doc2", "https://default/doc3", "https://www.bbc.com/doc2", "https://www.bbc.com/doc3")
     //    "starting domains:" !! ws

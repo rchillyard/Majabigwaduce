@@ -28,8 +28,8 @@ case class MockURL(w: String) {
 }
 
 class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with Futures with ScalaFutures with Inside {
-  implicit val system: ActorSystem = ActorSystem("MapReduceFuncSpec")
-  implicit val timeout: Timeout = Timeout(5.seconds)
+  given system: ActorSystem = ActorSystem("MapReduceFuncSpec")
+  given timeout: Timeout = Timeout(5.seconds)
 
   import system.dispatcher
 
@@ -48,7 +48,7 @@ class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with F
 
     def mapper(w: String): (URL, String) = MockURL(w).asTuple
 
-    val props = Props.create(classOf[Master_First_Fold[String, URL, String, Seq[String]]], config, MapReduce.lift(mapper _), reducer _, init _)
+    val props = Props.create(classOf[Master_First_Fold[String, URL, String, Seq[String]]], config, FP.lift(mapper _), reducer _, init _)
     //noinspection SpellCheckingInspection
     val master = system.actorOf(props, s"""mstr-$spec1""")
     val futureResponse = master.ask(Seq("https://www.bbc.com/", "https://www.cnn.com/", "https://default/"))
@@ -69,7 +69,7 @@ class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with F
 
     def mapper(w: String, gs: Seq[String]): (String, Int) = (w, (for (g <- gs) yield g.split("""\s+""").length) reduce (_ + _))
 
-    val props = Props.create(classOf[Master[String, Seq[String], String, Int, Int]], config, MapReduce.lift(mapper _), adder _)
+    val props = Props.create(classOf[Master[String, Seq[String], String, Int, Int]], config, FP.lift(mapper _), adder _)
     val master = system.actorOf(props, s"""master-$spec2""")
     val part1result = Map[String, Seq[String]]("https://www.bbc.com/" -> Seq(MapReduceFuncSpec.bbcText),
       "https://www.cnn.com/" -> Seq(MapReduceFuncSpec.cnnText),
@@ -93,9 +93,9 @@ class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with F
 
     def mapper2(w: URL, gs: Seq[String]): (URL, Int) = (w, (for (g <- gs) yield g.split("""\s+""").length) reduce (_ + _))
 
-    val props1 = Props.create(classOf[Master_First_Fold[String, URL, String, Seq[String]]], config, MapReduce.lift(mapper1 _), reducer _, init _)
+    val props1 = Props.create(classOf[Master_First_Fold[String, URL, String, Seq[String]]], config, FP.lift(mapper1 _), reducer _, init _)
     val master1 = system.actorOf(props1, s"WC-1-master")
-    val props2 = Props.create(classOf[Master[URL, Seq[String], URL, Int, Int]], config, MapReduce.lift(mapper2 _), adder _)
+    val props2 = Props.create(classOf[Master[URL, Seq[String], URL, Int, Int]], config, FP.lift(mapper2 _), adder _)
     val master2 = system.actorOf(props2, s"WC-2-master")
     val wsUrf = master1.ask(Seq("https://www.bbc.com/", "https://www.cnn.com/", "https://default/")).mapTo[Response[URL, Seq[String]]]
     val iUrf = wsUrf flatMap { wsUr => val wsUm = wsUr.right; master2.ask(wsUm).mapTo[Response[URL, Int]] }
@@ -114,7 +114,8 @@ class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with F
   // NOTE: this is the cause of the ClassCastError which is logged. Don't worry, it's supposed to be like this.
   it should "fail because mapper is incorrectly defined" in {
     logger.info(s"Starting $spec0:fail because mapper is incorrectly defined")
-    implicit val timeout: Timeout = Timeout(60.seconds) // We need a longer timeout for this one to work correctly.
+
+    given timeout: Timeout = Timeout(60.seconds) // We need a longer timeout for this one to work correctly.
 
     def mapper1(w: String): (URL, String) = MockURL(w).asTuple
 
@@ -144,7 +145,7 @@ class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with F
 
     def mapper(w: String, us: Seq[URL]): (String, Int) = (w, us.length)
 
-    val props = Props.create(classOf[Master[String, Seq[URL], String, Int, Int]], config, MapReduce.lift(mapper _), adder _)
+    val props = Props.create(classOf[Master[String, Seq[URL], String, Int, Int]], config, FP.lift(mapper _), adder _)
     val master = system.actorOf(props, s"TF2-master")
     val bbc = new URL("https://www.bbc.com/")
     val cnn = new URL("https://www.cnn.com/")

@@ -6,12 +6,12 @@ package com.phasmid.majabigwaduce.examples.webcrawler
 
 import akka.actor.ActorSystem
 import akka.util.Timeout
-import com.phasmid.majabigwaduce.core._
+import com.phasmid.majabigwaduce.core.*
 import com.typesafe.config.{Config, ConfigFactory}
 
 import java.net.{URI, URL}
-import scala.concurrent._
-import scala.concurrent.duration._
+import scala.concurrent.*
+import scala.concurrent.duration.*
 import scala.io.Source
 import scala.util.{Failure, Success, Try, Using}
 
@@ -34,7 +34,7 @@ case class WebCrawler(depth: Int)(implicit system: ActorSystem, config: Config, 
   trait StringsZero$ extends Zero[Strings]:
     def zero: Strings = Nil: Strings
 
-  val actors: Actors = Actors(implicitly[ActorSystem], implicitly[Config])
+  val actors: Actors = Actors(summon[ActorSystem], summon[Config])
 
   implicit object StringsZero$ extends StringsZero$
 
@@ -66,7 +66,7 @@ case class WebCrawler(depth: Int)(implicit system: ActorSystem, config: Config, 
     if depth < 0
     then Future((all ++ ws).distinct)
     else {
-      def cleanup(ws: Strings): Strings = 
+      def cleanup(ws: Strings): Strings =
         (for (w <- ws; if w.indexOf('?') == -1; t = trim(w, '#')) yield t).distinct
 
       def trim(s: String, p: Char): String =
@@ -84,7 +84,7 @@ case class WebCrawler(depth: Int)(implicit system: ActorSystem, config: Config, 
 
   // Probably, we should get three URIs: the host, the directory and the URI for the string w
   private def getHostAndURI(w: String): Try[(URI, URI)] =
-    def getHostURI(u: URI): URI = 
+    def getHostURI(u: URI): URI =
       new URL(u.getScheme + "://" + u.getHost).toURI
 
     Try {

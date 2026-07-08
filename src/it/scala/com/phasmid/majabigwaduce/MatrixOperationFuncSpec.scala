@@ -19,10 +19,13 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 
 class MatrixOperationFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with Futures with ScalaFutures with Inside {
   "MatrixOperation" should "apply vector" in {
-    implicit val config: Config = ConfigFactory.load.getConfig("majabigwaduce.Matrix")
-    implicit val system: ActorSystem = ActorSystem(config.getString("name"))
-    implicit val to: Timeout = getTimeout(config.getString("timeout"))
-    implicit val logger: LoggingAdapter = system.log
+    given config: Config = ConfigFactory.load.getConfig("majabigwaduce.Matrix")
+
+    given system: ActorSystem = ActorSystem(config.getString("name"))
+
+    given to: Timeout = getTimeout(config.getString("timeout"))
+
+    given logger: LoggingAdapter = system.log
     import ExecutionContext.Implicits.global
     val op: MatrixOperation[Int] = MatrixOperation(x => x % 10)
     val matrix = Seq(Seq(1, 1), Seq(2, 1))
@@ -39,10 +42,13 @@ class MatrixOperationFuncSpec extends flatspec.AnyFlatSpec with should.Matchers 
   }
 
   it should "create product of matrices" in {
-    implicit val config: Config = ConfigFactory.load.getConfig("majabigwaduce.Matrix")
-    implicit val system: ActorSystem = ActorSystem(config.getString("name"))
-    implicit val to: Timeout = getTimeout(config.getString("timeout"))
-    implicit val logger: LoggingAdapter = system.log
+    given config: Config = ConfigFactory.load.getConfig("majabigwaduce.Matrix")
+
+    given system: ActorSystem = ActorSystem(config.getString("name"))
+
+    given to: Timeout = getTimeout(config.getString("timeout"))
+
+    given logger: LoggingAdapter = system.log
     import ExecutionContext.Implicits.global
     val op: MatrixOperation[Int] = MatrixOperation(x => x % 10)
     val matrix1 = Seq(Seq(1, 2, 3), Seq(4, 5, 6))
@@ -55,7 +61,7 @@ class MatrixOperationFuncSpec extends flatspec.AnyFlatSpec with should.Matchers 
 
     Await.ready(system.terminate(), 5.seconds)
   }
-  
+
   "main program" should "work" in {
     given config: Config = ConfigFactory.load.getConfig("majabigwaduce.Matrix")
     given system: ActorSystem = ActorSystem(config.getString("name"))
