@@ -31,10 +31,15 @@ class MasterSpec
   "A map-reduce" must {
     "return map" in {
       val _5seconds = FiniteDuration(5L, scala.concurrent.duration.SECONDS)
-      implicit val timeout: Timeout = Timeout(_5seconds)
-      implicit val executionContext: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
-      implicit val config: Config = ConfigFactory.load.getConfig("Matrix")
-      implicit val actors: Actors = Actors(system, config)
+
+      given timeout: Timeout = Timeout(_5seconds)
+
+      given executionContext: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
+
+      given config: Config = ConfigFactory.load.getConfig("majabigwaduce.Matrix")
+
+      given actors: Actors = Actors(system, config)
+
       val mr: MapReduceFirst[String, String, String, String] = MapReduceFirst.create(v => (v, v), (v1, _) => v1)
       val rf: Future[Map[String, String]] = mr.apply(Seq("Hello", "Goodbye"))
       Await.ready(rf, _5seconds)
@@ -44,8 +49,11 @@ class MasterSpec
     }
     "return failure status from Mapper" in {
       val _5seconds = FiniteDuration(5L, scala.concurrent.duration.SECONDS)
-      implicit val timeout: Timeout = Timeout(_5seconds)
-      implicit val executionContext: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
+
+      given timeout: Timeout = Timeout(_5seconds)
+
+      given executionContext: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
+
       val f: (String, String) => Try[(Int, String)] = (_, _) => Failure(MapReduceException("test"))
       val mapper = system.actorOf(Props.create(classOf[Mapper[String, String, Int, String]], f))
       val rf = mapper ask KeyValuePairs(Seq("hello" -> "Fred", "goodbye" -> "Thursday"))
@@ -59,10 +67,15 @@ class MasterSpec
   "A master" must {
     "return map" in {
       val _5seconds = FiniteDuration(5L, scala.concurrent.duration.SECONDS)
-      implicit val timeout: Timeout = Timeout(_5seconds)
-      implicit val executionContext: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
-      implicit val config: Config = ConfigFactory.load.getConfig("Matrix")
-      implicit val actors: Actors = Actors(system, config)
+
+      given timeout: Timeout = Timeout(_5seconds)
+
+      given executionContext: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
+
+      given config: Config = ConfigFactory.load.getConfig("majabigwaduce.Matrix")
+
+      given actors: Actors = Actors(system, config)
+
       val f: (String, String) => Try[(String, String)] = (k, v) => Success((k, v))
       val g: (String, String) => Try[String] = (v1, _) => Success(v1)
       val props = Props.create(classOf[Master[String, String, String, String, String]], config, f, g)

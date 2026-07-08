@@ -34,8 +34,11 @@ class MapperSpec
     }
     "return failure status" in {
       val _5seconds = FiniteDuration(5L, scala.concurrent.duration.SECONDS)
-      implicit val timeout: Timeout = Timeout(_5seconds)
-      implicit val executionContext: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
+
+      given timeout: Timeout = Timeout(_5seconds)
+
+      given executionContext: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
+
       val f: (String, String) => Try[(Int, String)] = (_, _) => Failure(MapReduceException("test"))
       val mapper = system.actorOf(Props.create(classOf[Mapper[String, String, Int, String]], f))
       val rf = mapper ask KeyValuePairs(Seq("hello" -> "Fred", "goodbye" -> "Thursday"))
@@ -55,8 +58,11 @@ class MapperSpec
     }
     "return failure status" in {
       val _5seconds = FiniteDuration(5L, scala.concurrent.duration.SECONDS)
-      implicit val timeout: Timeout = Timeout(_5seconds)
-      implicit val executionContext: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
+
+      given timeout: Timeout = Timeout(_5seconds)
+
+      given executionContext: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
+
       val f: (String, String) => Try[(Int, String)] = (_, _) => Failure(MapReduceException("test"))
       val mapper = system.actorOf(Props.create(classOf[Mapper_Forgiving[String, String, Int, String]], f))
       val rf: Future[(Map[Int, List[String]], List[String])] = (mapper ask KeyValuePairs(Seq("hello" -> "Fred", "goodbye" -> "Thursday"))).mapTo[(Map[Int, List[String]], List[String])]

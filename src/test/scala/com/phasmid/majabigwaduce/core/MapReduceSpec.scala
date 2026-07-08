@@ -5,8 +5,8 @@
 package com.phasmid.majabigwaduce.core
 
 import com.phasmid.majabigwaduce.ASync
-import org.scalatest._
-import org.scalatest.concurrent._
+import org.scalatest.*
+import org.scalatest.concurrent.*
 import org.scalatest.matchers.should
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -81,7 +81,7 @@ case class MockMapReduce[T, K, V](f: Seq[T] => Map[K, V]) extends MapReduce[T, K
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
-  def ec: ExecutionContext = implicitly[ExecutionContext]
+  def ec: ExecutionContext = summon[ExecutionContext]
 
   override def apply(v1: Seq[T]): Future[Map[K, V]] = Future(f(v1))
 

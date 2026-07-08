@@ -1,7 +1,7 @@
 package com.phasmid.majabigwaduce.core
 
-import com.phasmid.majabigwaduce.core.FP._
-import org.scalatest._
+import com.phasmid.majabigwaduce.core.FP.*
+import org.scalatest.*
 import org.scalatest.concurrent.{Futures, ScalaFutures}
 
 import java.net.URL

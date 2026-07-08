@@ -6,12 +6,12 @@ package com.phasmid.majabigwaduce.examples.webcrawler
 
 import akka.actor.ActorSystem
 import akka.util.Timeout
-import com.phasmid.majabigwaduce.core._
+import com.phasmid.majabigwaduce.core.*
 import com.typesafe.config.{Config, ConfigFactory}
 
 import java.net.{URI, URL}
-import scala.concurrent._
-import scala.concurrent.duration._
+import scala.concurrent.*
+import scala.concurrent.duration.*
 import scala.io.Source
 import scala.util.{Failure, Success, Try, Using}
 
@@ -29,104 +29,127 @@ import scala.util.{Failure, Success, Try, Using}
  *
  * @author scalaprof
  */
-case class WebCrawler(depth: Int)(implicit system: ActorSystem, config: Config, timeout: Timeout, ec: ExecutionContext) extends (Strings => Future[Int]) {
+case class WebCrawler(depth: Int)(implicit system: ActorSystem, config: Config, timeout: Timeout, ec: ExecutionContext) extends (Strings => Future[Int]):
 
-  trait StringsZero$ extends Zero[Strings] {
+  trait StringsZero$ extends Zero[Strings]:
     def zero: Strings = Nil: Strings
-  }
 
-  val actors: Actors = Actors(implicitly[ActorSystem], implicitly[Config])
+  val actors: Actors = Actors(summon[ActorSystem], summon[Config])
 
   implicit object StringsZero$ extends StringsZero$
 
-  val g: (Strings, URI) => Strings = (ws, u) => appendContent(ws, u) match {
+  val g: (Strings, URI) => Strings = (ws, u) => appendContent(ws, u) match
     case Success(w) => w
     case Failure(x) => actors.logException(s"problem with reduce function: ${x.getLocalizedMessage}")
       Nil
-  }
 
-  val stage1: MapReduce[String, URI, Strings] = MapReduceFirstFold(getHostAndURI, g)(actors, timeout)
-  val stage2: MapReduce[(URI, Strings), URI, Strings] = MapReducePipeFold.create(getLinkStrings, joinWordLists, 1)(actors, timeout)
-  val stage3: Reduce[URI, Strings, Strings] = Reduce[URI, Strings, Strings](_ ++ _)
+  val stage1: MapReduce[String, URI, Strings] =
+    MapReduceFirstFold(getHostAndURI, g)(actors, timeout)
+  val stage2: MapReduce[(URI, Strings), URI, Strings] =
+    MapReducePipeFold.create(getLinkStrings, joinWordLists, 1)(actors, timeout)
+  val stage3: Reduce[URI, Strings, Strings] =
+    Reduce[URI, Strings, Strings](_ ++ _)
   val crawler: Strings => Future[Strings] = stage1 & stage2 | stage3
 
-  override def apply(ws: Strings): Future[Int] = doCrawl(ws, Nil, depth) transform( { n => val z = n.length; system.terminate(); z }, { x => system.log.error(x, "Map/reduce error (typically in map function)"); x })
+  /**
+   * Applies the web crawling operation starting from the provided sequence of URLs (web strings).
+   * The method performs a depth-limited crawl, processes the links, logs information, and ultimately terminates the system.
+   * Errors encountered during the operation are logged, and the resulting count of processed URLs is returned.
+   *
+   * @param ws the sequence of starting URLs (web strings) to be crawled.
+   * @return a Future containing the total count of processed URLs as an integer.
+   */
+  override def apply(ws: Strings): Future[Int] =
+    doCrawl(ws, Nil, depth) transform( { n => val z = n.length; system.terminate(); z }, { x => system.log.error(x, "Map/reduce error (typically in map function)"); x })
 
   private def doCrawl(ws: Strings, all: Strings, depth: Int): Future[Strings] =
-    if (depth < 0) Future((all ++ ws).distinct)
+    if depth < 0
+    then Future((all ++ ws).distinct)
     else {
-      def cleanup(ws: Strings): Strings = (for (w <- ws; if w.indexOf('?') == -1; t = trim(w, '#')) yield t).distinct
+      def cleanup(ws: Strings): Strings =
+        (for (w <- ws; if w.indexOf('?') == -1; t = trim(w, '#')) yield t).distinct
 
-      def trim(s: String, p: Char): String = {
+      def trim(s: String, p: Char): String =
         val hash = s.indexOf(p)
-        if (hash >= 0) s.substring(0, hash) else s
-      }
+        if hash >= 0
+        then s.substring(0, hash)
+        else s
 
       system.log.info(s"doCrawl: depth=$depth; #ws=${ws.length}; #all=${all.length}")
       system.log.debug(s"doCrawl: ws=$ws; all=$all")
       val (_, out) = ws.partition { u => all.contains(u) }
       system.log.debug(s"doCrawl: out=$out")
-      for (ws <- crawler(cleanup(out)); gs <- doCrawl(ws.distinct, (all ++ out).distinct, depth - 1)) yield gs
+      for ws <- crawler(cleanup(out)); gs <- doCrawl(ws.distinct, (all ++ out).distinct, depth - 1) yield gs
     }
 
   // Probably, we should get three URIs: the host, the directory and the URI for the string w
-  private def getHostAndURI(w: String): Try[(URI, URI)] = {
-    def getHostURI(u: URI): URI = new URL(u.getScheme + "://" + u.getHost).toURI
+  private def getHostAndURI(w: String): Try[(URI, URI)] =
+    def getHostURI(u: URI): URI =
+      new URL(u.getScheme + "://" + u.getHost).toURI
 
     Try {
       val u = new URI(w)
       (getHostURI(u), u)
     }
-  }
 
-  // TODO use Using...
-  //  private def appendContent(a: Strings, v: URI): Strings = a :+ Source.fromURL(v.toURL).mkString
-
-  private def appendContent(a: Strings, v: URI): Try[Strings] = Using(Source.fromURL(v.toURL)) { s => a :+ s.mkString }
+  private def appendContent(a: Strings, v: URI): Try[Strings] =
+    Using(Source.fromURL(v.toURL)) { s => a :+ s.mkString }
 
   // We are passing the wrong URL into getLinks: the value of u is the server, not the current directory.
-  private def getLinkStrings(u: URI, gs: Strings): (URI, Strings) = {
+  private def getLinkStrings(u: URI, gs: Strings): (URI, Strings) =
     def normalizeURL(w: URI, w2: String) = new URL(w.toURL, w2).toString
 
-    def getLinks(u: URI, g: String): Strings = for (
+    def getLinks(u: URI, g: String): Strings = for
       nsA <- HTMLParser.parse(g) \\ "a";
       nsH <- nsA \ "@href";
       nH <- nsH.headOption.toSeq
-    ) yield normalizeURL(u, nH.toString)
+    yield normalizeURL(u, nH.toString)
 
-    (u, (for (g <- gs) yield getLinks(u, g)) reduce (_ ++ _))
-  }
+    (u, (for g <- gs yield getLinks(u, g)) reduce (_ ++ _))
 
   private def joinWordLists(a: Strings, v: Strings) = a ++ v
-}
 
 
-object WebCrawler {
+/**
+ * Object WebCrawler is primarily responsible for web crawling operations. It handles
+ * fetching links, managing timeouts, and processes input strings for crawling tasks.
+ *
+ * This object provides methods to retrieve timeout configurations based on input,
+ * enabling proper scaling of crawling operations within the defined duration.
+ *
+ * Notes:
+ * - The parsing of timeout strings involves validating and transforming input formats
+ *   into the required Timeout object.
+ * - Any invalid formats will result in a default timeout of 10 seconds being applied.
+ *
+ * Methods:
+ *   - getTimeout: Parses human-readable time representations (e.g., "10s", "5m")
+ *     into appropriate Timeout objects. Relies on regex pattern matching for format validation.
+ */
+object WebCrawler:
   // TODO try to combine this with the same method in MapReduceActor
-  def getTimeout(t: String): Timeout = {
+  def getTimeout(t: String): Timeout =
     val durationR = """(\d+)\s*(\w+)""".r
-    t match {
+    t match
       case durationR(n, s) => new Timeout(FiniteDuration(n.toLong, s))
       case _ => Timeout(10.seconds)
-    }
-  }
-}
 
 /**
  * NOTE: this is kept separate from the WebCrawler object so that referencing WebCrawler's pure methods
  * (e.g. from tests) does not trigger this side-effecting computation.
  */
-@main def webCrawlerApp(args: String*): Unit = {
+@main def webCrawlerApp(args: String*): Unit =
 
-  implicit val config: Config = ConfigFactory.load.getConfig("WebCrawler")
-  implicit val system: ActorSystem = ActorSystem(config.getString("name"))
-  implicit val timeout: Timeout = WebCrawler.getTimeout(config.getString("timeout"))
+  given config: Config = ConfigFactory.load.getConfig("majabigwaduce.WebCrawler")
+
+  given system: ActorSystem = ActorSystem(config.getString("name"))
+
+  given timeout: Timeout = WebCrawler.getTimeout(config.getString("timeout"))
 
   import ExecutionContext.Implicits.global
 
-  val ws = if (args.nonEmpty) args else Seq(config.getString("start"))
+  val ws = if args.nonEmpty then args else Seq(config.getString("start"))
   val crawler = WebCrawler(config.getInt("depth"))
   val xf = crawler(ws)
   xf foreach (x => println(s"total links: $x"))
   Await.ready(xf, 10.minutes)
-}

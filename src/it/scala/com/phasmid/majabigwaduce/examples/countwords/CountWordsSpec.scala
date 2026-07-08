@@ -5,10 +5,10 @@
 package com.phasmid.majabigwaduce.examples.countwords
 
 import org.scalamock.scalatest.MockFactory
-import org.scalatest._
-import org.scalatest.concurrent._
+import org.scalatest.*
+import org.scalatest.concurrent.*
 import org.scalatest.matchers.should
-import org.scalatest.time._
+import org.scalatest.time.*
 
 import java.net.URI
 

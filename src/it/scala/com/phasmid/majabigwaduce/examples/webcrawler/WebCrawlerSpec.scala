@@ -16,24 +16,36 @@ import org.scalatest.{Inside, flatspec}
 import scala.concurrent.ExecutionContext
 
 /**
-  * NOTE: this is more of a Functional test rather than a unit test.
-  * Feel free to ignore this test if it's taking up too much time.
-  *
-  * Created by scalaprof on 6/28/16.
-  */
+ * NOTE: this is more of a Functional test rather than a unit test.
+ * Feel free to ignore this test if it's taking up too much time.
+ *
+ * Created by scalaprof on 6/28/16.
+ */
 class WebCrawlerSpec extends flatspec.AnyFlatSpec with should.Matchers with Futures with ScalaFutures with Inside with MockFactory {
   // CONSIDER when run alone, this works just fine.
   // CONSIDER moving to it since this requires an internet connection
   // But sometimes when run with all the specs in Majabigwaduce, this runs -- but in the logs we see exceptions thrown
   "crawl" should "work" in {
-    implicit val config: Config = ConfigFactory.load.getConfig("WebCrawler")
-    implicit val system: ActorSystem = ActorSystem(config.getString("name"))
-    implicit val to: Timeout = WebCrawler.getTimeout(config.getString("timeout"))
+    given config: Config = ConfigFactory.load.getConfig("majabigwaduce.WebCrawler")
+
+    given system: ActorSystem = ActorSystem(config.getString("name"))
+
+    given to: Timeout = WebCrawler.getTimeout(config.getString("timeout"))
     import ExecutionContext.Implicits.global
     val ws = Seq(config.getString("start"))
     val crawler = WebCrawler(config.getInt("depth"))
     val xf = crawler(ws)
     whenReady(xf, timeout(Span(300, Seconds)))( // The actual number is approximate and will vary (currently 9)
       i => assert(i > 5 && i < 200))
+  }
+
+  "webCrawlerApp main program" should "work" in {
+    given config: Config = ConfigFactory.load.getConfig("majabigwaduce.WebCrawler")
+
+    given system: ActorSystem = ActorSystem(config.getString("name"))
+
+    given timeout: Timeout = WebCrawler.getTimeout(config.getString("timeout"))
+
+    webCrawlerApp()
   }
 }

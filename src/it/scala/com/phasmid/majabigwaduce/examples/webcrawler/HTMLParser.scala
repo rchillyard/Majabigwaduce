@@ -13,8 +13,8 @@ import scala.xml.Node
 import scala.xml.parsing.NoBindingFactoryAdapter
 
 /**
-  * @author scalaprof
-  */
+ * @author scalaprof
+ */
 object HTMLParser {
 
   lazy val adapter = new NoBindingFactoryAdapter()
