@@ -66,28 +66,28 @@ class FPSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers with Fut
     checkCompatibleX(xs, yss) should matchPattern { case Failure(_) => }
   }
 
-  "lift(Future[Try[T]])" should "succeed for http://www.google.com" in {
-    val uyf = Future(Try(new URL("http://www.google.com")))
+  "lift(Future[Try[T]])" should "succeed for https://www.google.com" in {
+    val uyf = Future(Try(new URL("https://www.google.com")))
     val uf = flatten(uyf)
     whenReady(uf) { u => u should matchPattern { case _: URL => } }
   }
 
-  "lift(Try[Future[T]])" should "succeed for http://www.google.com" in {
-    val ufy: Try[Future[URL]] = Try(Future(new URL("http://www.google.com")))
+  "lift(Try[Future[T]])" should "succeed for https://www.google.com" in {
+    val ufy: Try[Future[URL]] = Try(Future(new URL("https://www.google.com")))
     val uf: Future[URL] = flatten(ufy)
     whenReady(uf) { u => u should matchPattern { case _: URL => } }
   }
 
-  "sequence(Seq[Future[T]])" should "succeed for http://www.google.com, etc." in {
-    val ws = List("http://www.google.com", "http://www.microsoft.com")
+  "sequence(Seq[Future[T]])" should "succeed for https://www.google.com, etc." in {
+    val ws = List("https://www.google.com", "https://www.microsoft.com")
     val ufs: Seq[Future[URL]] = for {w <- ws; uf = Future(new URL(w))} yield uf
     val usf: Future[Seq[URL]] = Future.sequence(ufs)
     whenReady(usf) { us => Assertions.assert(us.length == 2) }
   }
 
   behavior of "sequence(Seq[Try[T]])"
-  it should "succeed for http://www.google.com, etc." in {
-    val ws = List("http://www.google.com", "http://www.microsoft.com")
+  it should "succeed for https://www.google.com, etc." in {
+    val ws = List("https://www.google.com", "https://www.microsoft.com")
     val uys = for {w <- ws; url = Try(new URL(w))} yield url
     sequence(uys) match {
       case Success(us) => Assertions.assert(us.length == 2)
@@ -95,7 +95,7 @@ class FPSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers with Fut
     }
   }
   it should "fail for www.google.com, etc." in {
-    val ws = List("www.google.com", "http://www.microsoft.com")
+    val ws = List("www.google.com", "https://www.microsoft.com")
     val uys = for {w <- ws; uy = Try(new URL(w))} yield uy
     sequence(uys) match {
       case Failure(_) => Succeeded

@@ -10,18 +10,17 @@ import com.phasmid.majabigwaduce.core.FP._
 
 import scala.collection.mutable
 import scala.concurrent.duration._
-import scala.language.postfixOps
 import scala.reflect.ClassTag
 import scala.util._
 
 abstract class MapReduceActor extends Actor with ActorLogging with AutoCloseable {
-  override def preStart: Unit = {
+  override def preStart(): Unit = {
     log.debug("is starting")
-    super.preStart
+    super.preStart()
   }
 
-  override def postStop: Unit = {
-    super.postStop
+  override def postStop(): Unit = {
+    super.postStop()
     log.debug("has shut down")
   }
 
@@ -52,7 +51,7 @@ abstract class MapReduceActor extends Actor with ActorLogging with AutoCloseable
     val durationR = """(\d+)\s*(\w+)""".r
     val timeout = t match {
       case durationR(n, s) => new Timeout(FiniteDuration(n.toLong, s))
-      case _ => Timeout(10 seconds)
+      case _ => Timeout(10.seconds)
     }
     log.debug(s"setting timeout to: $timeout")
     timeout

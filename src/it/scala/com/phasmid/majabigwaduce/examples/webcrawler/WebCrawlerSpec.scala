@@ -14,7 +14,6 @@ import org.scalatest.time.{Seconds, Span}
 import org.scalatest.{Inside, flatspec}
 
 import scala.concurrent.ExecutionContext
-import scala.language.postfixOps
 
 /**
   * NOTE: this is more of a Functional test rather than a unit test.

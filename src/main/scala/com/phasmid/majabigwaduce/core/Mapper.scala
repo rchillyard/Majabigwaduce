@@ -46,7 +46,7 @@ class Mapper[K1, V1, K2, W](f: (K1, V1) => Try[(K2, W)]) extends MapReduceActor 
       log.debug(s"Mapper received $i") // NOTE: this only logs the number of elements, not their values.
       // CONSIDER using a form of groupBy to perform this operation
       val wk2ts: Seq[Try[(K2, W)]] = for ((k1, v1) <- i.m) yield f(k1, v1)
-      sendReply(sender, prepareResponse[Map[K2, Seq[W]]](wk2ts))
+      sendReply(sender(), prepareResponse[Map[K2, Seq[W]]](wk2ts))
     case q =>
       super.receive(q)
   }

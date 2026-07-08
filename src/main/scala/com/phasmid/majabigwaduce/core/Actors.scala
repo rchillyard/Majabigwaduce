@@ -29,6 +29,7 @@ case class Actors(system: ActorSystem, config: Config) extends AutoCloseable {
     // CONSIDER eliminating this suffix now that we create actors hierarchically (i.e. we create them from context, except the master).
     val actorId = s"$actorName-$suffix"
     system.log.debug(s"""createActor: $actorId of ${props.args.headOption.getOrElse(().getClass)}""")
+    // CONSIDER creating a factory method for each actor type--that's more idiomatic.
     factory.actorOf(props, actorId)
   }
 
