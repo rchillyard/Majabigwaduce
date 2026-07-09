@@ -32,8 +32,9 @@ iterations to report a mean with an error margin instead of one noisy sample.
 - `build.sbt` defines a separate `benchmarks` subproject (`.enablePlugins(JmhPlugin)`,
   `.dependsOn(root)`) so JMH's dependencies never leak into the published library jar.
 - Benchmark classes live under `benchmarks/src/main/scala/com/phasmid/majabigwaduce/benchmarks/`:
-  `WordCountBenchmark.scala` (the map/pipe/reduce word-count pipeline) and
-  `MatrixBenchmark.scala` (`Matrix2`'s actor-vs-sequential row processing).
+  `WordCountBenchmark.scala` (the map/pipe/reduce word-count pipeline), `MatrixBenchmark.scala`
+  (`Matrix2`'s actor-vs-sequential row processing), and `DataDefinitionBenchmark.scala`
+  (the filter/map/reduce RDD-style pipeline).
 
 ## The annotations, explained
 
@@ -127,6 +128,47 @@ a real design smell worth carrying into the typed-actors redesign discussion: an
 eagerly-initialized global singleton makes a component hard to reconfigure within one running
 JVM.
 
+## DataDefinitionBenchmark's parameters
+
+- **`size`** — number of synthetic `(key, value)` pairs in the pipeline's input. The
+  data-volume knob.
+- **`forceActors`** — the benchmark runs `dd.filter(...).map(...).reduce(...)`, where `dd` is
+  built via `DataDefinition(kvs, partitions)`. `LazyDD.evaluate` takes the sequential in-thread
+  path when `partitions < 2`, and the actor-based (`MapReducePipe`) path when `partitions >= 2`
+  — `forceActors` maps directly to `partitions = 4` (`true`) or `partitions = 1` (`false`), so
+  the same `size` can be measured both ways, same idea as `MatrixBenchmark`'s `forceActors`.
+
+Same limitation as `MatrixBenchmark`: `DataDefinition`'s reducer-actor count isn't
+independently configurable per run, for the same JVM-wide-singleton reason described above.
+
+### A real bug this benchmark exposed
+
+Building this benchmark surfaced a genuine correctness bug in `Actors.scala`, not just a
+benchmark-code issue. Its actor-name suffix was:
+
+```scala
+private val suffix = (System.nanoTime().hashCode + Actors.getCount).toHexString
+```
+
+`DataDefinition`'s `MapReducePipe` actors are created *inside* `LazyDD.evaluate()`, fully
+encapsulated — a benchmark has no handle to `close()` them between invocations (unlike
+`WordCountBenchmark`, where `stage1.close()`/`stage2.close()` sidestepped this). Under JMH's
+tight measurement loop (thousands of calls per second), `System.nanoTime()`'s 32-bit hash can
+repeat between calls just nanoseconds apart — its upper bits barely move at that timescale —
+so two different `Actors` instances could compute the *same* suffix and collide on actor names
+(`InvalidActorNameException: actor name [...] is not unique!`), even though `Actors.getCount`
+itself never repeats. The fix was to stop combining a hash with the counter and rely on the
+counter alone, via a thread-safe, purely monotonic `AtomicLong`:
+
+```scala
+private val counter = new java.util.concurrent.atomic.AtomicLong(0)
+def getCount: Long = counter.incrementAndGet()
+```
+
+This is a real fix to core library code (`src/main/scala/.../core/Actors.scala`), not scoped to
+`benchmarks/` — any consumer creating actors at high frequency could have hit the same
+collision. Full test suite re-verified green (125 tests) after the change.
+
 ## Running it
 
 Basic run, everything from the annotations:
@@ -164,10 +206,11 @@ measured on — that context is what makes the number comparable months later.
 ```bash
 sbt "benchmarks/Jmh/run -i 1 -wi 1 -f1 -t1 -p documents=10 -p executors=4 .*WordCountBenchmark.*"
 sbt "benchmarks/Jmh/run -i 1 -wi 1 -f1 -t1 -p size=5,50 -p forceActors=true,false .*MatrixBenchmark.*"
+sbt "benchmarks/Jmh/run -i 1 -wi 1 -f1 -t1 -p size=100,10000 -p forceActors=true,false .*DataDefinitionBenchmark.*"
 ```
 
-Note: `MatrixBenchmark` runs noticeably slower per fork than `WordCountBenchmark` for the same
-`-i`/`-wi` — `DataDefinition`'s global `ActorSystem` (see the limitation above) never gets
-explicitly terminated, so each fork's forced-exit timeout (~24s) is paid on top of the actual
-measurement time, once per fork.
+Note: `MatrixBenchmark` and `DataDefinitionBenchmark` both run noticeably slower per fork than
+`WordCountBenchmark` for the same `-i`/`-wi` — `DataDefinition`'s global `ActorSystem` (see the
+limitation above) never gets explicitly terminated, so each fork's forced-exit timeout (~24s)
+is paid on top of the actual measurement time, once per fork.
 

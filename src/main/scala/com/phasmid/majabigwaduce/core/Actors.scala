@@ -43,14 +43,15 @@ case class Actors(system: ActorSystem, config: Config) extends AutoCloseable:
 
   def close(): Unit = {}
 
-  private val suffix = (System.nanoTime().hashCode + Actors.getCount).toHexString
+  private val suffix = Actors.getCount.toHexString
 
 
 object Actors:
-  // NOTE: consciously using var here.
-  var count: Int = 0
+  // A globally unique, thread-safe, monotonically increasing counter -- deliberately not
+  // combined with System.nanoTime().hashCode as it previously was. Under high-frequency actor
+  // creation (e.g. JMH benchmarks calling this thousands of times per second), nanoTime's
+  // 32-bit hash can repeat between calls just nanoseconds apart, producing duplicate actor
+  // names (InvalidActorNameException) even though the counter itself never repeats.
+  private val counter = new java.util.concurrent.atomic.AtomicLong(0)
 
-  def getCount: Int = {
-    count += 1
-    count
-  }
+  def getCount: Long = counter.incrementAndGet()
