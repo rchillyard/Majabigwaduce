@@ -38,9 +38,13 @@ class WordCountBenchmark {
   @Param(Array("10", "100", "1000"))
   var documents: Int = _
 
-  // Number of distinct "servers" (partitions) the documents are grouped under.
+  // Number of distinct grouping keys ("servers") the documents are folded under in stage 1.
   @Param(Array("4"))
-  var servers: Int = _
+  var keyCardinality: Int = _
+
+  // Number of reducer actors Master spins up to parallelize the reduce stage.
+  @Param(Array("4"))
+  var reducers: Int = _
 
   private var system: ActorSystem = _
   private var docIds: Strings = _
@@ -62,7 +66,7 @@ class WordCountBenchmark {
     system = ActorSystem("WordCountBenchmark")
     ec = system.dispatcher
     val baseConfig = ConfigFactory.load().getConfig("majabigwaduce")
-    config = baseConfig.withValue("reducers", ConfigValueFactory.fromAnyRef(servers))
+    config = baseConfig.withValue("reducers", ConfigValueFactory.fromAnyRef(reducers))
     docIds = (0 until documents).map(i => s"doc-$i")
   }
 
@@ -71,7 +75,7 @@ class WordCountBenchmark {
     Await.ready(system.terminate(), 30.seconds)
   }
 
-  private def serverFor(docId: String): String = s"server-${Math.abs(docId.hashCode) % servers}"
+  private def serverFor(docId: String): String = s"server-${Math.abs(docId.hashCode) % keyCardinality}"
 
   private def contentFor(docId: String): String = WordCountBenchmark.syntheticContent(docId)
 
