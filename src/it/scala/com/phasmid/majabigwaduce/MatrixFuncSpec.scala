@@ -38,7 +38,7 @@ class MatrixFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with Futu
   }
 
   // NOTE we choose to ignore this just because it takes a while to run.
-  ignore should "implement product by identity correctly (N=500)" taggedAs Slow in {
+  it should "implement product by identity correctly (N=500)" taggedAs Slow in {
     given atMost: Duration = duration.FiniteDuration(1, "minute")
 
     productByIdentity(500)
@@ -47,7 +47,7 @@ class MatrixFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with Futu
   // NOTE In order to be confident of this executing in time, we should set the overall timeout (in application.conf) to be 5 minutes
   // FIXME Issue #27
   // NOTE that this does not appear to fail--that needs fixing, too.
-  ignore should "implement product by identity correctly (N=1000)" taggedAs Slow in {
+  it should "implement product by identity correctly (N=1000)" taggedAs Slow in {
     given atMost: Duration = duration.FiniteDuration(5, "minute")
 
     productByIdentity(1000)
