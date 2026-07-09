@@ -62,11 +62,11 @@ Using `WordCountBenchmark` as the reference example:
 
   When a class has more than one `@Param` field, JMH runs the *entire* warmup+measurement
   cycle once for **every combination** of values across all of them — the Cartesian product,
-  not a zipped/paired sweep. `WordCountBenchmark` has three: `documents` (3 values by default),
-  `keyCardinality` (1), `reducers` (1) — that's 3 × 1 × 1 = 3 full runs. Add a second value to
-  `keyCardinality` and a second to `reducers` and it becomes 3 × 2 × 2 = 12 runs; the cost of
-  sweeping multiple parameters compounds fast, which is worth keeping in mind before adding a
-  fourth `@Param` on a whim.
+  not a zipped/paired sweep. `WordCountBenchmark` has four: `documents` (3 values by default),
+  `executors` (1), `keyCardinality` (1), `reducers` (1) — that's 3 × 1 × 1 × 1 = 3 full runs.
+  Add a second value to `executors` and it becomes 3 × 2 × 1 × 1 = 6 runs; the cost of sweeping
+  multiple parameters compounds fast, which is worth keeping in mind before adding another
+  `@Param` on a whim.
 - **`@Setup(Level.Trial)`** / **`@TearDown(Level.Trial)`** — run once before/after all
   iterations *for a given param combination* (not once per invocation — that would defeat the
   point of measuring steady-state cost). `Level.Trial` is the coarsest; `Level.Iteration` and
@@ -80,6 +80,8 @@ Using `WordCountBenchmark` as the reference example:
 
 - **`documents`** — number of synthetic documents word-counted per invocation. This is the
   overall data-volume knob.
+- **`executors`** — default parallelism knob (default: 4). `keyCardinality` and `reducers`
+  each fall back to this value unless explicitly overridden (see below).
 - **`keyCardinality`** — number of distinct grouping keys ("servers") the documents are folded
   under in stage 1. This mirrors the original `CountWords` exemplar, where real documents came
   from actual HTTP servers (`bbc.com`, `cnn.com`, `default`) and got grouped by which server
@@ -87,10 +89,20 @@ Using `WordCountBenchmark` as the reference example:
   have," independent of how much parallelism is applied to reduce them.
 - **`reducers`** — number of reducer actors `Master` spins up to parallelize the reduce stage
   (set via the `reducers` config key that `Master` reads at construction time). This is
-  actor-pool parallelism, a different concern from `keyCardinality` — they used to be
-  conflated under one `servers` parameter, which meant you couldn't isolate "does more data-key
-  cardinality slow things down" from "does more reducer parallelism speed things up," since
-  they always moved together. Splitting them lets you vary each independently.
+  actor-pool parallelism, a different concern from `keyCardinality`.
+
+`keyCardinality` and `reducers` default to `-1`, a sentinel meaning "use `executors`." JMH
+`@Param` default arrays must be compile-time constant literals, so a field can't directly
+default to *another field's* runtime value — the `-1` sentinel is the standard workaround:
+`@Setup` resolves it (`if (keyCardinality > 0) keyCardinality else executors`) before each
+trial. Practically, this means:
+
+- Don't pass `-p keyCardinality` or `-p reducers` at all, and both follow whatever `-p
+  executors=N` you gave (or its default of 4) — one knob, coupled behavior.
+- Pass `-p keyCardinality=8` (or `reducers`) explicitly, and that value wins regardless of
+  `executors` — letting you isolate "does more data-key cardinality slow things down" from
+  "does more reducer parallelism speed things up," which is the reason they're two fields
+  instead of one.
 
 ## Running it
 
@@ -104,7 +116,7 @@ Override anything from the command line without touching the file — this is th
 workflow, since editing annotations for every experiment gets old fast:
 
 ```bash
-sbt "benchmarks/Jmh/run -i 10 -wi 5 -f3 -t1 -p documents=10,100,1000,10000 -p keyCardinality=4,8 -p reducers=4,8 .*WordCountBenchmark.*"
+sbt "benchmarks/Jmh/run -i 10 -wi 5 -f3 -t1 -p documents=10,100,1000,10000 -p executors=4,8 .*WordCountBenchmark.*"
 ```
 
 - `-i` measurement iterations, `-wi` warmup iterations, `-f` forks, `-t` threads
@@ -127,6 +139,6 @@ measured on — that context is what makes the number comparable months later.
 ## Smoke Testing
 
 ```bash
-sbt "benchmarks/Jmh/run -i 1 -wi 1 -f1 -t1 -p documents=10 -p keyCardinality=4 -p reducers=4 .*WordCountBenchmark.*"
+sbt "benchmarks/Jmh/run -i 1 -wi 1 -f1 -t1 -p documents=10 -p executors=4 .*WordCountBenchmark.*"
 ```
 

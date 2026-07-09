@@ -38,18 +38,26 @@ class WordCountBenchmark {
   @Param(Array("10", "100", "1000"))
   var documents: Int = _
 
-  // Number of distinct grouping keys ("servers") the documents are folded under in stage 1.
+  // Default parallelism knob: keyCardinality and reducers each fall back to this value
+  // unless explicitly overridden (see the -1 sentinel below).
   @Param(Array("4"))
+  var executors: Int = _
+
+  // Number of distinct grouping keys ("servers") the documents are folded under in stage 1.
+  // -1 means: use `executors`. Override independently with e.g. -p keyCardinality=8.
+  @Param(Array("-1"))
   var keyCardinality: Int = _
 
   // Number of reducer actors Master spins up to parallelize the reduce stage.
-  @Param(Array("4"))
+  // -1 means: use `executors`. Override independently with e.g. -p reducers=8.
+  @Param(Array("-1"))
   var reducers: Int = _
 
   private var system: ActorSystem = _
   private var docIds: Strings = _
   private var ec: ExecutionContext = _
   private var config: com.typesafe.config.Config = _
+  private var resolvedKeyCardinality: Int = _
 
   private val timeout: Timeout = Timeout(30.seconds)
 
@@ -65,8 +73,10 @@ class WordCountBenchmark {
   def setup(): Unit = {
     system = ActorSystem("WordCountBenchmark")
     ec = system.dispatcher
+    resolvedKeyCardinality = if (keyCardinality > 0) keyCardinality else executors
+    val resolvedReducers = if (reducers > 0) reducers else executors
     val baseConfig = ConfigFactory.load().getConfig("majabigwaduce")
-    config = baseConfig.withValue("reducers", ConfigValueFactory.fromAnyRef(reducers))
+    config = baseConfig.withValue("reducers", ConfigValueFactory.fromAnyRef(resolvedReducers))
     docIds = (0 until documents).map(i => s"doc-$i")
   }
 
@@ -75,7 +85,7 @@ class WordCountBenchmark {
     Await.ready(system.terminate(), 30.seconds)
   }
 
-  private def serverFor(docId: String): String = s"server-${Math.abs(docId.hashCode) % keyCardinality}"
+  private def serverFor(docId: String): String = s"server-${Math.abs(docId.hashCode) % resolvedKeyCardinality}"
 
   private def contentFor(docId: String): String = WordCountBenchmark.syntheticContent(docId)
 
