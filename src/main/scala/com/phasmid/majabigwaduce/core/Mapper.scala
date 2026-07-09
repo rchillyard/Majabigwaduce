@@ -56,7 +56,10 @@ class Mapper[K1, V1, K2, W](f: (K1, V1) => Try[(K2, W)]) extends MapReduceActor 
     case i: KeyValuePairs[K1, V1] @unchecked =>
       log.debug(s"Mapper received $i") // NOTE: this only logs the number of elements, not their values.
       // CONSIDER using a form of groupBy to perform this operation
-      val wk2ts: Seq[Try[(K2, W)]] = for (k1, v1) <- i.m yield f(k1, v1)
+      // NOTE: f is documented to always return a Try, but a misbehaving f (e.g. one that throws
+      // during argument unboxing due to an erasure-related ClassCastException) must not be allowed
+      // to crash this actor -- Try(...).flatten catches that case too.
+      val wk2ts: Seq[Try[(K2, W)]] = for (k1, v1) <- i.m yield Try(f(k1, v1)).flatten
       sendReply(sender(), prepareResponse[Map[K2, Seq[W]]](wk2ts))
     case q =>
       super.receive(q)
