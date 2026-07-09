@@ -94,3 +94,10 @@ sbt "benchmarks/Jmh/run -rf json -rff benchmarks/results/baseline-classic-actors
 `-f5`) once you're ready to treat the numbers as an actual baseline rather than a smoke test,
 and check the resulting JSON into git alongside a note of which commit/JVM/machine it was
 measured on — that context is what makes the number comparable months later.
+
+## Smoke Testing
+
+```bash
+sbt "benchmarks/Jmh/run -i 1 -wi 1 -f1 -t1 -p documents=10 -p servers=4 .*WordCountBenchmark.*"
+```
+
