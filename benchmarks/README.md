@@ -31,8 +31,9 @@ iterations to report a mean with an error margin instead of one noisy sample.
   annotation-processing/code-generation step JMH needs).
 - `build.sbt` defines a separate `benchmarks` subproject (`.enablePlugins(JmhPlugin)`,
   `.dependsOn(root)`) so JMH's dependencies never leak into the published library jar.
-- Benchmark classes live under `benchmarks/src/main/scala/com/phasmid/majabigwaduce/benchmarks/`,
-  e.g. `WordCountBenchmark.scala`.
+- Benchmark classes live under `benchmarks/src/main/scala/com/phasmid/majabigwaduce/benchmarks/`:
+  `WordCountBenchmark.scala` (the map/pipe/reduce word-count pipeline) and
+  `MatrixBenchmark.scala` (`Matrix2`'s actor-vs-sequential row processing).
 
 ## The annotations, explained
 
@@ -104,6 +105,28 @@ trial. Practically, this means:
   "does more reducer parallelism speed things up," which is the reason they're two fields
   instead of one.
 
+## MatrixBenchmark's parameters
+
+- **`size`** — dimension N of the two NxN matrices being multiplied. The overall data-volume
+  knob, same role as `documents` in `WordCountBenchmark`.
+- **`forceActors`** — `Matrix2.forRows` only takes the actor-based (`DataDefinition`/MapReduce)
+  path when `this.size >= cutoff`; below that it runs sequentially in-thread. `forceActors`
+  overrides the in-scope `cutoff` given directly (`Dimensions(Seq(1,1))` when `true`,
+  effectively unreachable when `false`), so the *same* `size` can be measured both ways. That's
+  what makes the crossover visible: at `size=5`, forcing actors was ~60x slower than sequential
+  (pure dispatch overhead on trivial work); at `size=50` the two were within a few percent
+  (the actual computation had grown enough to amortize that overhead).
+
+**Limitation worth knowing about:** unlike `WordCountBenchmark`, the number of reducer actors
+used on the actor path isn't independently configurable per run here. `DataDefinition`'s actor
+context (`DDContext`) is a JVM-wide singleton — built once, lazily, from the global application
+config the first time the `DataDefinition` object is touched, reading `ConfigFactory.load()`
+at that moment. A benchmark instance has no hook to override it afterward; it's whatever
+`majabigwaduce.DataDefinition.reducers` resolves to at JVM startup (default: 4). That's itself
+a real design smell worth carrying into the typed-actors redesign discussion: an
+eagerly-initialized global singleton makes a component hard to reconfigure within one running
+JVM.
+
 ## Running it
 
 Basic run, everything from the annotations:
@@ -140,5 +163,11 @@ measured on — that context is what makes the number comparable months later.
 
 ```bash
 sbt "benchmarks/Jmh/run -i 1 -wi 1 -f1 -t1 -p documents=10 -p executors=4 .*WordCountBenchmark.*"
+sbt "benchmarks/Jmh/run -i 1 -wi 1 -f1 -t1 -p size=5,50 -p forceActors=true,false .*MatrixBenchmark.*"
 ```
+
+Note: `MatrixBenchmark` runs noticeably slower per fork than `WordCountBenchmark` for the same
+`-i`/`-wi` — `DataDefinition`'s global `ActorSystem` (see the limitation above) never gets
+explicitly terminated, so each fork's forced-exit timeout (~24s) is paid on top of the actual
+measurement time, once per fork.
 
