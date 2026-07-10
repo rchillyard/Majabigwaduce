@@ -27,16 +27,18 @@ jobs:
       # Download and cache dependencies
       - restore_cache:
           keys:
-          - v1-dependencies-{{ checksum "build.sbt" }}
+          - v2-dependencies-{{ checksum "build.sbt" }}
           # fallback to using the latest cache if no exact match is found
-          - v1-dependencies-
+          - v2-dependencies-
 
       - run: cat /dev/null | sbt test:compile
 
       - save_cache:
           paths:
-            - ~/.m2
-          key: v1-dependencies--{{ checksum "build.sbt" }}
+            - ~/.ivy2/cache
+            - ~/.sbt
+            - ~/.cache/coursier
+          key: v2-dependencies-{{ checksum "build.sbt" }}
         
       # run tests!
       - run: cat /dev/null | sbt "testOnly -- -l org.scalatest.tags.Slow"

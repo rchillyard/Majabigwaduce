@@ -17,6 +17,7 @@ import org.scalatest.time._
 import scala.concurrent.ExecutionContext.Implicits.global
 
 import java.net.URL
+import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.util._
 
@@ -128,11 +129,16 @@ class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with F
     val master2 = system.actorOf(props2, s"WC-2b-master")
     val wsUrf = master1.ask(Seq("https://www.bbc.com/", "https://www.cnn.com/", "https://default/")).mapTo[Response[URL, Seq[String]]]
     val iUrf = wsUrf flatMap { wsUr => val wsUm = wsUr.right; master2.ask(wsUm).mapTo[Response[URL, Int]] }
-    iUrf.onComplete {
-      case Failure(x: AskTimeoutException) => fail(s"should throw MapReduceException, not $x")
+    // NOTE: we must block until iUrf completes before stopping the masters below -- otherwise
+    // system.stop races the in-flight ask and can win, so the ask times out instead of failing
+    // with the ClassCastException we're actually testing for.
+    Await.ready(iUrf, 65.seconds)
+    iUrf.value.get match {
+      case Failure(x: AskTimeoutException) => fail(s"should throw ClassCastException, not $x")
+      // NOTE: prepareResponse's strict-failure branch (see Responder.prepareResponse) returns the
+      // mapper's own exception unwrapped, rather than a MapReduceException, so that's what we get here.
       case Failure(x) =>
-        x shouldBe a[MapReduceException]
-        x.getCause shouldBe a[ClassCastException]
+        x shouldBe a[ClassCastException]
       case Success(_) => fail("should fail")
     }
     system.stop(master1)

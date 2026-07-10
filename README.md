@@ -28,7 +28,19 @@ see [Penobscot Expedition](https://en.wikipedia.org/wiki/Penobscot_Expedition)
 API
 ---
 
-Quick link to the [API](https://github.com/rchillyard/Majabigwaduce/tree/master/api/index.html) [TODO: This needs to be fixed]
+Full Scaladoc for every version published to Maven Central is generated automatically by
+[javadoc.io](https://javadoc.io/doc/com.phasmidsoftware/majabigwaduce_3).
+
+Getting Started
+----------------
+
+Majabigwaduce is published on Maven Central. Add it to your `build.sbt`:
+
+```scala
+libraryDependencies += "com.phasmidsoftware" %% "majabigwaduce" % "<version>"
+```
+
+(see the Sonatype Central badge at the top of this page for the current version number).
 
 High-level API
 ---------------
@@ -36,130 +48,161 @@ High-level API
 DataDefinition
 -------------
 Majabigwaduce has a high-level API, something like that used by Spark.
-The classes for this API can be found in the _dd_ package.
-It is based on the concept of *DataDefinition*, essentially a lazy, partitionable, map of key-value pairs.
-_DataDefinition_ is a trait with two concrete sub-classes:
+The classes for this API can be found in the `dd` package.
+It is based on the concept of `DataDefinition`, essentially a lazy, partitionable, map of key-value pairs.
+`DataDefinition` is a trait with two concrete sub-classes:
 
-* _LazyDD_ is a lazily-evaluated _DataDefinition_ and which is the normal implementation of _DataDefinition_ to be used.
-* _EagerDD_ is an eagerly (i.e. fully) evaluated _DataDefinition_ which also implements _HasEvaluatedMap_ which provides
+* `LazyDD` is a lazily-evaluated `DataDefinition` and which is the normal implementation of `DataDefinition` to be used.
+* `EagerDD` is an eagerly (i.e. fully) evaluated `DataDefinition` which also implements `HasEvaluatedMap` which provides
 a method to yield directly the wrapped key-value map.
-In practice, a _LazyDD_ creates an _EagerDD_ when implementing its _apply_ method.
+In practice, a `LazyDD` creates an `EagerDD` when implementing its `apply` method.
 
-A _DataDefinition_ (in these cases a _LazyDD_) is normally created with a statement such as:
+A `DataDefinition` (in these cases a `LazyDD`) is normally created with a statement such as:
 
-    val dd = DataDefinition(map, partitions)
-    
-where _map_ is either a _Map\[K,V\]_ or a _Seq\[(K,V)\]_; or
+```scala
+val dd = DataDefinition(map, partitions)
+```
 
-    val dd = DataDefinition(list, f, partitions)
-    
-where _list_ is a _Seq\[V\]_ and where _f_ is a function of type _V=>K_ (the mapper function).
+where `map` is either a `Map[K,V]` or a `Seq[(K,V)]`; or
 
-In all cases, _partitions_ represents the desired number of partitions for the data definition,
+```scala
+val dd = DataDefinition(list, f, partitions)
+```
+
+where `list` is a `Seq[V]` and where `f` is a function of type `V=>K` (the mapper function).
+
+In all cases, `partitions` represents the desired number of partitions for the data definition,
 but can be omitted, in which case it will default to 2.
 
 There are three types of transformation function currently supported:
- 
-* _map_ which, as expected, takes a function which maps a key-value pair into a new key-value pair.
-* _filter_ which, as expected, takes a predicate (i.e. a boolean function) which tests each key-value pair.
-* _join_ which implements an inner join of two _DataDefinitions_.
+
+* `map` which, as expected, takes a function which maps a key-value pair into a new key-value pair.
+* `filter` which, as expected, takes a predicate (i.e. a boolean function) which tests each key-value pair.
+* `join` which implements an inner join of two `DataDefinition`s.
 
 There are three types of "action" function:
- 
-* _apply_ which yields a _Future\[Map\[K,V\]\]_
-* _reduce(f)_ which yields a _Future\[W\]_ where the function _f_ is the aggregation function
-of type _(W,V)=>W_ where _W_ is constrained by a context bound: _W: Zero_.
-* _count_ which yields the number of key-value pairs in the _DataDefinition_, wrapped in _Future_.
 
-An additional type _DDContext_ is used implicitly when calling the _apply_ methods of the _DataDefinition_ object.
+* `apply` which yields a `Future[Map[K,V]]`
+* `reduce(f)` which yields a `Future[W]` where the function `f` is the aggregation function
+of type `(W,V)=>W` where `W` is constrained by a context bound: `W: Zero`.
+* `count` which yields the number of key-value pairs in the `DataDefinition`, wrapped in `Future`.
 
-For an example of using this higher-level API, please see the _Matrix_ class.
-Because this class is useful in its own right, it can be found in the main source area under the _matrix_ package.
+An additional type `DDContext` is used implicitly when calling the `apply` methods of the `DataDefinition` object.
+
+For an example of using this higher-level API, please see the `Matrix` class.
+Because this class is useful in its own right, it can be found in the main source area under the `matrix` package.
 
 Functional Map-Reduce (mid-level API)
 =====================
 
-The classes for this API (and anything lower) can be found in the core package.
-The set of _Master_ classes (lowest-level API) can be used by applications exactly as described below.
-However, there is a more convenient, functional form based on the trait _MapReduce_ which is defined thus:
+The classes for this API (and anything lower) can be found in the `core` package.
+The set of `Master` classes (lowest-level API) can be used by applications exactly as described below.
+However, there is a more convenient, functional form based on the trait `MapReduce` which is defined thus:
 
-	trait MapReduce[T,K2,V2] extends Seq[T] => Future[Map[K2,V2]] {
-	    def compose[K3,V3](mr: MapReduce[(K2,V2),K3,V3]): MapReduce[T,K3,V3] = MapReduceComposed(this,mr)
-	    def compose[S>:V2](r: Reduce[V2,S])(implicit executionContext: ExecutionContext): Seq[T]=>Future[S]= { ts => for (v2K2m <- apply(ts); s = r.apply(v2K2m)) yield s }
-	    def ec: ExecutionContext
-	}
+```scala
+trait MapReduce[T, K1, V1] extends ASync[Seq[T], Map[K1, V1]] with AutoCloseable:
+  self =>
 
-This trait casts the map-reduce process as a simple function: one which takes a _Seq\[T]_ and results in a
-(future of) _Map\[K2,V2]_ where _T_ is either _V1_ in the case of the first stage of a map-reduce pipeline or
-_(Kn,Vn)_ in the case of the subsequent (nth) stage.
+  // Compose this stage with a subsequent map-reduce stage.
+  def :&[K2, V2](f: ASync[Seq[(K1, V1)], Map[K2, V2]]): MapReduce[T, K2, V2] =
+    MapReduceComposed(self, f)(self.ec)
+
+  // Alternative, symmetrical formulation of :&
+  def &[K2, V2](mr: MapReduce[(K1, V1), K2, V2]): MapReduce[T, K2, V2] = :&(mr)
+
+  // Terminate the pipeline with a Reduce, yielding a single value of a super-type of V1.
+  def :|[S](r: RF[K1, V1, S])(implicit executionContext: ExecutionContext): ASync[Seq[T], S] =
+    ts => for (v2K2m <- self(ts); s = r(v2K2m)) yield s
+
+  // Alternative name for :|
+  def |[S](r: RF[K1, V1, S])(implicit executionContext: ExecutionContext): ASync[Seq[T], S] =
+    :|(r)(executionContext)
+
+  def ec: ExecutionContext
+```
+
+This trait casts the map-reduce process as a simple function: one which takes a `Seq[T]` and results in a
+(future of) `Map[K1,V1]` where `T` is either `V0` in the case of the first stage of a map-reduce pipeline or
+`(Kn,Vn)` in the case of the subsequent (nth) stage.
 There are four case classes which implement this trait (and which should be specified by the application programmer):
 
-* _MapReduceFirst_
-* _MapReducePipe_
-* _MapReduceFirstFold_
-* _MapReducePipeFold_
+* `MapReduceFirst`
+* `MapReducePipe`
+* `MapReduceFirstFold`
+* `MapReducePipeFold`
 
-Additionally, there is the _MapReduceComposed_ case class which is created by invoking the _compose_ method.
-A pipeline of map-reduce stages can thus be composed by using the _compose_ method of _MapReduce_.
-Such a pipeline may be (optionally) terminated by composing with a _Reduce_ instance which combines the values of the
-final _Map\[Kn,Vn]_ into a single _S_ value (where _S_ is a super-class of _Vn_).
+Additionally, there is the `MapReduceComposed` case class which is created by invoking the `:&` operator (or its
+alias `&`). A pipeline of map-reduce stages is thus composed by chaining `:&`/`&` between stages.
+Such a pipeline may be (optionally) terminated by combining it with a `Reduce` instance, using the `:|` operator
+(or its alias `|`), which combines the values of the final `Map[Kn,Vn]` into a single `S` value (where `S` is a
+super-class of `Vn`).
 
 Thus, a pipeline in functional form is a closure which captures all the functions,
 and their parameters which are in scope at the time of defining the pipeline.
 
-See the _CountWords_ example (below). 
+See the `CountWords` example (below).
 
 Lowest-level API
 ------------
 
 In order for a calculation to be performed in parallel, it is necessary that the complete calculation can be broken up
 into smaller parts which can each be implemented independently.
-These parallel calculations are performed in the _reduce_ phase of map-reduce while the _map_ phase is responsible for
+These parallel calculations are performed in the `reduce` phase of map-reduce while the `map` phase is responsible for
 breaking the work into these independent parts.
-In order that the results from the _reduce_ phase can be collated and/or aggregated,
+In order that the results from the `reduce` phase can be collated and/or aggregated,
 it is usually convenient for each portion of the calculation to be identified by a unique key
-(we will call the type of these keys _K2_).
-The data required for each portion is typically of many similar elements. We will call the type of these elements _W_.
-Thus, the natural intermediate data structure (for the _shuffle_ phase, see below) which results from
-the _map_ stage and is used as input to the _reduce_ stage is:
+(we will call the type of these keys `K2`).
+The data required for each portion is typically of many similar elements. We will call the type of these elements `W`.
+Thus, the natural intermediate data structure (for the `shuffle` phase, see below) which results from
+the `map` stage and is used as input to the `reduce` stage is:
 
-    Map[K2, Seq[W]]
-    
-Thus, the first job of designing an application to use map-reduce is to figure out the types _K2_ and _W_.
-If you are chaining map-reduce operations together, then the input to stage _N_+1 will be of the same form as the output of stage _N_.
+```scala
+Map[K2, Seq[W]]
+```
+
+Thus, the first job of designing an application to use map-reduce is to figure out the types `K2` and `W`.
+If you are chaining map-reduce operations together, then the input to stage N+1 will be of the same form as the output of stage N.
 Thus, in general, the input to the map-reduce process is a map of key-value pairs.
-We call the type of the key _K1_ and the type of the value _V1_.
+We call the type of the key `K1` and the type of the value `V1`.
 So, the input to the map stage is, in general:
 
-    Map[K1,V1]
-    
-For the first stage, there is usually no appropriate key, so instead we pass in a message of the following form
-(which is more or less equivalent to _Map\[Unit,V1]_):
+```scala
+Map[K1, V1]
+```
 
-	Seq[V1]
-	
-The reduction stage, as we have already seen, starts with information in the form of _Map\[K2,Seq\[W]]_ and the work
+For the first stage, there is usually no appropriate key, so instead we pass in a message of the following form
+(which is more or less equivalent to `Map[Unit,V1]`):
+
+```scala
+Seq[V1]
+```
+
+The reduction stage, as we have already seen, starts with information in the form of `Map[K2,Seq[W]]` and the work
 is divided up and sent to each of the reducers.
 Thus, each reducer takes as input (via a message) the following tuple:
 
-	(K2,Seq[W])
-	
- The result of each reduction is a tuple of the following form:
- 
-	(K2,V2)
-	
-where _V2_ is the aggregate of all the _W_ elements.
+```scala
+(K2, Seq[W])
+```
 
-Note that the reason that _W_ is not called _V2_ and _V2_ is not called _V3_ is because _W_ is an internal type.
-It is not a factor in the incoming or outgoing messages from the _Master_.
+The result of each reduction is a tuple of the following form:
+
+```scala
+(K2, V2)
+```
+
+where `V2` is the aggregate of all the `W` elements.
+
+Note that the reason that `W` is not called `V2` and `V2` is not called `V3` is because `W` is an internal type.
+It is not a factor in the incoming or outgoing messages from the `Master`.
 
 Of course, it's possible that there are insufficient reducers available for each of the keys.
 The way this project deals with that situation is simply to start sending messages to the available actors again.
-In general, the so-called _shuffle_ phase which precedes the _reduce_ phase is able to pick and choose how to make the
-best match between the key value _k_ and a particular reducer.
+In general, the so-called `shuffle` phase which precedes the `reduce` phase is able to pick and choose how to make the
+best match between the key value `k` and a particular reducer.
 This might be based on locality of data referenced by the values in the sequence.
 Or some other criterion with a view to load-balancing.
-However, this project does not currently make any such decisions, so the _shuffle_ phase is really non-existent:
+However, this project does not currently make any such decisions, so the `shuffle` phase is really non-existent:
 messages (one per key) are simply sent out to reducers in sequence.
 
 Low-level Details
@@ -168,124 +211,133 @@ Low-level Details
 Master
 ------
 
-The _Master_ (or one its three siblings) is the only class which an application needs to be concerned with.
-The _Master_, itself an actor, creates a mapper and a number of reducers as appropriate at startup and destroys them at
+The `Master` (or one of its three siblings) is the only class which an application needs to be concerned with.
+The `Master`, itself an actor, creates a mapper and a number of reducers as appropriate at startup and destroys them at
 the end.
-The input message and the constructor format are slightly different according to which form of the _Master_
+The input message and the constructor format are slightly different according to which form of the `Master`
 (see below) you are employing.
 
-Generally, there are five polymorphic types which describe the definition of _Master_: _K1, V1, K2, W,_ and _V2_.
-Of these, _W_ is not involved in messages going to or from the master--it is internal only.
-And, again generally, the constructor for the _Master_ takes the following parameters:
+Generally, there are five polymorphic types which describe the definition of `Master`: `K1, V1, K2, W,` and `V2`.
+Of these, `W` is not involved in messages going to or from the master--it is internal only.
+And, again generally, the constructor for the `Master` takes the following parameters:
 
-* _config: Config_
-* _f: (K1,V1)=>Try\[(K2,W)]_
-* _g: (V2,W)=>V2_
-* (optionally) _z: ()=>V2_
+* `config: Config`
+* `f: (K1,V1)=>Try[(K2,W)]`
+* `g: (V2,W)=>V2`
+* (optionally) `z: ()=>V2`
 
 where
 
-* _config_ is used for various configuration settings, such as the number of reducers to be created;
-* _f_ is described in _Mapper_ below
-* _g_ and _z_ are described in _Reducer_ below
+* `config` is used for various configuration settings, such as the number of reducers to be created;
+* `f` is described in `Mapper` below
+* `g` and `z` are described in `Reducer` below
 
-There are actually four _Master_ types to accommodate different situations.
-The first map-reduce stage in a pipeline (as mentioned above) does not involve _K1_.
-Therefore, two of the _master_ types are of this "first" type.
+There are actually four `Master` types to accommodate different situations.
+The first map-reduce stage in a pipeline (as mentioned above) does not involve `K1`.
+Therefore, two of the `Master` types are of this "first" type.
 Next, there is a difference between the pure reducers which require that these are treated separately
-(see section on _Reducer_ below).
+(see section on `Reducer` below).
 This creates another pairing of master forms: the "fold" variations.
-Thus, we have four forms of _Master_ all told:
+Thus, we have four forms of `Master` all told:
 
-* _Master_
-* _Master_First_
-* _Master_Fold_
-* _Master_First_Fold_
+* `Master`
+* `Master_First`
+* `Master_Fold`
+* `Master_First_Fold`
 
-The "fold" variations require the _z_ parameter, whereas the other variations do not.
-Thus, the non-"fold" variations require that _Z2_ be a super-type of _W_ (as required by _reduceLeft_).
+The "fold" variations require the `z` parameter, whereas the other variations do not.
+Thus, the non-"fold" variations require that `V2` be a super-type of `W` (as required by `reduceLeft`).
 
-The "first" variations do not require a _K1_ to be defined (it defaults to _Unit_) and see below in _Mapper_
+The "first" variations do not require a `K1` to be defined (it defaults to `Unit`) and see below in `Mapper`
 for the difference in input message types.
 
-The __input message__ type for the "first" variations is: _Seq\[V1]_ while the input message type for the non-"first"
-variations is _Map\[K1,V1]_.
-    
-The __output message__ type is always _Response\[K2,V2]_.
-The _Response_ type is defined thus:
+The __input message__ type for the "first" variations is: `Seq[V1]` while the input message type for the non-"first"
+variations is `Map[K1,V1]`.
 
-	case class Response[K,V](left: Map[K,Throwable], right: Map[K,V]) {
-	  def size = right.size
-	}
+The __output message__ type is always `Response[K2,V2]`.
+The `Response` type is defined thus:
 
-where _K_ represents _K2_ and _V_ represents _V2_.
+```scala
+case class Response[K, V](left: Map[K, Throwable], right: Map[K, V]):
+  def size: Int = right.size
+```
+
+where `K` represents `K2` and `V` represents `V2`.
 As you can see, the results of applying the reductions are preserved whether they are successes or failures.
-The _right_ value of the response is the collation of the successful reductions,
-while the _left_ value represents all the exceptions that were thrown (with their corresponding key).
+The `right` value of the response is the collation of the successful reductions,
+while the `left` value represents all the exceptions that were thrown (with their corresponding key).
 
-Note that each of the classes described above also provides in _apply_ method in its companion object which
-you can use if your mapper function is of the form _(K1,V1)=>(K2,W)_ (that's to say, without the _Try_).
+Note that the mid-level classes described above (`MapReduceFirst`, `MapReducePipe`, `MapReduceFirstFold`,
+`MapReducePipeFold`) each provide a `create` method in their companion object which you can use if your mapper
+function is of the form `V1=>(K2,W)` (or `(K1,V1)=>(K2,W)`), that's to say, without the `Try`.
+The low-level `Master` classes themselves do not currently provide an equivalent convenience constructor --
+you must wrap your mapper function in a `Try` (or use `FP.lift`) yourself.
 
 Mapper
 -----
 
-The _Mapper_ class is a sub-class of _Actor_.
-In general, the _Mapper_ takes the following polymorphic types: _\[K1,V1,K2,W]_.
+The `Mapper` class is a sub-class of `Actor`.
+In general, the `Mapper` takes the following polymorphic types: `[K1,V1,K2,W]`.
 
-The constructor takes a function _f_ of type _(K1,V1)=>Try\[(K2,W)]_,
-that's to say it is a function which transforms a _(K1,V1)_ tuple into a _Try_ of _(K2,W)_ tuple.
+The constructor takes a function `f` of type `(K1,V1)=>Try[(K2,W)]`,
+that's to say it is a function which transforms a `(K1,V1)` tuple into a `Try` of `(K2,W)` tuple.
 
 The incoming message is of the form:
-_KeyValueSeq\[K,V]_ where _KeyValueSeq_ is essentially a wrapper around the input (but in sequence/tuple form) and is defined thus:
+`KeyValuePairs[K,V]` where `KeyValuePairs` is essentially a wrapper around the input (but in sequence/tuple form) and is defined thus:
 
-	case class KeyValueSeq[K, V](m: Seq[(K,V)])
+```scala
+case class KeyValuePairs[K, V](m: Seq[(K, V)])
+```
 
-Where, in practice, _K=K1_ and _V=V1_. For the first-stage map-reduce processes, _K1_ is assumed to be _Unit_.
-Therefore, you can see the reason for making the input in the form of a wrapper around _Seq\[(K1,V1)]_.
-If the keys are unique then this is 100% two-way convertible with a _Map\[K1,V1]_.
-However, since the _K1_ keys can sometimes be missing entirely, we cannot properly form a _Map_.
-A _Map_ can always be represented as _Seq\[Tuple2]_, however.
+Where, in practice, `K=K1` and `V=V1`. For the first-stage map-reduce processes, `K1` is assumed to be `Unit`.
+Therefore, you can see the reason for making the input in the form of a wrapper around `Seq[(K1,V1)]`.
+If the keys are unique then this is 100% two-way convertible with a `Map[K1,V1]`.
+However, since the `K1` keys can sometimes be missing entirely, we cannot properly form a `Map`.
+A `Map` can always be represented as `Seq[Tuple2]`, however.
 
 It makes sense that the output from the reducer phase and, ultimately the master,
-recalls both successful calls to the reducer and failures.
+records both successful calls to the reducer and failures.
 This follows from the independent nature of the "reduce" phase.
 But, what about errors in the mapper phase?
 If the mapper fails on even one input tuple, the entire mapping process is pretty much trashed.
 What would be the point of continuing on to do the "reduce" phase after a mapper error?
 That is indeed the normal way of things: if there are any failures in mapping, the whole mapping fails.
-The form of (successful) output is _Map\[K2,Seq\[W]]_ while any failure outputs a _Throwable_
-(this is all part of the _Future_ class behavior). 
+The form of (successful) output is `Map[K2,Seq[W]]` while any failure outputs a `Throwable`
+(this is all part of the `Future` class behavior).
 
-Nevertheless, there is an alternative form of mapper called _Mapper_Forgiving_ which will return
-(to the master) both (as a tuple) the successful output and a sequence of _Throwable_ objects.
-This behavior can be turned on my setting _forgiving_ to true in the configuration.
+Nevertheless, there is an alternative form of mapper called `Mapper_Forgiving` which will return
+(to the master) both (as a tuple) the successful output and a sequence of `Throwable` objects.
+This behavior can be turned on by setting `forgiving` to true in the configuration.
 
 Reducer
 -------
 
-The _Reducer_ class is a sub-class of _Actor_.
-In general, the _Reducer_ takes the following polymorphic types: _\[K2,W,V2]_.
+The `Reducer` class is a sub-class of `Actor`.
+In general, the `Reducer` takes the following polymorphic types: `[K2,W,V2]`.
 
-The constructor takes a function _g_ of type _(V2,W)=>V2_,
-that's to say it is a function which recursively combines an accumulator of type _V2_ with an element of type _W_,
+The constructor takes a function `g` of type `(V2,W)=>V2`,
+that's to say it is a function which recursively combines an accumulator of type `V2` with an element of type `W`,
 yielding a new value for the accumulator.
-That's to say, _g_ is passed to the _reduceLeft_ method of _Seq_.
+That's to say, `g` is passed to the `reduceLeft` method of `Seq`.
 
-The incoming message is of the form: _Intermediate\[K2,W]_ where Intermediate is essentially a wrapper around the input and is defined thus:
+The incoming message is of the form: `Intermediate[K2,W]` where `Intermediate` is essentially a wrapper around the
+input and is defined thus:
 
-	case class Intermediate[K, V](k: K, vs: Seq[V])
+```scala
+case class Intermediate[K2, W](k2: K2, ws: Seq[W])
+```
 
-Where, in practice, _K=K2_ and _V=W_. There is an alternative form of reducer: _Reducer_Fold_.
-This type is designed for the situation where _V2_ is _not_ a super-type of _W_ or
-where there is no natural function to combine a _V2_ with a _W_.
-In this case, we must use the _foldLeft_ method of _Seq_ instead of the _reduceLeft_ method.
-This takes an additional function _z_ which is able to initialize the accumulator. 
+There is an alternative form of reducer: `Reducer_Fold`.
+This type is designed for the situation where `V2` is *not* a super-type of `W` or
+where there is no natural function to combine a `V2` with a `W`.
+In this case, we must use the `foldLeft` method of `Seq` instead of the `reduceLeft` method.
+This takes an additional function `z` which is able to initialize the accumulator.
 
 Configuration
 ============
 
-Configuration is based on Typesafe _Config_ (as is normal with _Akka_ applications).
-Please see the _reference.conf_ file in the main/resources directory for the list of
+Configuration is based on Typesafe `Config` (as is normal with Akka applications).
+Please see the `reference.conf` file in the `main/resources` directory for the list of
 configurable parameters with their explanations.
 
 Dependencies
@@ -293,24 +345,24 @@ Dependencies
 
 The components that are used by this project are:
 
-* Scala (2.13.x)
-* Akka (2.6.x)
+* Scala (3.3.x)
+* Akka (2.8.x)
 * Typesafe Configuration (1.4.x)
 * ...and dependencies thereof
 
 Testing
 =======
 
-There are two directories (under _src_) for testing: _test_ (unit tests/specifications) and _it_ (integration tests).
+There are two directories (under `src`) for testing: `test` (unit tests/specifications) and `it` (integration tests).
 By default, all tests are in the classpath.
-The example applications are in the _it_ directory, given that they are not really _unit_ tests.
-If you wish to suppress the integration tests temporarily, simply un-mark the _it/scala_ as a test source root.
-Or, you could comment out the appropriate entry (_unmanagedSourceDirectories_) in _build.sbt_.
+The example applications are in the `it` directory, given that they are not really unit tests.
+If you wish to suppress the integration tests temporarily, simply un-mark `it/scala` as a test source root.
+Or, you could comment out the appropriate entry (`unmanagedSourceDirectories`) in `build.sbt`.
 
 Examples
 ========
 
-There are several examples provided (in the "src/it/scala/com/phasmid/majabigwaduce/examples" directory):
+There are several examples provided (in the `src/it/scala/com/phasmid/majabigwaduce/examples` directory):
 
 * CountWords: a simple example which counts the words in documents and can provide a total word count of all documents.
 * WebCrawler: a more complex version of the same sort of thing.
@@ -320,85 +372,72 @@ There are several examples provided (in the "src/it/scala/com/phasmid/majabigwad
 CountWords
 ----------
 
-Here is the _CountWords_ app.
+Here is the `CountWords` app.
 It actually uses a "mock" URI rather than the real thing, but of course, it's simple to change it to use real URIs.
-I have not included the mock URI code (check current code for the most accurate version):
+Here is a simplified version (see the current code for the full version, including imports and configuration lookup):
 
-    object CountWords {
-      def apply(hc: HttpClient, args: Array[String]): Future[Int] = {
-        val configRoot = ConfigFactory.load
-        implicit val config: Config = configRoot.getConfig("CountWords")
-        implicit val system: ActorSystem = ActorSystem(config.getString("name"))
-        implicit val timeout: Timeout = getTimeout(config.getString("timeout"))
-        implicit val logger: LoggingAdapter = system.log
-        import ExecutionContext.Implicits.global    
-        val ws = if (args.length > 0) args.toSeq else Seq("http://www.bbc.com/doc1", "http://www.cnn.com/doc2", "http://default/doc3", "http://www.bbc.com/doc2", "http://www.bbc.com/doc3")
-        CountWords(hc.getResource).apply(ws)
-      }
+```scala
+case class CountWords(resourceFunc: String => Resource)
+    (using system: ActorSystem, logger: LoggingAdapter, config: Config, timeout: Timeout, ec: ExecutionContext)
+  extends (Seq[String] => Future[Int]) {
 
-      def getTimeout(t: String): Timeout = {
-        val durationR = """(\d+)\s*(\w+)""".r
-        t match {
-          case durationR(n, s) => new Timeout(FiniteDuration(n.toLong, s))
-          case _ => Timeout(10 seconds)
-        }
-      }
-    }
+  type Strings = Seq[String]
 
-    case class CountWords(resourceFunc: String => Resource)(implicit system: ActorSystem, logger: LoggingAdapter, config: Config, timeout: Timeout, ec: ExecutionContext) extends (Seq[String] => Future[Int]) {
-      type Strings = Seq[String]
-      trait StringsZeros extends Zero[Strings] {
-        def zero: Strings = Nil: Strings
-      }
-      implicit object StringsZeros extends StringsZeros
-      trait IntZeros extends Zero[Int] {
-        def zero: Int = 0
-      }
-      implicit object IntZeros extends IntZeros
-      override def apply(ws: Strings): Future[Int] = {
-        val stage1 = MapReduceFirstFold.create(
-            { w: String => val u = resourceFunc(w); logger.debug(s"stage1 map: $w"); (u.getServer, u.getContent) },
-            appendString
-            )
-            (actors, timeout)
+  trait StringsZeros extends Zero[Strings] {
+    def zero: Strings = Nil: Strings
+  }
+  implicit object StringsZeros extends StringsZeros
 
-        val stage2 = MapReducePipe.create[URI, Strings, URI, Int, Int](
-          (w, gs) => w -> (countFields(gs) reduce addInts),
-          addInts,
-          1
-        )
-        val stage3 = Reduce[URI, Int, Int](addInts)
-        val mr = stage1 & stage2 | stage3
-        mr(ws)
-      }
-      private def countFields(gs: Strings) = for (g <- gs) yield g.split("""\s+""").length
-      private def addInts(x: Int, y: Int) = x + y
-      private def appendString(a: Strings, v: String) = a :+ v
-    }
-	
+  trait IntZeros extends Zero[Int] {
+    def zero: Int = 0
+  }
+  implicit object IntZeros extends IntZeros
+
+  override def apply(ws: Strings): Future[Int] =
+    given actors: Actors = Actors(summon[ActorSystem], summon[Config])
+    val stage1 = MapReduceFirstFold.create(
+      { (w: String) => val u = resourceFunc(w); (u.getServer(), u.getContent()) },
+      appendString
+    )(actors, timeout)
+
+    val stage2 = MapReducePipe.create[URI, Strings, URI, Int, Int](
+      (w, gs) => w -> (countFields(gs) reduce addInts),
+      addInts,
+      1
+    )
+    val stage3 = Reduce[URI, Int, Int](addInts)
+    val mr = stage1 & stage2 | stage3
+    mr(ws)
+
+  private def countFields(gs: Strings) = for (g <- gs) yield g.split("""\s+""").length
+  private def addInts(x: Int, y: Int) = x + y
+  private def appendString(a: Strings, v: String) = a :+ v
+}
+```
+
 It is a three-stage map-reduce problem, including a final reduce stage.
 
-Stage 1 takes a _Seq\[String]_ (representing URIs) and produces a _Map\[URI,Seq\[String]]_.
-The mapper for the first stage returns a tuple of the _URI_ (corresponding to the server for the string),
+Stage 1 takes a `Seq[String]` (representing URIs) and produces a `Map[URI,Seq[String]]`.
+The mapper for the first stage returns a tuple of the `URI` (corresponding to the server for the string),
 and the content of the resource defined by the string.
-The reducer simply adds a _String_ to a _Seq\[String]_.
-There is additionally an _init_ function which creates an empty _Seq\[String]_.
-The result of the first stage is a map of _URI->Seq\[String]_ where the key represents a server,
-and the value elements are the contents of the documents read from that server. 
+The reducer simply adds a `String` to a `Seq[String]`.
+There is additionally an `init` function which creates an empty `Seq[String]`.
+The result of the first stage is a map of `URI->Seq[String]` where the key represents a server,
+and the value elements are the contents of the documents read from that server.
 
-Stage 2 takes the result of the first stage and produces a _Map\[URI,Int]_.
-The second stage mapper takes the _URI_ and _Seq\[String]_ from the first stage and splits each string on white space,
+Stage 2 takes the result of the first stage and produces a `Map[URI,Int]`.
+The second stage mapper takes the `URI` and `Seq[String]` from the first stage and splits each string on white space,
 getting the number of words, then returns the sum of the lengths.
 In practice (if you are using just the three default args), these sequences have only one string each.
 The second stage reducer simply adds together the results of the mapping phase.
-The result of stage 2 is a map of _URI->Int_.
+The result of stage 2 is a map of `URI->Int`.
 
 Stage 3 (a terminating stage which produces simply a value) takes the map resulting from stage 2,
 but simply sums the values (ignoring the keys) to form a grand total.
-This resulting value of _Int_ is printed using _println_.
+This resulting value of `Int` is printed using `println`.
 
-Note that the first stage uses _MapReduceFirstFold_, the second stage uses _MapReducePipe_,
-and the third (terminating) stage uses _Reduce_.
+Note that the first stage uses `MapReduceFirstFold`, the second stage uses `MapReducePipe`,
+and the third (terminating) stage uses `Reduce`.
 
 If the names of variables look a bit odd to you, then see my "ScalaProf" blog:
 http://scalaprof.blogspot.com/2015/12/naming-of-identifiers.html
@@ -406,87 +445,43 @@ http://scalaprof.blogspot.com/2015/12/naming-of-identifiers.html
 WebCrawler
 ----------
 
-Here is the web crawler example app (of course, you should check the current code for accuracy):
+Here is the shape of the web crawler example app (private helper methods are omitted below for brevity --
+see `WebCrawler.scala` in the `it` source tree for the full implementation):
 
-    case class WebCrawler(depth: Int)(implicit system: ActorSystem, config: Config, timeout: Timeout, ec: ExecutionContext) extends (Strings => Future[Int]) {
-    
-      trait StringsZero$ extends Zero[Strings] {
-        def zero: Strings = Nil: Strings
-      }
-      implicit object StringsZero$ extends StringsZero$
-    
-      val stage1: MapReduce[String, URI, Strings] =
-          MapReduceFirstFold(getHostAndURI, appendContent)(config, system, timeout)
-      val stage2: MapReduce[(URI, Strings), URI, Strings] =
-          MapReducePipeFold.create(getLinkStrings, joinWordLists, 1)(config, system, timeout)
-      val stage3: Reduce[URI, Strings, Strings] =
-          Reduce[URI, Strings, Strings](_ ++ _)
-      val crawler: Strings => Future[Strings] = stage1 & stage2 | stage3
-    
-      override def apply(ws: Strings): Future[Int] =
-          doCrawl(ws, Nil, depth) transform( { n => val z = n.length; system.terminate; z }, { x => system.log.error(x, "Map/reduce error (typically in map function)"); x })
-    
-      private def doCrawl(ws: Strings, all: Strings, depth: Int): Future[Strings] =
-        if (depth < 0) Future((all ++ ws).distinct)
-        else {
-          def cleanup(ws: Strings): Strings = ???
-    
-          def trim(s: String, p: Char): String = ???
-    
-          val (_, out) = ws.partition { u => all.contains(u) }
-          for (ws <- crawler(cleanup(out)); gs <- doCrawl(ws.distinct, (all ++ out).distinct, depth - 1)) yield gs
-        }
-    
-      private def getHostAndURI(w: String): (URI, URI) = ???
-    
-      private def appendContent(a: Strings, v: URI): Strings = ???
-    
-      private def getLinkStrings(u: URI, gs: Strings): (URI, Strings) = {
-        def normalizeURL(w: URI, w2: String) = ???
-    
-        def getLinks(u: URI, g: String): Strings = for (
-          nsA <- HTMLParser.parse(g) \\ "a";
-          nsH <- nsA \ "@href";
-          nH <- nsH.head
-        ) yield normalizeURL(u, nH.toString)
-    
-        (u, (for (g <- gs) yield getLinks(u, g)) reduce (_ ++ _))
-      }
-    
-      private def joinWordLists(a: Strings, v: Strings) = a ++ v
-    }
-    
-    object WebCrawler extends App {
-      implicit val config: Config = ConfigFactory.load.getConfig("WebCrawler")
-      implicit val system: ActorSystem = ActorSystem(config.getString("name"))
-      implicit val timeout: Timeout = getTimeout(config.getString("timeout"))        
-      import ExecutionContext.Implicits.global  
-        
-      val ws = if (args.length > 0) args.toSeq else Seq(config.getString("start"))
-      val crawler = WebCrawler(config.getInt("depth"))
-      private val xf = crawler(ws)
-      xf foreach (x => println(s"total links: $x"))
-      Await.ready(xf, 10.minutes)
-          
-      def getTimeout(t: String) = {
-        val durationR = """(\d+)\s*(\w+)""".r
-        t match {
-          case durationR(n, s) => new Timeout(FiniteDuration(n.toLong, s))
-          case _ => Timeout(10 seconds)
-        }
-      }
-    }
-          
-The application is somewhat similar to the _CountWords_ app,
+```scala
+case class WebCrawler(depth: Int)(implicit system: ActorSystem, config: Config, timeout: Timeout, ec: ExecutionContext)
+  extends (Strings => Future[Int]):
+
+  val actors: Actors = Actors(system, config)
+
+  val stage1: MapReduce[String, URI, Strings] =
+    MapReduceFirstFold(getHostAndURI, g)(actors, timeout)
+  val stage2: MapReduce[(URI, Strings), URI, Strings] =
+    MapReducePipeFold.create(getLinkStrings, joinWordLists, 1)(actors, timeout)
+  val stage3: Reduce[URI, Strings, Strings] =
+    Reduce[URI, Strings, Strings](_ ++ _)
+  val crawler: Strings => Future[Strings] = stage1 & stage2 | stage3
+
+  override def apply(ws: Strings): Future[Int] =
+    doCrawl(ws, Nil, depth) transform (
+      n => { val z = n.length; system.terminate(); z },
+      x => { system.log.error(x, "Map/reduce error (typically in map function)"); x }
+    )
+
+  // getHostAndURI, g, getLinkStrings, joinWordLists, and the recursive doCrawl driver
+  // are omitted here -- see WebCrawler.scala for the full implementation.
+```
+
+The application is somewhat similar to the `CountWords` app,
 but because of the much greater load in reading all the documents at any level of recursion,
 the first stage performs the actual document reading during its reduce phase.
 However, it also has three stages.
 
-The three stages combined as a pipeline called _crawler_ are invoked recursively by the method _doCrawl_.
+The three stages combined as a pipeline called `crawler` are invoked recursively by the method `doCrawl`.
 
 Because you cannot predict in advance what problems you will run into with badly formed (or non-existent) links,
 it is better to run this app in forgiving mode.
-Expect about 250 links to be visited given the default value of _ws_ and depth of 2.
+Expect about 250 links to be visited given the default value of `ws` and depth of 2.
 
 Future enhancements
 ===================
@@ -502,5 +497,6 @@ Revision History
 * 1.0.1 Version compatible with 2.13
 * 1.0.2 Code cleanup and issues fixes.
 * 1.0.3 More cleanup (TODOs, etc.)
-* 1.0.4 Refactored package structure and moved _examples_ into _it_ directory.
+* 1.0.4 Refactored package structure and moved `examples` into `it` directory.
 * 1.0.5 Upgraded dependencies, added Flog, added more badges.
+* 1.1.0 Migrated to Scala 3; added the high-level `DataDefinition` API, the `matrix` package, and JMH benchmarks.

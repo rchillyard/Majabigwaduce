@@ -39,3 +39,15 @@ libraryDependencies ++= Seq(
 Test / unmanagedSourceDirectories += baseDirectory.value / "src/it/scala"
 Test / unmanagedResourceDirectories += baseDirectory.value / "src/it/resources"
 Test / parallelExecution := false
+
+lazy val root = project.in(file("."))
+
+lazy val benchmarks = project.in(file("benchmarks"))
+	.dependsOn(root)
+	.enablePlugins(JmhPlugin)
+	.settings(
+		name := "majabigwaduce-benchmarks",
+		scalaVersion := "3.3.8",
+		publish / skip := true,
+		libraryDependencies += "ch.qos.logback" % "logback-classic" % logBackVersion % "runtime"
+	)

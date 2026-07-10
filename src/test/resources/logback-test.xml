@@ -27,7 +27,7 @@
         </rollingPolicy>
 
         <encoder>
-            <pattern>%d %p %c{1.} [%t] %m%n</pattern>
+            <pattern>%d %p %logger{36} [%t] %m%n</pattern>
         </encoder>
     </appender>
 
@@ -39,10 +39,7 @@
 
     <root level="DEBUG">
         <appender-ref ref="STDOUT"/>
-    </root>
-
-    <root level="DEBUG">
-        <appender-ref ref="FILE-ROLLING"/>
+        <appender-ref ref="ASYNC"/>
     </root>
 
 </configuration>

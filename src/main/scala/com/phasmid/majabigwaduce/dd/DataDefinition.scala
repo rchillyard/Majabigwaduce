@@ -101,13 +101,16 @@ case class EagerDD[K, V](kVs: Seq[(K, V)])(implicit ec: ExecutionContext) extend
 
   /**
    * Method to form a new DataDefinition where the resulting values derive from applying the function f to the original values
+   * TESTME
+   *
    *
    * @param f the function to transform key-value pairs
    * @tparam L the underlying type of the keys of the resulting map
    * @tparam W the underlying type of the values of the resulting map
    * @return a new DataDefinition
    */
-  def map[L, W: Monoid](f: ((K, V)) => (L, W)): DataDefinition[L, W] = EagerDD(for ((k, v) <- kVs) yield f(k, v))
+  def map[L, W: Monoid](f: ((K, V)) => (L, W)): DataDefinition[L, W] =
+    EagerDD(for ((k, v) <- kVs) yield f(k, v))
 
   /**
    * Method to filter this DataDefinition according to a predicate which takes a k-v tuple.
@@ -115,7 +118,8 @@ case class EagerDD[K, V](kVs: Seq[(K, V)])(implicit ec: ExecutionContext) extend
    * @param p the predicate which will yield a Boolean for a given k-v tuple.
    * @return a new DataDefinition containing only those k-v pairs which satisfy the predicate p.
    */
-  def filter(p: ((K, V)) => Boolean): DataDefinition[K, V] = EagerDD[K, V](kVs.filter(p))
+  def filter(p: ((K, V)) => Boolean): DataDefinition[K, V] =
+    EagerDD[K, V](kVs.filter(p))
 
   /**
    * Join method to perform inner join.
@@ -125,15 +129,16 @@ case class EagerDD[K, V](kVs: Seq[(K, V)])(implicit ec: ExecutionContext) extend
    * @tparam W value type of other
    * @return the inner join of this and other
    */
-  def join[L >: K, W: Monoid](other: DataDefinition[L, W]): DataDefinition[L, (V, W)] = other match {
-    case edd: EagerDD[L, W] @unchecked => EagerDD[L, (V, W)](joinMap(kVs.toMap.asInstanceOf[Map[L, V]], edd.kVs.toMap).toSeq)
+  def join[L >: K, W: Monoid](other: DataDefinition[L, W]): DataDefinition[L, (V, W)] = other match
+    case edd: EagerDD[L, W] @unchecked =>
+      EagerDD[L, (V, W)](joinMap(kVs.toMap.asInstanceOf[Map[L, V]], edd.kVs.toMap).toSeq)
     case bdd: BaseDD[L, W] @unchecked =>
       import scala.concurrent.duration.*
       given timeout: Timeout = Timeout(5.seconds)
 
       join(Await.result(bdd.evaluate, timeout.duration))
-    case _ => throw DataDefinitionException("join not supported for Eager and non-Eager DataDefinition objects")
-  }
+    case _ =>
+      throw DataDefinitionException("join not supported for Eager and non-Eager DataDefinition objects")
 
   /**
    * Return the evaluated map as is
@@ -163,7 +168,8 @@ case class EagerDD[K, V](kVs: Seq[(K, V)])(implicit ec: ExecutionContext) extend
    * @tparam L the new key type, whose values are derived from the values of this DataDefinition
    * @return a DataDefinition based on L and Iterable[V]
    */
-  def groupBy[L](f: V => L): DataDefinition[L, Iterable[V]] = EagerDD(kVs.toMap.values.groupBy(f).toSeq)
+  def groupBy[L](f: V => L): DataDefinition[L, Iterable[V]] =
+    EagerDD(kVs.toMap.values.groupBy(f).toSeq)
 
 /**
  * A data structure that eagerly evaluates and stores key-value pairs.
@@ -179,7 +185,8 @@ object EagerDD:
    * @param ec  the implicit execution context required for asynchronous computations
    * @return an `EagerDD` instance initialized with the provided key-value pairs
    */
-  def apply[K, V](kVs: Map[K, V])(implicit ec: ExecutionContext): EagerDD[K, V] = EagerDD(kVs.toSeq)
+  def apply[K, V](kVs: Map[K, V])(implicit ec: ExecutionContext): EagerDD[K, V] =
+    EagerDD(kVs.toSeq)
 
 /**
  * Case Class which implements DataDefinition[K, W] and which is based on a Map[K,V] and a function V => W.
@@ -398,7 +405,7 @@ case class DDContext(config: Config, system: ActorSystem, timeout: Timeout)(impl
    */
   def ec: ExecutionContext = executor
 
-  // TEST
+  // TESTME
   override def toString: String = s"DDContext: system=${system.name}, timeout=$timeout"
 
 object DDContext:
@@ -550,6 +557,10 @@ object DataDefinition:
 
   val DefaultPartitions: Int = 2
 
+/**
+ * An object containing utility methods for performing operations on keyed collections
+ * and functions, particularly for supporting the LazyDD class.
+ */
 object LazyDD:
   private[majabigwaduce] def joinMap[K, V, W](map1: Map[K, V], map2: Map[K, W]): Map[K, (V, W)] =
     (for key <- map1.keySet intersect map2.keySet yield (key, (map1(key), map2(key)))).toMap
@@ -567,4 +578,14 @@ object LazyDD:
 
   val logger: Logger = LoggerFactory.getLogger(LazyDD.getClass)
 
+/**
+ * Exception to indicate issues related to data definition operations.
+ *
+ * This exception is thrown when operations involving DataDefinition objects cannot be performed
+ * due to incompatible types, unsupported operations, or other invalid states. Examples include
+ * attempting to join Eager and non-Eager DataDefinition objects or operations not supported between
+ * Lazy and Base DataDefinition instances.
+ *
+ * @param str the error message describing the issue.
+ */
 case class DataDefinitionException(str: String) extends Exception(str)
