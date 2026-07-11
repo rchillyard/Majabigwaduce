@@ -4,8 +4,8 @@
 
 package com.phasmid.majabigwaduce.core
 
-import akka.actor.Props
-import akka.pattern.ask
+import akka.actor.typed.scaladsl.AskPattern.*
+import akka.actor.typed.{ActorRef, Behavior, Scheduler}
 import akka.util.Timeout
 import com.phasmid.majabigwaduce.{ASync, RF}
 
@@ -84,14 +84,13 @@ trait MapReduce[T, K1, V1] extends ASync[Seq[T], Map[K1, V1]] with AutoCloseable
  * @param actors  an instance of Actors
  * @param timeout the value of timeout to be used
  */
-case class MapReduceFirst[V0, K1, W, V1 >: W](f: V0 => Try[(K1, W)], g: (V1, W) => V1)(actors: Actors, timeout: Timeout) extends MapReduce_LoggingBase[V0, K1, V1](actors)(timeout):
+case class MapReduceFirst[V0, K1, W, V1 >: W](f: V0 => Try[(K1, W)], g: (V1, W) => V1)(actors: Actors, timeout: Timeout) extends MapReduce_LoggingBase[V0, Unit, V0, K1, V1](actors)(timeout):
   /**
-   * Method to create a Props value for this class.
-   * CONSIDER this looks dangerous, although this class does not extend Actor so maybe it's OK.
-   *
-   * @return a Props based on a new instance of Master_First
+   * @return a Behavior based on a new instance of Master_First
    */
-  def createProps: Props = Props(new Master_First(actors.config, f, g))
+  def createBehavior: Behavior[MasterCommand[Unit, V0, K1, V1]] = Master_First(actors.config, f, g)
+
+  def toMasterPair(t: V0): (Unit, V0) = () -> t
 
   /**
    * Provides the name associated with the MapReduceFirst instance.
@@ -126,14 +125,16 @@ object MapReduceFirst:
  * @param actors  an instance of Actors
  * @param timeout the value of timeout to be used
  */
-case class MapReducePipe[K0, V0, K1, W, V1 >: W](f: (K0, V0) => Try[(K1, W)], g: (V1, W) => V1, n: Int)(implicit actors: Actors, timeout: Timeout) extends MapReduce_LoggingBase[(K0, V0), K1, V1](actors)(timeout):
+case class MapReducePipe[K0, V0, K1, W, V1 >: W](f: (K0, V0) => Try[(K1, W)], g: (V1, W) => V1, n: Int)(implicit actors: Actors, timeout: Timeout) extends MapReduce_LoggingBase[(K0, V0), K0, V0, K1, V1](actors)(timeout):
   /**
-   * Creates a Props instance for the Master actor, initialized with the configuration,
+   * Creates a Behavior for the Master actor, initialized with the configuration,
    * mapper function, and reducer function provided by the enclosing MapReducePipe.
    *
-   * @return a Props instance configured for creating a Master actor
+   * @return a Behavior configured for creating a Master actor
    */
-  def createProps: Props = Props(new Master(actors.config, f, g))
+  def createBehavior: Behavior[MasterCommand[K0, V0, K1, V1]] = Master(actors.config, f, g)
+
+  def toMasterPair(t: (K0, V0)): (K0, V0) = t
 
   /**
    * Generates a name for the master actor of the current map-reduce stage.
@@ -183,12 +184,14 @@ object MapReducePipe:
  *                CONSIDER why is config parameter set not implicit?
  */
 //noinspection SpellCheckingInspection
-case class MapReduceFirstFold[V0, K1, W, V1: Zero](f: V0 => Try[(K1, W)], g: (V1, W) => V1)(actors: Actors, timeout: Timeout) extends MapReduce_LoggingBase[V0, K1, V1](actors)(timeout):
+case class MapReduceFirstFold[V0, K1, W, V1: Zero](f: V0 => Try[(K1, W)], g: (V1, W) => V1)(actors: Actors, timeout: Timeout) extends MapReduce_LoggingBase[V0, Unit, V0, K1, V1](actors)(timeout):
   // The following constructor allows for a f which needs to be lifted to T=>Try[R]
   // CONSIDER implementing an apply method in MapReduce for this signature
   //  def this(fy: V0 => (K1, W), g: (V1, W) => V1)(actors: Actors, timeout: Timeout) = this(MapReduce.lift(fy), g)(actors, timeout)
-  def createProps: Props =
-    Props(new Master_First_Fold(actors.config, f, g, () => summon[Zero[V1]].zero))
+  def createBehavior: Behavior[MasterCommand[Unit, V0, K1, V1]] =
+    Master_First_Fold(actors.config, f, g, () => summon[Zero[V1]].zero)
+
+  def toMasterPair(t: V0): (Unit, V0) = () -> t
 
   /**
    * Provides the name of the MapReduce master actor used in the first-stage fold operation.
@@ -230,20 +233,21 @@ object MapReduceFirstFold:
  * @param actors  an instance of Actors.
  * @param timeout the value of timeout to be used
  */
-case class MapReducePipeFold[K0, V0, K1, W, V1: Zero](f: (K0, V0) => Try[(K1, W)], g: (V1, W) => V1, n: Int)(actors: Actors, timeout: Timeout) extends MapReduce_LoggingBase[(K0, V0), K1, V1](actors)(timeout):
+case class MapReducePipeFold[K0, V0, K1, W, V1: Zero](f: (K0, V0) => Try[(K1, W)], g: (V1, W) => V1, n: Int)(actors: Actors, timeout: Timeout) extends MapReduce_LoggingBase[(K0, V0), K0, V0, K1, V1](actors)(timeout):
   /**
-   * Creates and returns a `Props` instance for the `Master_Fold` actor.
-   * The `Props` constructor encapsulates the actor class and its configuration,
-   * including the mapper function `f`, reducer function `g`, and
+   * Creates and returns a `Behavior` for the `Master_Fold` actor.
+   * Encapsulates the actor's configuration, including the mapper function `f`, reducer function `g`, and
    * an initializer function to generate a zero value of type V1.
    *
    * The following constructor allows for a f which needs to be lifted to T=>Try[R]
    * def this(fy: (K0, V0) => (K1, W), g: (V1, W) => V1, n: Int)(actors: Actors, timeout: Timeout) = this(MapReduce.lift(fy), g, n)(actors, timeout)
    *
-   * @return a `Props` instance for creating the `Master_Fold` actor.
+   * @return a `Behavior` instance for creating the `Master_Fold` actor.
    */
-  def createProps: Props =
-    Props(new Master_Fold(actors.config, f, g, () => summon[Zero[V1]].zero))
+  def createBehavior: Behavior[MasterCommand[K0, V0, K1, V1]] =
+    Master_Fold(actors.config, f, g, () => summon[Zero[V1]].zero)
+
+  def toMasterPair(t: (K0, V0)): (K0, V0) = t
 
   /**
    * Generates a name for the current MapReduce pipe fold stage.
@@ -332,13 +336,15 @@ case class Reduce[K, T, S: Zero](f: (S, T) => S) extends RF[K, T, S]:
 /**
  * An abstract base class which extends MapReduce_Base and which implements the logException method with non-trivial logging.
  *
- * @tparam T  the input type of the MapReduce function: T may be V1 for a first stage, or (K1,V1) for a subsequent stage.
- * @tparam K1 intermediate key type
- * @tparam V1 intermediate value type
+ * @tparam T   the input type of the MapReduce function: T may be V1 for a first stage, or (K1,V1) for a subsequent stage.
+ * @tparam K1M the key type of the master's own protocol (Unit for a first stage, or the outer K1 for a subsequent stage).
+ * @tparam V1M the value type of the master's own protocol.
+ * @tparam K1  intermediate key type
+ * @tparam V1  intermediate value type
  * @param actors  an instance of Actors
  * @param timeout the value of timeout to be used
  */
-abstract class MapReduce_LoggingBase[T, K1, V1](actors: Actors)(timeout: Timeout) extends MapReduce_Base[T, K1, V1](actors)(timeout):
+abstract class MapReduce_LoggingBase[T, K1M, V1M, K1, V1](actors: Actors)(timeout: Timeout) extends MapReduce_Base[T, K1M, V1M, K1, V1](actors)(using timeout):
   /**
    * Logs an exception using the provided message and throwable.
    *
@@ -351,11 +357,20 @@ abstract class MapReduce_LoggingBase[T, K1, V1](actors: Actors)(timeout: Timeout
 
 /**
  * An abstract base class for MapReduce classes (other than MapReduceComposed).
+ *
+ * @tparam T   the input type of the MapReduce function: T may be V1 for a first stage, or (K1,V1) for a subsequent stage.
+ * @tparam K1M the key type of the master's own protocol (Unit for a first stage, or K for a subsequent stage).
+ * @tparam V1M the value type of the master's own protocol (T for a first stage, or the V1 half of T for a subsequent stage).
+ * @tparam K   output key type
+ * @tparam V   output value type
  */
-abstract class MapReduce_Base[T, K, V](actors: Actors)(implicit timeout: Timeout) extends MapReduce[T, K, V]:
-  implicit def ec: ExecutionContextExecutor = actors.system.dispatcher
+abstract class MapReduce_Base[T, K1M, V1M, K, V](actors: Actors)(using timeout: Timeout) extends MapReduce[T, K, V]:
+  given ec: ExecutionContext = actors.system.executionContext
 
-  private val master = actors.createActor(actors.system, createName, createProps)
+  private given scheduler: Scheduler = actors.system.scheduler
+
+  private val master: ActorRef[MasterCommand[K1M, V1M, K, V]] =
+    actors.createActor[MasterCommand[K1M, V1M, K, V]]((b, n) => actors.system.systemActorOf(b, n), createName, createBehavior)
 
   /**
    * Processes a sequence of input items, communicates with the master actor to retrieve results,
@@ -366,14 +381,25 @@ abstract class MapReduce_Base[T, K, V](actors: Actors)(implicit timeout: Timeout
    */
   def apply(ts: Seq[T]): Future[Map[K, V]] =
     // Note: currently, we ignore the value of report but we could pass back a tuple that includes ok and the resulting map
-    for vKr <- master.ask(ts).mapTo[Response[K, V]]; _ = report(vKr) yield vKr.right
+    for
+      t <- master.ask[Try[Response[K, V]]](replyTo => ComputeSeq(ts.map(toMasterPair), replyTo))
+      vKr <- Future.fromTry(t)
+      _ = report(vKr)
+    yield vKr.right
 
   /**
-   * Creates and returns the Props configuration for the actor system.
-   *
-   * @return the Props configuration object used for actor creation
+   * Converts an input item of type T into the (key, value) pair the master's own protocol expects.
+   * For a first-stage MapReduce, this pairs T with a Unit key; for a subsequent stage, T already is
+   * the (K,V) pair the master expects.
    */
-  def createProps: Props
+  def toMasterPair(t: T): (K1M, V1M)
+
+  /**
+   * Creates and returns the Behavior for the master actor.
+   *
+   * @return the Behavior used for actor creation
+   */
+  def createBehavior: Behavior[MasterCommand[K1M, V1M, K, V]]
 
   /**
    * This probably ought to be configured according to whether or not we are debugging
@@ -392,12 +418,13 @@ abstract class MapReduce_Base[T, K, V](actors: Actors)(implicit timeout: Timeout
   def logException(m: => String, x: Throwable): Unit
 
   /**
-   * Stops the master actor to release resources and terminate associated processes.
+   * Stops the master actor (and, transitively, its mapper and reducer children) to release
+   * resources and terminate associated processes.
    *
    * @return Unit, as the method performs an action and does not produce a value.
    */
   def close(): Unit =
-    actors.system.stop(master)
+    master ! CloseMaster()
 
   /**
    * Logs exceptions associated with the left entries of the provided response and evaluates

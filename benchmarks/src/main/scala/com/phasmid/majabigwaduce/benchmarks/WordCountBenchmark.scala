@@ -4,7 +4,8 @@
 
 package com.phasmid.majabigwaduce.benchmarks
 
-import akka.actor.ActorSystem
+import akka.actor.typed.ActorSystem
+import akka.actor.typed.scaladsl.Behaviors
 import akka.util.Timeout
 import com.phasmid.majabigwaduce.core.*
 import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
@@ -53,7 +54,7 @@ class WordCountBenchmark {
   @Param(Array("-1"))
   var reducers: Int = _
 
-  private var system: ActorSystem = _
+  private var system: ActorSystem[Nothing] = _
   private var docIds: Strings = _
   private var ec: ExecutionContext = _
   private var config: com.typesafe.config.Config = _
@@ -71,8 +72,8 @@ class WordCountBenchmark {
 
   @Setup(Level.Trial)
   def setup(): Unit = {
-    system = ActorSystem("WordCountBenchmark")
-    ec = system.dispatcher
+    system = ActorSystem(Behaviors.empty, "WordCountBenchmark")
+    ec = system.executionContext
     resolvedKeyCardinality = if (keyCardinality > 0) keyCardinality else executors
     val resolvedReducers = if (reducers > 0) reducers else executors
     val baseConfig = ConfigFactory.load().getConfig("majabigwaduce")
@@ -82,7 +83,8 @@ class WordCountBenchmark {
 
   @TearDown(Level.Trial)
   def teardown(): Unit = {
-    Await.ready(system.terminate(), 30.seconds)
+    system.terminate()
+    Await.ready(system.whenTerminated, 30.seconds)
   }
 
   private def serverFor(docId: String): String = s"server-${Math.abs(docId.hashCode) % resolvedKeyCardinality}"

@@ -1,45 +1,44 @@
 package com.phasmid.majabigwaduce.core
 
-import akka.actor.{ActorRef, ActorRefFactory, ActorSystem, Props}
+import akka.actor.typed.{ActorRef, ActorSystem, Behavior}
 import akka.util.Timeout
 import com.typesafe.config.Config
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 
 /**
  * Case class to deal with the construction and configuration of actors.
  *
- * CONSIDER eliminating this class and calling actorOf directly from context or system. See Issue #13.
+ * CONSIDER eliminating this class and calling spawn/systemActorOf directly. See Issue #13.
  *
  * @param system the actor system.
  * @param config the configuration for this set of actors.
  */
-case class Actors(system: ActorSystem, config: Config) extends AutoCloseable:
+case class Actors(system: ActorSystem[?], config: Config) extends AutoCloseable:
 
   /**
-   * Create a new actor, using the appropriate factory (based on either system or context).
+   * Create a new actor, using the given spawn function (typically `context.spawn` for a child,
+   * or `system.systemActorOf` for a top-level actor).
    *
-   * @param factory   the appropriate actor ref factory.
+   * @param spawn     the function which actually creates the actor -- abstracts over whether it's spawned
+   *                  from an ActorContext or directly from the ActorSystem.
    * @param maybeName an optional name.
-   * @param props     the appropriate Props.
-   * @return an ActorRef.
+   * @param behavior  the Behavior to spawn.
+   * @return an ActorRef[U].
    */
-  def createActor(factory: ActorRefFactory, maybeName: Option[String], props: Props): ActorRef =
-    val actorName = maybeName match
-      case Some(name) => name
-      case None => "Nemo"
-
+  def createActor[U](spawn: (Behavior[U], String) => ActorRef[U], maybeName: Option[String], behavior: Behavior[U]): ActorRef[U] =
+    val actorName = maybeName.getOrElse("Nemo")
     // CONSIDER eliminating this suffix now that we create actors hierarchically (i.e. we create them from context, except the master).
     val actorId = s"$actorName-$suffix"
-    system.log.debug(s"""createActor: $actorId of ${props.args.headOption.getOrElse(().getClass)}""")
-    // CONSIDER creating a factory method for each actor type--that's more idiomatic.
-    factory.actorOf(props, actorId)
+    Actors.logger.debug(s"createActor: $actorId")
+    spawn(behavior, actorId)
 
   // TEST
   def logException(m: => String, x: Throwable = null): Unit =
     if exceptionStack
-    then system.log.error(x, m)
-    else system.log.warning(s"$m: ${x.getLocalizedMessage}")
+    then Actors.logger.error(m, x)
+    else Actors.logger.warn(s"$m: ${Option(x).fold("")(_.getLocalizedMessage)}")
 
   // TEST
   private lazy val exceptionStack = config.getBoolean("exceptionStack")
@@ -49,6 +48,8 @@ case class Actors(system: ActorSystem, config: Config) extends AutoCloseable:
   private val suffix = Actors.getCount.toHexString
 
 object Actors:
+  private val logger = LoggerFactory.getLogger(classOf[Actors])
+
   // A globally unique, thread-safe, monotonically increasing counter -- deliberately not
   // combined with System.nanoTime().hashCode as it previously was. Under high-frequency actor
   // creation (e.g. JMH benchmarks calling this thousands of times per second), nanoTime's

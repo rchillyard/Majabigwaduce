@@ -9,3 +9,4 @@ metastore_db
 /.bsp/
 
 *.class
+benchmarks/results/*.log

@@ -5,6 +5,7 @@
 package com.phasmid.majabigwaduce.benchmarks
 
 import com.phasmid.majabigwaduce.core.Monoid
+import com.phasmid.majabigwaduce.dd.DataDefinition
 import com.phasmid.majabigwaduce.matrix.*
 import org.openjdk.jmh.annotations.*
 
@@ -27,6 +28,8 @@ import scala.util.Random
  * `majabigwaduce.DataDefinition.reducers` resolves to at JVM startup (default: 4). This is
  * itself worth keeping in mind for the typed-actors redesign: DataDefinition's reliance on an
  * eagerly-initialized global singleton makes it hard to vary configuration within one JVM.
+ * We do explicitly tear down its ActorSystem in @TearDown below (via DataDefinition.shutdown()),
+ * so each fork exits promptly instead of paying JMH's forced-exit timeout.
  *
  * Run with: benchmarks/Jmh/run -i 10 -wi 5 -f1 -t1 .*MatrixBenchmark.*
  */
@@ -70,6 +73,11 @@ class MatrixBenchmark {
 
     a = randomMatrix()
     b = randomMatrix()
+  }
+
+  @TearDown(Level.Trial)
+  def teardown(): Unit = {
+    DataDefinition.shutdown()
   }
 
   @Benchmark

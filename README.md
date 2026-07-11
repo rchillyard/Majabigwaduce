@@ -217,6 +217,14 @@ the end.
 The input message and the constructor format are slightly different according to which form of the `Master`
 (see below) you are employing.
 
+Since version 2.0.0, the actors in the `core` package (`Master`, `Mapper`, `Reducer`) are implemented using
+Akka Typed rather than Akka Classic. `Master`/`Mapper`/`Reducer` are now factory functions which return a
+typed `Behavior`, spawned with `context.spawn`/`system.systemActorOf` rather than constructed via `Props`.
+Each has its own small, sealed command protocol (e.g. `MasterCommand`, with `ComputeMap`/`ComputeSeq`/`CloseMaster`
+cases) whose "compute" cases carry an explicit `replyTo: ActorRef[...]`, and a `Close` case that stops the actor
+(and, transitively, its children) -- there is no more implicit `sender()`, and no more `system.stop`. None of this
+affects the mid-level (`MapReduce`) or high-level (`DataDefinition`) APIs described above, which are unchanged.
+
 Generally, there are five polymorphic types which describe the definition of `Master`: `K1, V1, K2, W,` and `V2`.
 Of these, `W` is not involved in messages going to or from the master--it is internal only.
 And, again generally, the constructor for the `Master` takes the following parameters:
@@ -276,7 +284,7 @@ you must wrap your mapper function in a `Try` (or use `FP.lift`) yourself.
 Mapper
 -----
 
-The `Mapper` class is a sub-class of `Actor`.
+`Mapper` is a factory function which builds a typed actor `Behavior`.
 In general, the `Mapper` takes the following polymorphic types: `[K1,V1,K2,W]`.
 
 The constructor takes a function `f` of type `(K1,V1)=>Try[(K2,W)]`,
@@ -305,14 +313,16 @@ That is indeed the normal way of things: if there are any failures in mapping, t
 The form of (successful) output is `Map[K2,Seq[W]]` while any failure outputs a `Throwable`
 (this is all part of the `Future` class behavior).
 
-Nevertheless, there is an alternative form of mapper called `Mapper_Forgiving` which will return
-(to the master) both (as a tuple) the successful output and a sequence of `Throwable` objects.
-This behavior can be turned on by setting `forgiving` to true in the configuration.
+Nevertheless, there is a "forgiving" mode (set `forgiving` to true in the configuration) in which the
+master will accept both the successful output and a sequence of `Throwable` objects from the mapper, rather
+than treating any mapper exception as an overall failure. (`Mapper_Forgiving` is kept as a separate name for
+source compatibility, but it now behaves identically to `Mapper` -- the strict-vs-forgiving decision is made
+by the master, based on this configuration setting, not by the mapper itself.)
 
 Reducer
 -------
 
-The `Reducer` class is a sub-class of `Actor`.
+`Reducer` is a factory function which builds a typed actor `Behavior`.
 In general, the `Reducer` takes the following polymorphic types: `[K2,W,V2]`.
 
 The constructor takes a function `g` of type `(V2,W)=>V2`,
@@ -346,7 +356,7 @@ Dependencies
 The components that are used by this project are:
 
 * Scala (3.3.x)
-* Akka (2.8.x)
+* Akka Typed (2.8.x)
 * Typesafe Configuration (1.4.x)
 * ...and dependencies thereof
 
@@ -378,7 +388,7 @@ Here is a simplified version (see the current code for the full version, includi
 
 ```scala
 case class CountWords(resourceFunc: String => Resource)
-    (using system: ActorSystem, logger: LoggingAdapter, config: Config, timeout: Timeout, ec: ExecutionContext)
+    (using system: ActorSystem[Nothing], logger: Logger, config: Config, timeout: Timeout, ec: ExecutionContext)
   extends (Seq[String] => Future[Int]) {
 
   type Strings = Seq[String]
@@ -394,7 +404,7 @@ case class CountWords(resourceFunc: String => Resource)
   implicit object IntZeros extends IntZeros
 
   override def apply(ws: Strings): Future[Int] =
-    given actors: Actors = Actors(summon[ActorSystem], summon[Config])
+    given actors: Actors = Actors(summon[ActorSystem[Nothing]], summon[Config])
     val stage1 = MapReduceFirstFold.create(
       { (w: String) => val u = resourceFunc(w); (u.getServer(), u.getContent()) },
       appendString
@@ -449,8 +459,10 @@ Here is the shape of the web crawler example app (private helper methods are omi
 see `WebCrawler.scala` in the `it` source tree for the full implementation):
 
 ```scala
-case class WebCrawler(depth: Int)(implicit system: ActorSystem, config: Config, timeout: Timeout, ec: ExecutionContext)
+case class WebCrawler(depth: Int)(implicit system: ActorSystem[Nothing], config: Config, timeout: Timeout, ec: ExecutionContext)
   extends (Strings => Future[Int]):
+
+  private val logger: Logger = LoggerFactory.getLogger(classOf[WebCrawler])
 
   val actors: Actors = Actors(system, config)
 
@@ -465,7 +477,7 @@ case class WebCrawler(depth: Int)(implicit system: ActorSystem, config: Config, 
   override def apply(ws: Strings): Future[Int] =
     doCrawl(ws, Nil, depth) transform (
       n => { val z = n.length; system.terminate(); z },
-      x => { system.log.error(x, "Map/reduce error (typically in map function)"); x }
+      x => { logger.error("Map/reduce error (typically in map function)", x); x }
     )
 
   // getHostAndURI, g, getLinkStrings, joinWordLists, and the recursive doCrawl driver
@@ -500,3 +512,6 @@ Revision History
 * 1.0.4 Refactored package structure and moved `examples` into `it` directory.
 * 1.0.5 Upgraded dependencies, added Flog, added more badges.
 * 1.1.0 Migrated to Scala 3; added the high-level `DataDefinition` API, the `matrix` package, and JMH benchmarks.
+* 2.0.0 Migrated the `core` actors (`Master`, `Mapper`, `Reducer`) from Akka Classic to Akka Typed. See
+  `doc/TypedActorsMigration.md` for the design rationale. The mid-level (`MapReduce`) and high-level
+  (`DataDefinition`) APIs are unaffected.

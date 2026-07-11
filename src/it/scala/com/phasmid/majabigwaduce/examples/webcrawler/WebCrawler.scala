@@ -4,10 +4,12 @@
 
 package com.phasmid.majabigwaduce.examples.webcrawler
 
-import akka.actor.ActorSystem
+import akka.actor.typed.ActorSystem
+import akka.actor.typed.scaladsl.Behaviors
 import akka.util.Timeout
 import com.phasmid.majabigwaduce.core.*
 import com.typesafe.config.{Config, ConfigFactory}
+import org.slf4j.{Logger, LoggerFactory}
 
 import java.net.{URI, URL}
 import scala.concurrent.*
@@ -29,12 +31,14 @@ import scala.util.{Failure, Success, Try, Using}
  *
  * @author scalaprof
  */
-case class WebCrawler(depth: Int)(implicit system: ActorSystem, config: Config, timeout: Timeout, ec: ExecutionContext) extends (Strings => Future[Int]):
+case class WebCrawler(depth: Int)(implicit system: ActorSystem[Nothing], config: Config, timeout: Timeout, ec: ExecutionContext) extends (Strings => Future[Int]):
+
+  private val logger: Logger = LoggerFactory.getLogger(classOf[WebCrawler])
 
   trait StringsZero$ extends Zero[Strings]:
     def zero: Strings = Nil: Strings
 
-  val actors: Actors = Actors(summon[ActorSystem], summon[Config])
+  val actors: Actors = Actors(summon[ActorSystem[Nothing]], summon[Config])
 
   implicit object StringsZero$ extends StringsZero$
 
@@ -60,7 +64,7 @@ case class WebCrawler(depth: Int)(implicit system: ActorSystem, config: Config, 
    * @return a Future containing the total count of processed URLs as an integer.
    */
   override def apply(ws: Strings): Future[Int] =
-    doCrawl(ws, Nil, depth) transform( { n => val z = n.length; system.terminate(); z }, { x => system.log.error(x, "Map/reduce error (typically in map function)"); x })
+    doCrawl(ws, Nil, depth) transform( { n => val z = n.length; system.terminate(); z }, { x => logger.error("Map/reduce error (typically in map function)", x); x })
 
   private def doCrawl(ws: Strings, all: Strings, depth: Int): Future[Strings] =
     if depth < 0
@@ -75,10 +79,10 @@ case class WebCrawler(depth: Int)(implicit system: ActorSystem, config: Config, 
         then s.substring(0, hash)
         else s
 
-      system.log.info(s"doCrawl: depth=$depth; #ws=${ws.length}; #all=${all.length}")
-      system.log.debug(s"doCrawl: ws=$ws; all=$all")
+      logger.info(s"doCrawl: depth=$depth; #ws=${ws.length}; #all=${all.length}")
+      logger.debug(s"doCrawl: ws=$ws; all=$all")
       val (_, out) = ws.partition { u => all.contains(u) }
-      system.log.debug(s"doCrawl: out=$out")
+      logger.debug(s"doCrawl: out=$out")
       for ws <- crawler(cleanup(out)); gs <- doCrawl(ws.distinct, (all ++ out).distinct, depth - 1) yield gs
     }
 
@@ -142,7 +146,7 @@ object WebCrawler:
 
   given config: Config = ConfigFactory.load.getConfig("majabigwaduce.WebCrawler")
 
-  given system: ActorSystem = ActorSystem(config.getString("name"))
+  given system: ActorSystem[Nothing] = ActorSystem(Behaviors.empty, config.getString("name"))
 
   given timeout: Timeout = WebCrawler.getTimeout(config.getString("timeout"))
 

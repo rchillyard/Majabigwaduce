@@ -1,8 +1,8 @@
 // Optional but useful
-ThisBuild / description := "Scala library for parallel computation"
-ThisBuild / homepage := Some(url("https://github.com/rchillyard/Majabigwaduce"))
 ThisBuild / organizationName := "Phasmid Software"
 ThisBuild / organizationHomepage := Some(url("https://phasmidsoftware.com/"))
+ThisBuild / description := "Scala library for parallel computation"
+ThisBuild / homepage := Some(url("https://github.com/rchillyard/Majabigwaduce"))
 
 // Publishing configuration
 ThisBuild / publishTo := {

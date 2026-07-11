@@ -4,12 +4,13 @@
 
 package com.phasmid.majabigwaduce.examples.matrix
 
-import akka.actor.ActorSystem
-import akka.event.LoggingAdapter
+import akka.actor.typed.ActorSystem
+import akka.actor.typed.scaladsl.Behaviors
 import akka.util.Timeout
 import com.phasmid.majabigwaduce.core.*
 import com.phasmid.majabigwaduce.matrix.{IncompatibleLengthsException, Matrix2}
 import com.typesafe.config.{Config, ConfigFactory}
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.concurrent.duration.*
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -31,7 +32,7 @@ import scala.util.{Failure, Random, Try}
  * @param ec      (implicit) the execution context.
  * @tparam X the underlying type of the matrices (requires evidence of Numeric[X]).
  */
-case class MatrixOperation[X: Numeric](keyFunc: Int => Int)(using system: ActorSystem, logger: LoggingAdapter, config: Config, timeout: Timeout, ec: ExecutionContext) extends ((Seq[Seq[X]], Seq[X]) => Future[Seq[X]]):
+case class MatrixOperation[X: Numeric](keyFunc: Int => Int)(using system: ActorSystem[Nothing], logger: Logger, config: Config, timeout: Timeout, ec: ExecutionContext) extends ((Seq[Seq[X]], Seq[X]) => Future[Seq[X]]):
 
   self =>
 
@@ -41,7 +42,7 @@ case class MatrixOperation[X: Numeric](keyFunc: Int => Int)(using system: ActorS
   type Vector = Map[Int, X]
 
   override def apply(xss: Seq[XS], ys: XS): Future[XS] =
-    val actors: Actors = Actors(summon[ActorSystem], summon[Config])
+    val actors: Actors = Actors(summon[ActorSystem[Nothing]], summon[Config])
     implicit object zeroVector$$ extends Zero.VectorZero[X]
     val s1 = MapReduceFirstFold[Row, Int, Element, Vector](
       { case (i, xs) => FP.sequence(keyFunc(i) -> FP.sequence(i -> MatrixOperation.dot(xs, ys))) },
@@ -118,10 +119,10 @@ object MatrixOperation:
 @main def matrixOperationApp(): Unit =
 
   given config: Config = ConfigFactory.load.getConfig("majabigwaduce.Matrix")
-  given system: ActorSystem = ActorSystem(config.getString("name"))
-  given ec: ExecutionContext = system.dispatcher
+  given system: ActorSystem[Nothing] = ActorSystem(Behaviors.empty, config.getString("name"))
+  given ec: ExecutionContext = system.executionContext
   given timeout: Timeout = Actors.getTimeout(config.getString("timeout"))
-  given logger: LoggingAdapter = system.log
+  given logger: Logger = LoggerFactory.getLogger("MatrixOperationApp")
 
   val rows = config.getInt("rows")
   val cols = config.getInt("columns")

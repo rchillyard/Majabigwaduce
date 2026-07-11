@@ -4,12 +4,13 @@
 
 package com.phasmid.majabigwaduce.examples.countwords
 
-import akka.actor.ActorSystem
-import akka.event.LoggingAdapter
+import akka.actor.typed.ActorSystem
+import akka.actor.typed.scaladsl.Behaviors
 import akka.util.Timeout
 import com.phasmid.majabigwaduce.core.*
 import com.phasmidsoftware.flog.{Loggable, Loggables}
 import com.typesafe.config.{Config, ConfigFactory}
+import org.slf4j.{Logger, LoggerFactory}
 
 import java.net.URI
 import scala.concurrent.*
@@ -21,12 +22,9 @@ type ResourceFunction = String => Resource
 
 @main def wordCounter(args: String*): Unit =
   import ExecutionContext.Implicits.global
-  val hc = new ResourceHttpClient("/countwords")
-  val ws = if args.nonEmpty then args.toSeq
-  else Seq("https://www.bbc.com/doc1", "https://www.bbc.com/doc2", "https://www.cnn.com/doc3")
-  CountWords.countWords(hc, ws).onComplete {
-    case Success(i) => println(s"result = $i")
-    case Failure(t) => println(s"failure: ${t.getMessage}")
+  CountWords.doMain(args).onComplete {
+    case Success(s) => println(s);
+    case Failure(x) => println(s"Failure: ${x.getMessage}")
   }
 
 /**
@@ -50,12 +48,12 @@ type ResourceFunction = String => Resource
  *                     representing external data accessed during the pipeline.
  *
  * @param system       An implicit `ActorSystem` used for actor-based parallelism and concurrency.
- * @param logger       An implicit `LoggingAdapter` used for logging purposes.
+ * @param logger       An implicit `Logger` used for logging purposes.
  * @param config       An implicit `Config` used for managing configurations.
  * @param timeout      An implicit `Timeout` for specifying operation timeout durations.
  * @param ec           An implicit `ExecutionContext` for managing asynchronous computations.
  */
-case class CountWords(resourceFunc: ResourceFunction)(using system: ActorSystem, logger: LoggingAdapter, config: Config, timeout: Timeout, ec: ExecutionContext) extends (Seq[String] => Future[Int]) {
+case class CountWords(resourceFunc: ResourceFunction)(using system: ActorSystem[Nothing], logger: Logger, config: Config, timeout: Timeout, ec: ExecutionContext) extends (Seq[String] => Future[Int]) {
 
   trait StringsZeros extends Zero[Strings] {
     def zero: Strings = Nil: Strings
@@ -70,7 +68,7 @@ case class CountWords(resourceFunc: ResourceFunction)(using system: ActorSystem,
   implicit object IntZeros extends IntZeros
 
   override def apply(ws: Strings): Future[Int] =
-    given actors: Actors = Actors(summon[ActorSystem], summon[Config])
+    given actors: Actors = Actors(summon[ActorSystem[Nothing]], summon[Config])
     //    val stage1 = MapReduceFirstFold.create({ w: String => val u = resourceFunc("stage1 map" !! w); (u.getServer, u.getContent) }, appendString)(actors, timeout)
     val stage1 = MapReduceFirstFold.create({ (w: String) => val u = resourceFunc(w); (u.getServer(), u.getContent()) }, appendString)(actors, timeout)
 
@@ -101,24 +99,36 @@ case class CountWords(resourceFunc: ResourceFunction)(using system: ActorSystem,
  *
  * @author scalaprof
  */
-object CountWords extends Loggables:
+object CountWords: // extends Loggables:
 
-  def countWords(hc: HttpClient, args: Seq[String]): Future[Int] = {
+  def countWords(hc: HttpClient, args: Seq[String]): Future[Int] =
     given config: Config = ConfigFactory.load.getConfig("majabigwaduce.CountWords")
-    given system: ActorSystem = ActorSystem(config.getString("name"))
-    given ec: ExecutionContext = system.dispatcher
-
+    given system: ActorSystem[Nothing] = ActorSystem(Behaviors.empty, config.getString("name"))
+    given ec: ExecutionContext = system.executionContext
     given timeout: Timeout = Actors.getTimeout(config.getString("timeout"))
-    given logger: LoggingAdapter = system.log
+    given logger: Logger = LoggerFactory.getLogger(classOf[CountWords])
+//    given iterableStringLoggable: Loggable[Iterable[String]] = iterableLoggable[String]()
 
     //    val flog: Flog = Flog[CountWords.type]
     //    import flog._
 
-    given iterableLoggable: Loggable[Iterable[String]] = new Loggables {}.iterableLoggable[String]()
-
-    val ws = if (args.nonEmpty) args.toSeq else Seq("https://www.bbc.com/doc1", "https://www.cnn.com/doc2", "https://default/doc3", "https://www.bbc.com/doc2", "https://www.bbc.com/doc3")
+    val ws = if args.nonEmpty
+      then args
+      else Seq("https://www.bbc.com/doc1", "https://www.bbc.com/doc2", "https://www.cnn.com/doc3")
     //    "starting domains:" !! ws
-    CountWords(hc.getResource).apply(ws)  }
+    CountWords(hc.getResource).apply(ws).andThen ( _ => system.terminate() )
+
+  /**
+   * Executes the main application logic for processing a sequence of URLs to count words.
+   * If no arguments are provided, default URLs will be used.
+   *
+   * @param args A varargs parameter representing the URLs to process.
+   * @return Unit as the computation runs asynchronously and results are logged or handled.
+   */
+  def doMain(args: Strings): Future[String] =
+    import ExecutionContext.Implicits.global
+    val hc = new ResourceHttpClient("/countwords")
+    CountWords.countWords(hc, args).map(x => s"Word count = $x")
 
 /**
  * A trait that defines an HTTP client capable of resolving and handling resources.

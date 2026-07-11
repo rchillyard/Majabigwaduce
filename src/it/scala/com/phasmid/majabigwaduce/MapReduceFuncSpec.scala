@@ -4,9 +4,10 @@
 
 package com.phasmid.majabigwaduce
 
-import akka.actor.{ActorSystem, Props}
-import akka.event.LoggingAdapter
-import akka.pattern._
+import akka.actor.typed.ActorSystem
+import akka.actor.typed.scaladsl.AskPattern.*
+import akka.actor.typed.scaladsl.Behaviors
+import akka.actor.typed.Scheduler
 import akka.util.Timeout
 import com.phasmid.majabigwaduce.core._
 import com.typesafe.config.ConfigFactory
@@ -14,10 +15,12 @@ import org.scalatest._
 import org.scalatest.concurrent._
 import org.scalatest.matchers.should
 import org.scalatest.time._
+import org.slf4j.{Logger, LoggerFactory}
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 import java.net.URL
-import scala.concurrent.Await
+import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util._
 
@@ -30,11 +33,13 @@ case class MockURL(w: String) {
 }
 
 class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with Futures with ScalaFutures with Inside {
-  given system: ActorSystem = ActorSystem("MapReduceFuncSpec")
+  given system: ActorSystem[Nothing] = ActorSystem(Behaviors.empty, "MapReduceFuncSpec")
 
   given timeout: Timeout = Timeout(5.seconds)
 
-  private val logger: LoggingAdapter = system.log
+  given scheduler: Scheduler = system.scheduler
+
+  private val logger: Logger = LoggerFactory.getLogger(classOf[MapReduceFuncSpec])
 
   private val config = ConfigFactory.load().getConfig("majabigwaduce")
   val spec0 = "WC"
@@ -49,18 +54,19 @@ class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with F
 
     def mapper(w: String): (URL, String) = MockURL(w).asTuple
 
-    val props = Props.create(classOf[Master_First_Fold[String, URL, String, Seq[String]]], config, FP.lift(mapper _), reducer _, init _)
+    val behavior = Master_First_Fold(config, FP.lift(mapper _), reducer _, init _)
     //noinspection SpellCheckingInspection
-    val master = system.actorOf(props, s"""mstr-$spec1""")
-    val futureResponse = master.ask(Seq("https://www.bbc.com/", "https://www.cnn.com/", "https://default/"))
-    val wsUrf = futureResponse.mapTo[Response[URL, Seq[String]]]
+    val master = system.systemActorOf(behavior, s"""mstr-$spec1""")
+    val futureResponse = master.ask[Try[Response[URL, Seq[String]]]](replyTo =>
+      ComputeSeq(Seq("https://www.bbc.com/", "https://www.cnn.com/", "https://default/").map(() -> _), replyTo))
+    val wsUrf = futureResponse.flatMap(Future.fromTry)
     whenReady(wsUrf, timeout(Span(6, Seconds))) {
       wsUr =>
         assert(wsUr.size == 3)
         assert(wsUr.left.isEmpty)
         assert(wsUr.right.size == 3)
     }
-    system.stop(master)
+    master ! CloseMaster()
   }
 
   behavior of spec2
@@ -70,12 +76,12 @@ class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with F
 
     def mapper(w: String, gs: Seq[String]): (String, Int) = (w, (for (g <- gs) yield g.split("""\s+""").length) reduce (_ + _))
 
-    val props = Props.create(classOf[Master[String, Seq[String], String, Int, Int]], config, FP.lift(mapper _), adder _)
-    val master = system.actorOf(props, s"""master-$spec2""")
+    val behavior = Master(config, FP.lift(mapper _), adder _)
+    val master = system.systemActorOf(behavior, s"""master-$spec2""")
     val part1result = Map[String, Seq[String]]("https://www.bbc.com/" -> Seq(MapReduceFuncSpec.bbcText),
       "https://www.cnn.com/" -> Seq(MapReduceFuncSpec.cnnText),
       "https://default/" -> Seq(MapReduceFuncSpec.defaultText))
-    val iSrf = master.ask(part1result).mapTo[Response[String, Int]]
+    val iSrf = master.ask[Try[Response[String, Int]]](replyTo => ComputeMap(part1result, replyTo)).flatMap(Future.fromTry)
     whenReady(iSrf, timeout(Span(6, Seconds))) {
       iSr =>
         assert(iSr.size == 3)
@@ -84,7 +90,7 @@ class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with F
         assert(iSr.right.get("https://default/") match { case Some(327) => true; case _ => false })
         assert(iSr.right.values.sum == 556)
     }
-    system.stop(master)
+    master ! CloseMaster()
   }
 
     `spec0` should
@@ -95,12 +101,13 @@ class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with F
 
     def mapper2(w: URL, gs: Seq[String]): (URL, Int) = (w, (for (g <- gs) yield g.split("""\s+""").length) reduce (_ + _))
 
-    val props1 = Props.create(classOf[Master_First_Fold[String, URL, String, Seq[String]]], config, FP.lift(mapper1 _), reducer _, init _)
-    val master1 = system.actorOf(props1, s"WC-1-master")
-    val props2 = Props.create(classOf[Master[URL, Seq[String], URL, Int, Int]], config, FP.lift(mapper2 _), adder _)
-    val master2 = system.actorOf(props2, s"WC-2-master")
-    val wsUrf = master1.ask(Seq("https://www.bbc.com/", "https://www.cnn.com/", "https://default/")).mapTo[Response[URL, Seq[String]]]
-    val iUrf = wsUrf flatMap { wsUr => val wsUm = wsUr.right; master2.ask(wsUm).mapTo[Response[URL, Int]] }
+    val behavior1 = Master_First_Fold(config, FP.lift(mapper1 _), reducer _, init _)
+    val master1 = system.systemActorOf(behavior1, s"WC-1-master")
+    val behavior2 = Master(config, FP.lift(mapper2 _), adder _)
+    val master2 = system.systemActorOf(behavior2, s"WC-2-master")
+    val wsUrf = master1.ask[Try[Response[URL, Seq[String]]]](replyTo =>
+      ComputeSeq(Seq("https://www.bbc.com/", "https://www.cnn.com/", "https://default/").map(() -> _), replyTo)).flatMap(Future.fromTry)
+    val iUrf = wsUrf flatMap { wsUr => val wsUm = wsUr.right; master2.ask[Try[Response[URL, Int]]](replyTo => ComputeMap(wsUm, replyTo)).flatMap(Future.fromTry) }
     whenReady(iUrf, timeout(Span(6, Seconds))) {
       iUr =>
         assert(iUr.size == 3)
@@ -109,40 +116,24 @@ class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with F
         assert(iUr.right.get(new URL("https://default/")) match { case Some(327) => true; case _ => false })
         assert(iUr.right.values.sum == 556)
     }
-    system.stop(master1)
-    system.stop(master2)
+    master1 ! CloseMaster()
+    master2 ! CloseMaster()
   }
 
-  // NOTE: this is the cause of the ClassCastError which is logged. Don't worry, it's supposed to be like this.
-  it should "fail because mapper is incorrectly defined" in {
-    logger.info(s"Starting $spec0:fail because mapper is incorrectly defined")
-
-    given timeout: Timeout = Timeout(60.seconds) // We need a longer timeout for this one to work correctly.
-
-    def mapper1(w: String): (URL, String) = MockURL(w).asTuple
-
-    def mapper2(w: String, gs: Seq[String]): (String, Int) = (w, (for (g <- gs) yield g.split("""\s+""").length) reduce (_ + _))
-
-    val props1 = Props.create(classOf[Master_First_Fold[String, URL, String, Seq[String]]], config, mapper1 _, reducer _, init _)
-    val master1 = system.actorOf(props1, s"WC-1b-master")
-    val props2 = Props.create(classOf[Master[URL, Seq[String], URL, Int, Int]], config, mapper2 _, adder _)
-    val master2 = system.actorOf(props2, s"WC-2b-master")
-    val wsUrf = master1.ask(Seq("https://www.bbc.com/", "https://www.cnn.com/", "https://default/")).mapTo[Response[URL, Seq[String]]]
-    val iUrf = wsUrf flatMap { wsUr => val wsUm = wsUr.right; master2.ask(wsUm).mapTo[Response[URL, Int]] }
-    // NOTE: we must block until iUrf completes before stopping the masters below -- otherwise
-    // system.stop races the in-flight ask and can win, so the ask times out instead of failing
-    // with the ClassCastException we're actually testing for.
-    Await.ready(iUrf, 65.seconds)
-    iUrf.value.get match {
-      case Failure(x: AskTimeoutException) => fail(s"should throw ClassCastException, not $x")
-      // NOTE: prepareResponse's strict-failure branch (see Responder.prepareResponse) returns the
-      // mapper's own exception unwrapped, rather than a MapReduceException, so that's what we get here.
-      case Failure(x) =>
-        x shouldBe a[ClassCastException]
-      case Success(_) => fail("should fail")
-    }
-    system.stop(master1)
-    system.stop(master2)
+  // NOTE: prior to the Typed migration, this test exercised a genuine ClassCastException: passing
+  // a raw (non-Try-wrapped, wrong-arity) mapper function to Props.create(classOf[Master...], ...)
+  // bypassed all compile-time type checking (Props.create takes constructor args as Any*), so the
+  // mismatch only surfaced at runtime, deep inside Try(...).flatten. With Typed, Master/Master_First_Fold
+  // are ordinary type-checked factory functions -- passing mapper1/mapper2 with the wrong shape is
+  // now a compile error, not a runtime ClassCastException, so this failure mode no longer exists to
+  // be tested at runtime. This is one of the concrete benefits of the migration.
+  it should "fail to compile because mapper is incorrectly defined" in {
+    """
+      |def mapper1(w: String): (java.net.URL, String) = MockURL(w).asTuple
+      |def mapper2(w: String, gs: Seq[String]): (String, Int) = (w, gs.map(_.split("\\s+").length).sum)
+      |Master_First_Fold(config, mapper1 _, reducer _, init _)
+      |Master(config, mapper2 _, adder _)
+      |""".stripMargin shouldNot compile
   }
 
   behavior of spec3
@@ -152,17 +143,17 @@ class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with F
 
     def mapper(w: String, us: Seq[URL]): (String, Int) = (w, us.length)
 
-    val props = Props.create(classOf[Master[String, Seq[URL], String, Int, Int]], config, FP.lift(mapper _), adder _)
-    val master = system.actorOf(props, s"TF2-master")
+    val behavior = Master(config, FP.lift(mapper _), adder _)
+    val master = system.systemActorOf(behavior, s"TF2-master")
     val bbc = new URL("https://www.bbc.com/")
     val cnn = new URL("https://www.cnn.com/")
     val other = new URL("https://default/")
     val occurrences = Map("the" -> Seq(bbc, cnn, other), "Syria" -> Seq(bbc, cnn))
-    val iSrf = master.ask(occurrences).mapTo[Response[String, Int]]
+    val iSrf = master.ask[Try[Response[String, Int]]](replyTo => ComputeMap(occurrences, replyTo)).flatMap(Future.fromTry)
     whenReady(iSrf, timeout(Span(6, Seconds)))(iSr =>
       assert(iSr.size == 2)
     )
-    system.stop(master)
+    master ! CloseMaster()
   }
 
   private def reducer(a: Seq[String], v: String) = a :+ v

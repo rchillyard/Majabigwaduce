@@ -169,6 +169,42 @@ This is a real fix to core library code (`src/main/scala/.../core/Actors.scala`)
 `benchmarks/` — any consumer creating actors at high frequency could have hit the same
 collision. Full test suite re-verified green (125 tests) after the change.
 
+## Design limitations found via benchmarking
+
+Not bugs — the classic-actor implementation behaves exactly as designed in each case below —
+but real architectural characteristics the baseline numbers surfaced, worth carrying into the
+typed-actors redesign discussion rather than patching on the code that's about to be replaced.
+
+**1. Every map-reduce operation creates and tears down its own actors, every single time.**
+`Master`'s constructor (`src/main/scala/.../core/Master.scala`) spins up a fresh `Mapper` and N
+`Reducer` actors per instance; there's no reuse or pooling across separate operations —
+`CountWords.apply()`, `WordCountBenchmark.wordCount()`, etc. all build `stage1`/`stage2` from
+scratch on every call, use them once, and discard them. This is the single biggest cost the
+benchmarks actually measured, not a hypothesis: at `Matrix` size=5, forcing the actor path was
+~53× slower than sequential — almost entirely the fixed create-use-destroy cost, since the
+actual computation at that size is trivial. It's also the likely reason `DataDefinition` never
+crossed over even at size=10000 (actors still ~4× slower than sequential there) — the
+per-element work is cheap enough that this fixed cost is never amortized. A long-lived,
+reusable pool of actors that survives across separate operations (rather than one rebuilt per
+call) would remove this cost for repeated/small-workload use, and is a natural fit for
+something like Akka Typed's routers or cluster sharding.
+
+**2. Only the reduce side is parallelized — the map side isn't.**
+`MasterBase`'s constructor creates exactly **one** `Mapper` actor
+(`private val mapper = actors.createActor(context, Some(Master.sMpr), mapperProps)`) alongside
+N reducer actors. The map phase runs entirely sequentially inside that single actor; only
+reduction gets spread across a pool. For CPU-heavy mapping work this is a real, currently
+unclaimed parallelism opportunity — the classic "map-reduce" name promises parallelism on both
+sides, but only one side delivers it today.
+
+**3. Reducer pool size is fixed by config, not by workload.**
+The number of reducer actors comes from the `reducers` config key (default 4) regardless of
+how much data exists or how many distinct keys it has. For a workload with only a handful of
+keys, some of those actors never receive meaningful work; for a very large key space, 4 might
+be too few. Sizing the pool relative to the actual workload (or making it elastic) would help
+both ends of that range, rather than a single static default trying to serve all workload
+shapes.
+
 ## Running it
 
 Basic run, everything from the annotations:
@@ -209,8 +245,9 @@ sbt "benchmarks/Jmh/run -i 1 -wi 1 -f1 -t1 -p size=5,50 -p forceActors=true,fals
 sbt "benchmarks/Jmh/run -i 1 -wi 1 -f1 -t1 -p size=100,10000 -p forceActors=true,false .*DataDefinitionBenchmark.*"
 ```
 
-Note: `MatrixBenchmark` and `DataDefinitionBenchmark` both run noticeably slower per fork than
-`WordCountBenchmark` for the same `-i`/`-wi` — `DataDefinition`'s global `ActorSystem` (see the
-limitation above) never gets explicitly terminated, so each fork's forced-exit timeout (~24s)
-is paid on top of the actual measurement time, once per fork.
+(Historical note: `MatrixBenchmark` and `DataDefinitionBenchmark` used to run noticeably slower
+per fork than this, because `DataDefinition`'s global `ActorSystem` was never explicitly
+terminated, so each fork paid a ~24s forced-exit timeout on top of actual measurement time.
+Both benchmarks now call `DataDefinition.shutdown()` in `@TearDown(Level.Trial)`, which
+eliminates that tax entirely.)
 
