@@ -14,6 +14,12 @@ import java.net.URI
 
 class CountWordsSpec extends flatspec.AnyFlatSpec with should.Matchers with Futures with ScalaFutures with Inside with MockFactory {
 
+  "CountWords" should "work against (non-mocked) fixed test resources" in {
+    val hc = new ResourceHttpClient("/countwords")
+    val ws = Seq("https://www.bbc.com/doc1", "https://www.bbc.com/doc2", "https://www.cnn.com/doc3")
+    whenReady(CountWords.countWords(hc, ws), timeout(Span(6, Seconds)))(i => assert(i == 11))
+  }
+
   // NOTE: Issue #17 This test (and others) causes the following warning in the logs:
   // 2020-05-05 21:32:38,434 WARN  akka.stream.Materializer akka.stream.Log(akka://CountWords/system/Materializers/StreamSupervisor-1) - [outbound connection to [akka://ClusterSystem@127.0.0.1:2551], control stream] Upstream failed, cause: StreamTcpException: Tcp command [Connect(127.0.0.1:2551,None,List(),Some(5000 milliseconds),true)] failed because of java.net.ConnectException: Connection refused
   "CountWords" should "work for https://www.bbc.com/ https://www.cnn.com/ https://default/" in {
@@ -36,7 +42,7 @@ class CountWordsSpec extends flatspec.AnyFlatSpec with should.Matchers with Futu
     hc.getResource _ expects wBBC returning rBBC
     hc.getResource _ expects wCNN returning rCNN
     hc.getResource _ expects wDef returning rDef
-    val nf = CountWords(hc, Array(wBBC, wCNN, wDef))
+    val nf = CountWords.countWords(hc, Array(wBBC, wCNN, wDef))
     whenReady(nf, timeout(Span(6, Seconds)))(i => assert(i == 556))
   }
 }

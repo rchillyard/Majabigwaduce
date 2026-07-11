@@ -14,19 +14,97 @@ import com.typesafe.config.{Config, ConfigFactory}
 import java.net.URI
 import scala.concurrent.*
 import scala.concurrent.duration.*
+import scala.util.*
 
-trait HttpClient {
-  def getResource(w: String): Resource
+type Strings = Seq[String]
+
+type ResourceFunction = String => Resource
+
+@main def wordCounter(args: String*): Unit =
+  import ExecutionContext.Implicits.global
+  val hc = new ResourceHttpClient("/countwords")
+  val ws = if args.nonEmpty then args.toSeq
+  else Seq("https://www.bbc.com/doc1", "https://www.bbc.com/doc2", "https://www.cnn.com/doc3")
+  CountWords.countWords(hc, ws).onComplete {
+    case Success(i) => println(s"result = $i")
+    case Failure(t) => println(s"failure: ${t.getMessage}")
+  }
+
+/**
+ * A trait that defines an HTTP client capable of resolving and handling resources.
+ *
+ * This trait serves as a contract for implementations that can fetch resources,
+ * such as documents or content, from a given location represented by a URL or URI-like string.
+ *
+ * Key methods:
+ * - apply(String): Resolves a given string into a `Resource` object.
+ * - getResource(String): Delegates to `apply` to provide a resource for the specified URI.
+ */
+trait HttpClient extends (ResourceFunction) {
+  def apply(w: String): Resource
+
+  def getResource(w: String): Resource = apply(w)
 }
 
+/**
+ * A trait representing a resource that can be accessed, typically over a network or other location.
+ *
+ * This trait provides methods to retrieve the associated server information and the content of the resource.
+ */
 trait Resource {
+  /**
+   * Retrieves the URI of the server associated with the resource.
+   *
+   * This method returns the server URI where the resource is hosted, typically including the scheme and host, but excluding path or query parameters.
+   * 
+   * NOTE that it is defined with parentheses (which generates a compiler warning).
+   * It's left that way for compatibility with the mock library.
+   *
+   * @return the URI of the server.
+   */
   def getServer(): URI
 
+  /**
+   * Retrieves the content of the resource as a string.
+   *
+   * This method is used to fetch the underlying data or text associated with the resource,
+   * which may involve accessing network or local storage depending on the implementation.
+   *
+   * NOTE that it is defined with parentheses (which generates a compiler warning).
+   * It's left that way for compatibility with the mock library.
+   *
+   * @return the content of the resource as a String
+   */
   def getContent(): String
 }
 
-case class CountWords(resourceFunc: String => Resource)(using system: ActorSystem, logger: LoggingAdapter, config: Config, timeout: Timeout, ec: ExecutionContext) extends (Seq[String] => Future[Int]) {
-  type Strings = Seq[String]
+/**
+ * The `CountWords` class implements a word-counting pipeline using map-reduce operations.
+ * It processes a sequence of strings to produce the total count of words across all inputs.
+ *
+ * The class leverages the following stages:
+ * 1. Map stage (`stage1`): Maps input strings to tuples containing a server URI and content using the provided `resourceFunc`.
+ * 2. Reduce stage (`stage2`): Transforms and reduces intermediate results to word counts.
+ * 3. Final Reduction (`stage3`): Aggregates counts into a single total word count.
+ *
+ * The components used include:
+ * - `MapReduceFirstFold.create` for building the initial mapping stage.
+ * - `MapReducePipe.create` for intermediate reduction logic combining words and sums.
+ * - `Reduce` for the final reduction stage.
+ *
+ * This class uses implicit dependencies for actor system, logging, configurations, timeouts,
+ * and execution contexts to manage asynchronous processing and distributed behaviors.
+ *
+ * @param resourceFunc A function to fetch a `Resource` object given a string input,
+ *                     representing external data accessed during the pipeline.
+ *
+ * @param system       An implicit `ActorSystem` used for actor-based parallelism and concurrency.
+ * @param logger       An implicit `LoggingAdapter` used for logging purposes.
+ * @param config       An implicit `Config` used for managing configurations.
+ * @param timeout      An implicit `Timeout` for specifying operation timeout durations.
+ * @param ec           An implicit `ExecutionContext` for managing asynchronous computations.
+ */
+case class CountWords(resourceFunc: ResourceFunction)(using system: ActorSystem, logger: LoggingAdapter, config: Config, timeout: Timeout, ec: ExecutionContext) extends (Seq[String] => Future[Int]) {
 
   trait StringsZeros extends Zero[Strings] {
     def zero: Strings = Nil: Strings
@@ -72,17 +150,18 @@ case class CountWords(resourceFunc: String => Resource)(using system: ActorSyste
  *
  * @author scalaprof
  */
-object CountWords extends App with Loggables:
+object CountWords extends Loggables:
 
-  def apply(hc: HttpClient, args: Array[String]): Future[Int] = {
+  def countWords(hc: HttpClient, args: Seq[String]): Future[Int] = {
     given config: Config = ConfigFactory.load.getConfig("majabigwaduce.CountWords")
 
     given system: ActorSystem = ActorSystem(config.getString("name"))
 
+    given ec: ExecutionContext = system.dispatcher
+
     given timeout: Timeout = getTimeout(config.getString("timeout"))
 
     given logger: LoggingAdapter = system.log
-    import ExecutionContext.Implicits.global
     //    import Init._
 
     //    val flog: Flog = Flog[CountWords.type]
@@ -90,10 +169,9 @@ object CountWords extends App with Loggables:
 
     given iterableLoggable: Loggable[Iterable[String]] = new Loggables {}.iterableLoggable[String]()
 
-    val ws = if (args.length > 0) args.toSeq else Seq("https://www.bbc.com/doc1", "https://www.cnn.com/doc2", "https://default/doc3", "https://www.bbc.com/doc2", "https://www.bbc.com/doc3")
+    val ws = if (args.nonEmpty) args.toSeq else Seq("https://www.bbc.com/doc1", "https://www.cnn.com/doc2", "https://default/doc3", "https://www.bbc.com/doc2", "https://www.bbc.com/doc3")
     //    "starting domains:" !! ws
-    CountWords(hc.getResource).apply(ws)
-  }
+    CountWords(hc.getResource).apply(ws)  }
 
   // TODO try to combine this with the same method in MapReduceActor
   // TODO make this more visible (it is used in matrix package also)
