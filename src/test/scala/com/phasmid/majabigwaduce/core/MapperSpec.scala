@@ -1,87 +1,54 @@
 package com.phasmid.majabigwaduce.core
 
-import akka.actor.{ActorSystem, Props}
-import akka.pattern.ask
-import akka.testkit.{ImplicitSender, TestActors, TestKit}
-import akka.util.Timeout
-import org.scalatest.concurrent.ScalaFutures
+import akka.actor.testkit.typed.scaladsl.ScalaTestWithActorTestKit
 import org.scalatest.matchers.should
-import org.scalatest.{BeforeAndAfterAll, wordspec}
+import org.scalatest.wordspec.AnyWordSpecLike
 
-import scala.concurrent.duration.FiniteDuration
-import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.{Failure, Try}
 
-class MapperSpec
-  extends TestKit(ActorSystem("MySpec"))
-    with ImplicitSender
-    with wordspec.AnyWordSpecLike
-    with should.Matchers
-    with ScalaFutures
-    with BeforeAndAfterAll {
-
-  override def afterAll(): Unit = {
-    TestKit.shutdownActorSystem(system)
-  }
-
+class MapperSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike with should.Matchers {
 
   "A mapper" must {
-    "return map and empty throwable list" in {
+    "return a MapperResponse with the mapped results and an empty exceptions list" in {
       val f: (String, String) => Try[(Int, String)] = (k, v) => Try(k.hashCode, v.toUpperCase)
-      val mapper = system.actorOf(Props.create(classOf[Mapper[String, String, Int, String]], f))
-      mapper ! KeyValuePairs(Seq("hello" -> "Fred", "goodbye" -> "Thursday"))
-      expectMsg(Map(207022353 -> List("THURSDAY"), 99162322 -> List("FRED")) -> List())
+      val mapper = spawn(Mapper(f))
+      val probe = createTestProbe[MapperResponse[Int, String]]()
+      mapper ! DoMap(KeyValuePairs(Seq("hello" -> "Fred", "goodbye" -> "Thursday")), probe.ref)
+      probe.expectMessage(MapperResponse(Map(207022353 -> List("THURSDAY"), 99162322 -> List("FRED")), List()))
     }
-    "return failure status" in {
-      val _5seconds = FiniteDuration(5L, scala.concurrent.duration.SECONDS)
 
-      given timeout: Timeout = Timeout(_5seconds)
-
-      given executionContext: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
-
+    "return a MapperResponse with an empty result and the exceptions, when f fails" in {
       val f: (String, String) => Try[(Int, String)] = (_, _) => Failure(MapReduceException("test"))
-      val mapper = system.actorOf(Props.create(classOf[Mapper[String, String, Int, String]], f))
-      val rf = mapper ask KeyValuePairs(Seq("hello" -> "Fred", "goodbye" -> "Thursday"))
-      Await.ready(rf, _5seconds)
-      whenReady(rf.failed) {
-        x => x shouldBe a[MapReduceException]
-      }
+      val mapper = spawn(Mapper(f))
+      val probe = createTestProbe[MapperResponse[Int, String]]()
+      mapper ! DoMap(KeyValuePairs(Seq("hello" -> "Fred", "goodbye" -> "Thursday")), probe.ref)
+      val response = probe.receiveMessage()
+      response.result shouldBe empty
+      response.exceptions should have size 2
+      response.exceptions.head shouldBe a[MapReduceException]
+    }
+
+    "stop upon receiving CloseMapper" in {
+      val f: (String, String) => Try[(Int, String)] = (k, v) => Try(k.hashCode, v.toUpperCase)
+      val mapper = spawn(Mapper(f))
+      mapper ! CloseMapper()
+      createTestProbe().expectTerminated(mapper)
     }
   }
 
   "A forgiving mapper" must {
-    "return map and empty throwable list" in {
-      val f: (String, String) => Try[(Int, String)] = (k, v) => Try(k.hashCode, v.toUpperCase)
-      val mapper = system.actorOf(Props.create(classOf[Mapper_Forgiving[String, String, Int, String]], f))
-      mapper ! KeyValuePairs(Seq("hello" -> "Fred", "goodbye" -> "Thursday"))
-      expectMsg(Map(207022353 -> List("THURSDAY"), 99162322 -> List("FRED")) -> List())
-    }
-    "return failure status" in {
-      val _5seconds = FiniteDuration(5L, scala.concurrent.duration.SECONDS)
-
-      given timeout: Timeout = Timeout(_5seconds)
-
-      given executionContext: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
-
+    // NOTE: prior to the Typed migration, Mapper_Forgiving overrode isStrict to retain exceptions
+    // instead of failing outright. Since MapperResponse now always carries both the results and
+    // the exceptions, strict-vs-forgiving is purely a decision made by the caller (see
+    // Master.doMap), so Mapper_Forgiving is simply an alias for Mapper.
+    "behave identically to Mapper" in {
       val f: (String, String) => Try[(Int, String)] = (_, _) => Failure(MapReduceException("test"))
-      val mapper = system.actorOf(Props.create(classOf[Mapper_Forgiving[String, String, Int, String]], f))
-      val rf: Future[(Map[Int, List[String]], List[String])] = (mapper ask KeyValuePairs(Seq("hello" -> "Fred", "goodbye" -> "Thursday"))).mapTo[(Map[Int, List[String]], List[String])]
-      Await.ready(rf, _5seconds)
-      whenReady(rf) {
-        case (m, xs) =>
-          m.size shouldBe 0
-          xs.size shouldBe 2
-      }
+      val mapper = spawn(Mapper_Forgiving(f))
+      val probe = createTestProbe[MapperResponse[Int, String]]()
+      mapper ! DoMap(KeyValuePairs(Seq("hello" -> "Fred", "goodbye" -> "Thursday")), probe.ref)
+      val response = probe.receiveMessage()
+      response.result shouldBe empty
+      response.exceptions should have size 2
     }
-  }
-
-  "An Echo actor" must {
-
-    "send back messages unchanged" in {
-      val echo = system.actorOf(TestActors.echoActorProps)
-      echo ! "hello world"
-      expectMsg("hello world")
-    }
-
   }
 }

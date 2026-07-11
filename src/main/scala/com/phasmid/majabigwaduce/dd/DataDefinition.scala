@@ -4,7 +4,8 @@
 
 package com.phasmid.majabigwaduce.dd
 
-import akka.actor.ActorSystem
+import akka.actor.typed.ActorSystem
+import akka.actor.typed.scaladsl.Behaviors
 import akka.util.Timeout
 import com.phasmid.majabigwaduce.core.{Actors, MapReducePipe, Monoid, Zero}
 import com.phasmid.majabigwaduce.dd.DataDefinition.IterableMonoid
@@ -204,7 +205,7 @@ case class LazyDD[K, V, L, W: Monoid]
 
   private given cfs: Config = context.config
 
-  private given sys: ActorSystem = context.system
+  private given sys: ActorSystem[Nothing] = context.system
 
   private given to: Timeout = context.timeout
 
@@ -276,7 +277,7 @@ case class LazyDD[K, V, L, W: Monoid]
     if partitions < 2
     then Future(EagerDD(applyFunction))(scala.concurrent.ExecutionContext.Implicits.global)
     else
-      given actors: Actors = Actors(summon[ActorSystem], summon[Config])
+      given actors: Actors = Actors(summon[ActorSystem[Nothing]], summon[Config])
 
       val mr = MapReducePipe.create[K, V, L, W, W]((k, v) => f((k, v)), summon[Monoid[W]].combine, 1)
       context.register(mr)
@@ -363,7 +364,7 @@ abstract class BaseDD[K, V](using ec: ExecutionContext) extends DataDefinition[K
  * @param system  the actor system
  * @param timeout the value of timeout
  */
-case class DDContext(config: Config, system: ActorSystem, timeout: Timeout):
+case class DDContext(config: Config, system: ActorSystem[Nothing], timeout: Timeout):
   // NOTE: consciously using var here.
   var closeables: List[AutoCloseable] = Nil
 
@@ -399,7 +400,7 @@ case class DDContext(config: Config, system: ActorSystem, timeout: Timeout):
    *
    * @return the `ExecutionContext` associated with this instance.
    */
-  def ec: ExecutionContext = system.dispatcher
+  def ec: ExecutionContext = system.executionContext
 
   // TESTME
   override def toString: String = s"DDContext: system=${system.name}, timeout=$timeout"
@@ -419,9 +420,9 @@ object DDContext:
   def apply: DDContext =
     val config = ConfigFactory.load().getConfig("majabigwaduce.DataDefinition")
     val timeout = FiniteDuration(config.getDuration("timeout").getSeconds, TimeUnit.SECONDS)
-    val system: ActorSystem = ActorSystem(config.getString("actorSystem"))
+    val system: ActorSystem[Nothing] = ActorSystem(Behaviors.empty, config.getString("actorSystem"))
 
-    given ec: ExecutionContext = system.dispatcher
+    given ec: ExecutionContext = system.executionContext
     apply(config, system, timeout)
 
 /**

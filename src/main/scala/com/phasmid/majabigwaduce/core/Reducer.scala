@@ -4,98 +4,88 @@
 
 package com.phasmid.majabigwaduce.core
 
+import akka.actor.typed.scaladsl.Behaviors
+import akka.actor.typed.{ActorRef, Behavior}
 import com.phasmid.majabigwaduce.core.FP.*
+import org.slf4j.{Logger, LoggerFactory}
 
 import scala.util.*
 
 /**
  * This actor performs the reduce operation on the received sequence of W objects,
  * resulting in (ideally) a V2 object.
- * The incoming "Intermediate" message combines both the current K2 key and the sequence ws of W objects.
- * The reply message is a tuple of (K2,Either[Throwable,V2])
+ * It handles a `Reduce` command combining both the current K2 key and the sequence ws of W objects.
+ * The reply is a `ReduceResult[K2,V2]`.
  *
- * Intermediate is a convenience incoming message wrapper. It has the advantage of not suffering type erasure.
+ * Note that logging the actual values received in the incoming message can be VERY verbose.
+ * It is therefore recommended practice to log the values as they pass through the reducer function (g) which is
+ * under the control of the application.
+ */
+sealed trait ReducerCommand[K2, W, V2]
+
+/**
+ * Command to reduce the sequence of W values associated with a key, replying to `replyTo` with a `ReduceResult`.
  *
+ * NOTE: named DoReduce (not Reduce) to avoid clashing with the unrelated Reduce[K,T,S] class in MapReduce.scala.
+ */
+final case class DoReduce[K2, W, V2](i: Intermediate[K2, W], replyTo: ActorRef[ReduceResult[K2, V2]]) extends ReducerCommand[K2, W, V2]
+
+/**
+ * Command to stop this Reducer.
+ */
+final case class CloseReducer[K2, W, V2]() extends ReducerCommand[K2, W, V2]
+
+/**
+ * The response sent back from a Reducer.
+ *
+ * @param k2     the key of the intermediate result which was reduced.
+ * @param result the aggregated value, or the Throwable resulting from a failed reduction.
+ */
+case class ReduceResult[K2, V2](k2: K2, result: Either[Throwable, V2])
+
+/**
+ * Builds a Behavior which handles ReducerCommand[K2,W,V2] by applying `getValue` to the sequence
+ * of W values carried by each incoming Reduce command.
+ */
+private[core] object ReducerBase:
+  def behavior[K2, W, V2](logger: Logger)(getValue: Seq[W] => V2): Behavior[ReducerCommand[K2, W, V2]] =
+    MapReduceActor.withLifecycle(logger) { _ =>
+      {
+        case DoReduce(i, replyTo) =>
+          logger.debug(s"Reducer received $i")
+          replyTo ! ReduceResult(i.k2, toEither(Try(getValue(i.ws))))
+          Behaviors.same
+        case CloseReducer() =>
+          Behaviors.stopped
+      }
+    }
+
+/**
  * @author scalaprof
+ * @param g a function which takes a V2 (the accumulator) and a W (the value) and combines them into a V2
  * @tparam K2 key type
  * @tparam W  value type
  * @tparam V2 the aggregation of W objects (in this form, must be super-type of W)
- * @param g a function which takes a V2 (the accumulator) and a W (the value) and combines them into a V2
  */
-class Reducer[K2, W, V2 >: W](g: (V2, W) => V2) extends ReducerBase[K2, W, V2]:
-  /**
-   * Reduces a sequence of W objects into a single V2 object using the provided aggregation function.
-   *
-   * @param ws the sequence of W objects to be reduced
-   * @return the result of reducing the sequence into a single V2 object
-   */
-  def getValue(ws: Seq[W]): V2 = ws.reduceLeft(g)
+object Reducer:
+  private val logger = LoggerFactory.getLogger("com.phasmid.majabigwaduce.core.Reducer")
+
+  def apply[K2, W, V2 >: W](g: (V2, W) => V2): Behavior[ReducerCommand[K2, W, V2]] =
+    ReducerBase.behavior(logger)(ws => ws.reduceLeft(g))
 
 /**
- * This actor performs the reduce operation on the received sequence of V2 objects,
- * resulting in an V2 object.
- * The incoming "Intermediate" message combines both the current K2 key and the sequence ws of W objects.
- * The reply message is a tuple of (K2,Either[Throwable,V2])
- *
- * Intermediate is a convenience incoming message wrapper. It has the advantage of not suffering type erasure.
- *
  * @author scalaprof
- * @tparam K2 key type
- * @tparam W  value type
- * @tparam V2 the aggregation of W objects
  * @param g a function which takes a V2 (the accumulator) and a W (the value) and combines them into a V2
  * @param z a function which provides an initial value for V2 (this allows us to use Fold rather than Reduce methods)
- */
-class Reducer_Fold[K2, W, V2](g: (V2, W) => V2, z: => V2) extends ReducerBase[K2, W, V2]:
-  /**
-   * Computes an aggregated value of type V2 by iteratively applying the fold operation on
-   * the provided sequence of elements of type W, using the initial value z and the combine
-   * function g.
-   *
-   * @param ws the sequence of elements of type W to be aggregated
-   * @return the aggregated result of type V2
-   */
-  def getValue(ws: Seq[W]): V2 = ws.foldLeft(z)(g)
-
-/**
- * Base class to implement different types of reducer.
- *
- * Note that logging the actual values received in the incoming message can be VERY verbose.
- * It is therefore recommended practice to log the values as they pass through the reducer function (g, in the sub-classes) which is
- * under the control of the application.
- * Therefore the call to maybeLog is commented out.
- *
  * @tparam K2 key type
  * @tparam W  value type
  * @tparam V2 the aggregation of W objects
  */
-abstract class ReducerBase[K2, W, V2] extends MapReduceActor:
+object Reducer_Fold:
+  private val logger = LoggerFactory.getLogger("com.phasmid.majabigwaduce.core.Reducer_Fold")
 
-  /**
-   * Handles incoming messages and processes them based on their type.
-   *
-   * When an `Intermediate` message is received, it logs the message, converts the intermediate values
-   * to an `Either` type using the result of `getValue` applied to the `ws` field of the intermediate object,
-   * and sends the resulting tuple `(k2, processedValue)` back to the sender.
-   * Falls back to the superclass implementation for any unhandled messages.
-   *
-   * @return A partial function that maps incoming messages of type `Any` to unit-producing actions.
-   */
-  override def receive: PartialFunction[Any, Unit] = {
-    case i: Intermediate[K2, W] @unchecked =>
-      log.debug(s"Reducer received $i")
-      sender() ! (i.k2, toEither(Try(getValue(i.ws))))
-    case q =>
-      super.receive(q)
-  }
-
-  /**
-   * Aggregates a sequence of values of type `W` into a single value of type `V2`.
-   *
-   * @param ws the input sequence of elements of type `W` to be aggregated
-   * @return the aggregated value of type `V2` computed from the input sequence
-   */
-  def getValue(ws: Seq[W]): V2
+  def apply[K2, W, V2](g: (V2, W) => V2, z: => V2): Behavior[ReducerCommand[K2, W, V2]] =
+    ReducerBase.behavior(logger)(ws => ws.foldLeft(z)(g))
 
 /**
  * Represents an intermediate result containing a key-value pair and a sequence of elements.

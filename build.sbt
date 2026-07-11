@@ -2,7 +2,7 @@ organization := "com.phasmidsoftware"
 
 name := "Majabigwaduce"
 
-version := "1.1.1"
+version := "2.0.0-SNAPSHOT"
 
 scalaVersion := "3.3.8"
 
@@ -21,14 +21,14 @@ resolvers += "Typesafe Repository" at "https://repo.typesafe.com/typesafe/releas
 
 libraryDependencies ++= Seq(
 	"com.phasmidsoftware" %% "flog" % flogVersion withSources() withJavadoc(),
-	akkaGroup %% "akka-actor" % akkaVersion withSources() withJavadoc(),
+	akkaGroup %% "akka-actor-typed" % akkaVersion withSources() withJavadoc(),
 	akkaGroup %% "akka-slf4j" % akkaVersion withSources() withJavadoc(),
 	akkaGroup %% "akka-cluster" % akkaVersion withSources() withJavadoc(),
 	akkaGroup %% "akka-remote" % akkaVersion withSources() withJavadoc(),
 	akkaGroup %% "akka-cluster-metrics" % akkaVersion withSources() withJavadoc(),
 	"com.typesafe" % "config" % configVersion withSources() withJavadoc(),
 	"ch.qos.logback" % "logback-classic" % logBackVersion % "runtime",
-	akkaGroup %% "akka-testkit" % akkaVersion % "test",
+	akkaGroup %% "akka-actor-testkit-typed" % akkaVersion % "test",
 	"org.scalatest" %% "scalatest" % scalaTestVersion % "test",
 	"org.scalamock" %% "scalamock" % scalaMockVersion % "test",
 // NOTE: xml and tagsoup are for WebCrawler exemplar

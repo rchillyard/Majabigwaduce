@@ -4,9 +4,10 @@
 
 package com.phasmid.majabigwaduce
 
-import akka.actor.ActorSystem
-import akka.event.LoggingAdapter
+import akka.actor.typed.ActorSystem
+import akka.actor.typed.scaladsl.Behaviors
 import akka.util.Timeout
+import org.slf4j.{Logger, LoggerFactory}
 import com.phasmid.majabigwaduce.examples.matrix.{MatrixOperation, matrixOperationApp}
 import com.typesafe.config.{Config, ConfigFactory}
 import org.scalatest.*
@@ -21,11 +22,11 @@ class MatrixOperationFuncSpec extends flatspec.AnyFlatSpec with should.Matchers 
   "MatrixOperation" should "apply vector" in {
     given config: Config = ConfigFactory.load.getConfig("majabigwaduce.Matrix")
 
-    given system: ActorSystem = ActorSystem(config.getString("name"))
+    given system: ActorSystem[Nothing] = ActorSystem(Behaviors.empty, config.getString("name"))
 
     given to: Timeout = getTimeout(config.getString("timeout"))
 
-    given logger: LoggingAdapter = system.log
+    given logger: Logger = LoggerFactory.getLogger(classOf[MatrixOperation[?]])
     import ExecutionContext.Implicits.global
     val op: MatrixOperation[Int] = MatrixOperation(x => x % 10)
     val matrix = Seq(Seq(1, 1), Seq(2, 1))
@@ -38,17 +39,18 @@ class MatrixOperationFuncSpec extends flatspec.AnyFlatSpec with should.Matchers 
         ok should matchPattern { case Some(true) => }
     }
 
-    Await.ready(system.terminate(), 5.seconds)
+    system.terminate()
+    Await.ready(system.whenTerminated, 5.seconds)
   }
 
   it should "create product of matrices" in {
     given config: Config = ConfigFactory.load.getConfig("majabigwaduce.Matrix")
 
-    given system: ActorSystem = ActorSystem(config.getString("name"))
+    given system: ActorSystem[Nothing] = ActorSystem(Behaviors.empty, config.getString("name"))
 
     given to: Timeout = getTimeout(config.getString("timeout"))
 
-    given logger: LoggingAdapter = system.log
+    given logger: Logger = LoggerFactory.getLogger(classOf[MatrixOperation[?]])
     import ExecutionContext.Implicits.global
     val op: MatrixOperation[Int] = MatrixOperation(x => x % 10)
     val matrix1 = Seq(Seq(1, 2, 3), Seq(4, 5, 6))
@@ -59,7 +61,8 @@ class MatrixOperationFuncSpec extends flatspec.AnyFlatSpec with should.Matchers 
       (is: Seq[Seq[Int]]) => assert(is.head == Seq(58, 64) && is.tail.head == Seq(139, 154))
     }
 
-    Await.ready(system.terminate(), 5.seconds)
+    system.terminate()
+    Await.ready(system.whenTerminated, 5.seconds)
   }
 
   "main program" should "work" in {

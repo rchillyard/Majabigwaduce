@@ -1,55 +1,50 @@
 package com.phasmid.majabigwaduce.core
 
-import akka.actor.{ActorSystem, Props}
-import akka.testkit.{EventFilter, ImplicitSender, TestActorRef, TestKit}
-import com.typesafe.config.ConfigFactory
+import akka.actor.testkit.typed.scaladsl.ScalaTestWithActorTestKit
+import akka.actor.typed.scaladsl.Behaviors
+import akka.actor.typed.{ActorRef, Behavior}
 import org.scalatest.matchers.should
-import org.scalatest.{BeforeAndAfterAll, wordspec}
+import org.scalatest.wordspec.AnyWordSpecLike
+import org.slf4j.LoggerFactory
 
-import scala.util.{Failure, Success}
+// NOTE: classic Akka's MapReduceActor base class handled an "unknown message type" case (since
+// receive: PartialFunction[Any, Unit] could be sent anything) and exposed a sendReply helper for
+// wrapping a Try into a Status.Failure. Both are gone by construction in Typed -- a typed actor's
+// mailbox can only ever hold values of its own declared command type (checked at compile time),
+// and a reply can only ever be the declared reply type, so there is nothing left to test there.
+// What remains of the shared behavior -- start/stop logging, and Close stopping the actor -- is
+// tested here directly against MapReduceActor.withLifecycle using a minimal probe protocol.
+class MapReduceActorSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike with should.Matchers {
 
-// NOTE: MapReduceActor is abstract only in name -- every member required by Actor is already
-// implemented, so a bare subclass is enough to exercise its behavior directly.
-class ProbeActor extends MapReduceActor
+  private val logger = LoggerFactory.getLogger("MapReduceActorSpecProbe")
 
-class MapReduceActorSpec
-  extends TestKit(ActorSystem("MapReduceActorSpec",
-    ConfigFactory.parseString("""akka.loggers = ["akka.testkit.TestEventListener"]""").withFallback(ConfigFactory.load())))
-    with ImplicitSender
-    with wordspec.AnyWordSpecLike
-    with should.Matchers
-    with BeforeAndAfterAll {
+  sealed trait ProbeCommand
+  case class Ping(replyTo: ActorRef[String]) extends ProbeCommand
+  case object CloseProbe extends ProbeCommand
 
-  override def afterAll(): Unit = {
-    TestKit.shutdownActorSystem(system)
-  }
-
-  "A MapReduceActor" must {
-    "log a warning and otherwise ignore a message of an unrecognized type" in {
-      val actor = system.actorOf(Props(new ProbeActor))
-      EventFilter.warning(start = "received unknown message type", occurrences = 1).intercept {
-        actor ! 42
+  private def probeBehavior: Behavior[ProbeCommand] =
+    MapReduceActor.withLifecycle(logger) { _ =>
+      {
+        case Ping(replyTo) =>
+          replyTo ! "pong"
+          Behaviors.same
+        case CloseProbe =>
+          Behaviors.stopped
       }
     }
 
-    "invoke close() and stop itself upon receiving Close" in {
-      val actor = system.actorOf(Props(new ProbeActor))
-      watch(actor)
-      actor ! Close
-      expectTerminated(actor)
+  "MapReduceActor.withLifecycle" must {
+    "dispatch messages to the supplied handler" in {
+      val ref = spawn(probeBehavior)
+      val probe = createTestProbe[String]()
+      ref ! Ping(probe.ref)
+      probe.expectMessage("pong")
     }
 
-    "send a Success value straight back to the caller via sendReply" in {
-      val ref = TestActorRef(new ProbeActor)
-      ref.underlyingActor.sendReply(testActor, Success("ok"))
-      expectMsg("ok")
-    }
-
-    "wrap a Failure in akka.actor.Status.Failure via sendReply" in {
-      val ref = TestActorRef(new ProbeActor)
-      val x = new RuntimeException("boom")
-      ref.underlyingActor.sendReply(testActor, Failure(x))
-      expectMsg(akka.actor.Status.Failure(x))
+    "stop the actor upon receiving its own Close command" in {
+      val ref = spawn(probeBehavior)
+      ref ! CloseProbe
+      createTestProbe().expectTerminated(ref)
     }
   }
 }

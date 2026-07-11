@@ -4,284 +4,223 @@
 
 package com.phasmid.majabigwaduce.core
 
-import akka.actor.{ActorRef, Props}
-import akka.pattern.ask
+import akka.actor.typed.scaladsl.AskPattern.*
+import akka.actor.typed.scaladsl.Behaviors
+import akka.actor.typed.{ActorRef, Behavior, Scheduler}
 import akka.util.Timeout
 import com.typesafe.config.Config
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.*
-import scala.reflect.ClassTag
 import scala.util.*
 
 /**
+ * The command protocol handled by a Master actor.
+ *
+ * A Master accepts its input in either of two shapes -- as a Map[K1,V1] or as a Seq[(K1,V1)] --
+ * mirroring the two message shapes the original (classic-actor) Master.receive matched on.
+ * The "First" variants (Master_First / Master_First_Fold) reuse this same protocol with K1=Unit,
+ * exactly as the original MasterBaseFirst reused MasterBase[Unit,...] internally: their public
+ * factory functions unitize the incoming Seq[V1] into a Seq[(Unit,V1)] before it is sent here.
+ *
+ * NOTE: unlike the classic actor (which replied with `Status.Failure` on a hard failure), a
+ * Typed reply can only ever be the declared type. So the reply type here is `Try[Response[K2,V2]]`
+ * rather than a bare `Response[K2,V2]` -- this preserves the original behavior of failing the
+ * caller's ask with the *original* exception, rather than letting it time out.
+ *
+ * @tparam K1 key type: the message which this actor responds to is of type Map[K1,V1].
+ * @tparam V1 input type: the message which this actor responds to is of type Seq[V1].
+ * @tparam K2 key type: mapper groups things by this key and reducer processes said groups.
+ * @tparam V2 output type: the message which is sent on completion to the sender is of type Response[K2,V2]
+ */
+sealed trait MasterCommand[K1, V1, K2, V2]
+
+/** Command carrying a Map[K1,V1] payload, replying to `replyTo` with a Try[Response[K2,V2]]. */
+final case class ComputeMap[K1, V1, K2, V2](m: Map[K1, V1], replyTo: ActorRef[Try[Response[K2, V2]]]) extends MasterCommand[K1, V1, K2, V2]
+
+/** Command carrying a Seq[(K1,V1)] payload, replying to `replyTo` with a Try[Response[K2,V2]]. */
+final case class ComputeSeq[K1, V1, K2, V2](s: Seq[(K1, V1)], replyTo: ActorRef[Try[Response[K2, V2]]]) extends MasterCommand[K1, V1, K2, V2]
+
+/** Command to stop this Master -- its mapper and reducer children are stopped transitively. */
+final case class CloseMaster[K1, V1, K2, V2]() extends MasterCommand[K1, V1, K2, V2]
+
+/**
  * @author scalaprof
- * @tparam K1 key type: the message which this actor responds to is of type Map[K1,V1].
- * @tparam V1 input type: the message which this actor responds to is of type Seq[V1].
- * @tparam K2 key type: mapper groups things by this key and reducer processes said groups.
- * @tparam W  transitional type -- used internally
- * @tparam V2 output type: the message which is sent on completion to the sender is of type Response[K2,V2]
  * @param config an instance of Config which defines a suitable configuration
- * @param f      the mapper function which takes a V1 and creates a key-value tuple of type (K2,W), wrapped in Try
- * @param g      the reducer function which combines two values (an V2 and a W) into one V2
+ * @param f      the mapper function which takes a (K1,V1) pair and creates a key-value tuple of type (K2,W), wrapped in Try
+ * @param g      the reducer function which combines two values (a V2 and a W) into one V2
  */
-//noinspection EmptyParenMethodAccessedAsParameterless
-class Master[K1, V1, K2, W, V2 >: W](config: Config, f: (K1, V1) => Try[(K2, W)], g: (V2, W) => V2) extends MasterBase[K1, V1, K2, W, V2](config, f, g, Master.zero) with ByReduce[K1, V1, K2, W, V2]
+object Master:
+  private val logger = LoggerFactory.getLogger("com.phasmid.majabigwaduce.core.Master")
 
-/**
- * @tparam K1 key type: the message which this actor responds to is of type Map[K1,V1].
- * @tparam V1 input type: the message which this actor responds to is of type Seq[V1].
- * @tparam K2 key type: mapper groups things by this key and reducer processes said groups.
- * @tparam W  transitional type -- used internally
- * @tparam V2 output type: the message which is sent on completion to the sender is of type Response[K2,V2]
- * @param config an instance of Config which defines a suitable configuration
- * @param f      the mapper function which takes a V1 and creates a key-value tuple of type (K2,W), wrapped in Try
- * @param g      the reducer function which combines two values (an V2 and a W) into one V2
- * @param z      the "zero" or "unit" (i.e. initializer) function which creates an "empty" V2.
- */
-class Master_Fold[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => Try[(K2, W)], g: (V2, W) => V2, z: () => V2) extends MasterBase[K1, V1, K2, W, V2](config, f, g, z) with ByFold[K1, V1, K2, W, V2]
+  def apply[K1, V1, K2, W, V2 >: W](config: Config, f: (K1, V1) => Try[(K2, W)], g: (V2, W) => V2): Behavior[MasterCommand[K1, V1, K2, V2]] =
+    behavior(config, f, Reducer(g))
 
-/**
- * @tparam V1 input type: the message which this actor responds to is of type Seq[V1].
- * @tparam K2 key type: mapper groups things by this key and reducer processes said groups.
- * @tparam W  transitional type -- used internally
- * @tparam V2 output type: the message which is sent on completion to the sender is of type Response[K2,V2]
- * @param config an instance of Config which defines a suitable configuration
- * @param f      the mapper function which takes a V1 and creates a key-value tuple of type (K2,W), wrapped in Try
- * @param g      the reducer function which combines two values (an V2 and a W) into one V2
- */
-//noinspection EmptyParenMethodAccessedAsParameterless
-class Master_First[V1, K2, W, V2 >: W](config: Config, f: V1 => Try[(K2, W)], g: (V2, W) => V2) extends MasterBaseFirst[V1, K2, W, V2](config, f, g, Master.zero) with ByReduce[Unit, V1, K2, W, V2]
-
-/**
- * @tparam V1 input type: the message which this actor responds to is of type Seq[V1].
- * @tparam K2 key type: mapper groups things by this key and reducer processes said groups.
- * @tparam W  transitional type -- used internally
- * @tparam V2 output type: the message which is sent on completion to the sender is of type Response[K2,V2]
- * @param config an instance of Config which defines a suitable configuration
- * @param f      the mapper function which takes a V1 and creates a key-value tuple of type (K2,W), wrapped in Try
- * @param g      the reducer function which combines two values (an V2 and a W) into one V2
- * @param z      the "zero" or "unit" (i.e. initializer) function which creates an "empty" V2.
- */
-class Master_First_Fold[V1, K2, W, V2](config: Config, f: V1 => Try[(K2, W)], g: (V2, W) => V2, z: () => V2) extends MasterBaseFirst[V1, K2, W, V2](config, f, g, z) with ByFold[Unit, V1, K2, W, V2]
-
-/**
- * @tparam K1 key type: the message which this actor responds to is of type Map[K1,V1].
- * @tparam V1 input type: the message which this actor responds to is of type Seq[V1].
- * @tparam K2 key type: mapper groups things by this key and reducer processes said groups.
- * @tparam W  transitional type -- used internally
- * @tparam V2 output type: the message which is sent on completion to the sender is of type Response[K2,V2]
- */
-trait ByReduce[K1, V1, K2, W, V2 >: W]:
   /**
-   * CONSIDER eliminating this method and its trait
+   * Builds the shared Master behavior. On setup, spawns one mapper and `reducers` (per config)
+   * reducer children, then handles ComputeMap/ComputeSeq/Close commands by driving the
+   * map -> distribute -> reduce -> collate pipeline and replying to each request's `replyTo`.
    *
-   * @param g the reduce function
-   * @param z ignored
-   * @return a Props instance
+   * Shared by Master, Master_Fold, Master_First and Master_First_Fold -- the only difference
+   * between them is which reducer Behavior is spawned (plain Reducer vs Reducer_Fold), and, for
+   * the "First" variants, that K1=Unit and `f` has already been unitized by the caller.
    */
-  def reducerProps(g: (V2, W) => V2, z: () => V2): Props =
-    Props.create(classOf[Reducer[K2, W, V2]], g)
+  private[core] def behavior[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => Try[(K2, W)], reducerBehavior: Behavior[ReducerCommand[K2, W, V2]]): Behavior[MasterCommand[K1, V1, K2, V2]] =
+    MapReduceActor.withLifecycle(logger) { context =>
+      val actors = Actors(context.system, config)
 
-/**
- * @tparam K1 key type: the message which this actor responds to is of type Map[K1,V1].
- * @tparam V1 input type: the message which this actor responds to is of type Seq[V1].
- * @tparam K2 key type: mapper groups things by this key and reducer processes said groups.
- * @tparam W  transitional type -- used internally
- * @tparam V2 output type: the message which is sent on completion to the sender is of type Response[K2,V2]
- */
-trait ByFold[K1, V1, K2, W, V2]:
-  /**
-   * @param g the reducer function
-   * @param z the "zero" or "unit" (i.e. initializer) function which creates an "empty" V2.
-   * @return
-   */
-  def reducerProps(g: (V2, W) => V2, z: () => V2): Props =
-    Props.create(classOf[Reducer_Fold[K2, W, V2]], g, z)
+      given timeout: Timeout = Actors.getTimeout(config.getString("timeout"))
+      logger.debug(s"Master: timeout=$timeout")
 
-/**
- * Abstract class MasterBaseFirst
- *
- * This version of the MasterBase class (which it extends) take a different type of message: to wit, a Seq[V1].
- * That is to say, there is no K1 type.
- *
- * @tparam V1 input type: the message which this actor responds to is of type Seq[V1].
- * @tparam K2 key type: mapper groups things by this key and reducer processes said groups.
- * @tparam W  transitional type -- used internally
- * @tparam V2 output type: the message which is sent on completion to the sender is of type Response[K2,V2]
- * @param config an instance of Config which defines a suitable configuration
- * @param f      the mapper function which takes a V1 and creates a key-value tuple of type (K2,W), wrapped in Try
- * @param g      the reducer function which combines two values (an V2 and a W) into one V2
- * @param z      the "zero" or "unit" (i.e. initializer) function which creates an "empty" V2.
- */
-abstract class MasterBaseFirst[V1, K2, W, V2](config: Config, f: V1 => Try[(K2, W)], g: (V2, W) => V2, z: () => V2) extends MasterBase[Unit, V1, K2, W, V2](config, Master.unitize(f), g, z):
+      given ec: ExecutionContext = context.executionContext
+      given scheduler: Scheduler = context.system.scheduler
 
-  import context.dispatcher
+      // NOTE: the mapper and reducers will be terminated when this master is terminated.
+      val mapperBehavior = if Master.isForgiving(config) then Mapper_Forgiving(f) else Mapper(f)
+      val mapper: ActorRef[MapperCommand[K1, V1, K2, W]] =
+        actors.createActor[MapperCommand[K1, V1, K2, W]]((b, n) => context.spawn(b, n), Some(Master.sMpr), mapperBehavior)
 
-  override def receive: PartialFunction[Any, Unit] =
-    case v1s: Seq[V1] @unchecked =>
-      log.debug(s"Master received Seq[V1]: with ${v1s.length} elements")
-      val caller = sender() // XXX: this looks strange but it is required
-      doMapReduce(KeyValuePairs.sequence[Unit, V1](v1s)).onComplete {
-        case Success(wXeK2m) => caller ! Response.create(wXeK2m)
-        case Failure(x) => caller ! akka.actor.Status.Failure(x)
+      val nReducers = config.getInt("reducers")
+      logger.debug(s"creating $nReducers reducers")
+      val reducers: Seq[ActorRef[ReducerCommand[K2, W, V2]]] =
+        for i <- 1 to nReducers yield
+          actors.createActor[ReducerCommand[K2, W, V2]]((b, n) => context.spawn(b, n), Some(s"${Master.sReducer}-$i"), reducerBehavior)
+      if Master.isForgiving(config) then logger.debug("setting forgiving mode")
+
+      // NOTE this involves a cast to the parametric type Z which can result in a ClassCastException,
+      // the same way the classic-actor `ask.mapTo[Z]` did.
+      def doMap(i: KeyValuePairs[K1, V1]): Future[Map[K2, Seq[W]]] =
+        mapper.ask[MapperResponse[K2, W]](replyTo => DoMap(i, replyTo)).flatMap {
+          case MapperResponse(m, xs) =>
+            if xs.nonEmpty && !Master.isForgiving(config)
+            then Future.failed[Map[K2, Seq[W]]](xs.head)
+            else
+              xs.foreach(x => actors.logException("mapper exception", x))
+              Future.successful(m)
+        }
+
+      // NOTE that this method operates in real time, without the protection of Try
+      def distributeWork(wsK2m: Map[K2, Seq[W]]): Seq[((K2, Seq[W]), ActorRef[ReducerCommand[K2, W, V2]])] =
+        val rs = LazyList.continually(reducers.to(LazyList)).flatten
+        val wsK2s = for (k2, ws) <- wsK2m.to(Seq) yield (k2, ws)
+        wsK2s zip rs
+
+      def doReductionAsync(k2: K2, ws: Seq[W], actor: ActorRef[ReducerCommand[K2, W, V2]]): Future[(K2, Either[Throwable, V2])] =
+        actor.ask[ReduceResult[K2, V2]](replyTo => DoReduce(Intermediate(k2, ws), replyTo)).map(r => r.k2 -> r.result)
+
+      def doDistributeReduceCollate(wsK2m: Map[K2, Seq[W]]): Future[Map[K2, Either[Throwable, V2]]] =
+        if wsK2m.isEmpty then
+          logger.warn("mapper returned empty map" + (if Master.isForgiving(config) then "" else ": see log for problem and consider using Mapper_Forgiving instead"))
+        val v2XeK2fs = for ((k2, ws), a) <- distributeWork(wsK2m) yield doReductionAsync(k2, ws, a)
+        Future.sequence(v2XeK2fs).map(_.toMap)
+
+      /**
+       * The main map-reduce method.
+       * This takes a KeyValuePairs object and returns a map of K2 and either a Throwable or a V2, all wrapped in Future.
+       *
+       * CONSIDER why are we using Either[Throwable, V2] instead of Try[V2]?
+       */
+      def doMapReduce(i: KeyValuePairs[K1, V1]): Future[Map[K2, Either[Throwable, V2]]] = for
+        wsK2m <- doMap(i)
+        v2XeK2m <- doDistributeReduceCollate(wsK2m)
+      yield v2XeK2m
+
+      {
+        case ComputeMap(m, replyTo) =>
+          logger.debug(s"Master received Map[K1,V1]: with ${m.size} elements")
+          doMapReduce(KeyValuePairs.map(m)).onComplete {
+            case s@Success(v2XeK2m) =>
+              MapReduceActor.maybeLog(logger, "response: {}", v2XeK2m)
+              replyTo ! s.map(Response.create)
+            case f@Failure(x) =>
+              logger.error("no response--failure", x)
+              replyTo ! f.map(Response.create)
+          }
+          Behaviors.same
+        case ComputeSeq(s, replyTo) =>
+          logger.debug(s"Master received Seq[(K1,V1)]: with ${s.length} elements")
+          doMapReduce(KeyValuePairs[K1, V1](s)).onComplete { t => replyTo ! t.map(Response.create) }
+          Behaviors.same
+        case CloseMaster() =>
+          actors.close()
+          Behaviors.stopped
       }
-    case q =>
-      baseReceive(q)
-
-  private def baseReceive: PartialFunction[Any, Unit] = super.receive
-
-/**
- * NOTE that logging the actual values received in the incoming message and other places can be VERY verbose.
- * It is therefore recommended practice to log the values as they pass through the mapper/reducer functions (f,g) which are
- * under the control of the application.
- * Therefore the various calls to maybeLog are commented out.
- *
- * @tparam K1 key type: the message which this actor responds to is of type Map[K1,V1].
- * @tparam V1 input type: the message which this actor responds to is of type Seq[V1].
- * @tparam K2 key type: mapper groups things by this key and reducer processes said groups.
- * @tparam W  transitional type -- used internally
- * @tparam V2 output type: the message which is sent on completion to the sender is of type Response[K2,V2]
- * @param config an instance of Config which defines a suitable configuration
- * @param f      the mapper function which takes a K1,V1 pair and creates a key-value tuple of type (K2,W), wrapped in Try
- * @param g      the reducer function which combines two values (an V2 and a W) into one V2
- * @param z      the "zero" or "unit" (i.e. initializer) function which creates an "empty" V2.
- */
-abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => Try[(K2, W)], g: (V2, W) => V2, z: () => V2) extends MapReduceActor:
-
-  // CONSIDER using Using
-  private val actors = Actors(context.system, config)
-
-  given timeout: Timeout = Actors.getTimeout(config.getString("timeout"))
-
-  log.debug(s"MasterBase: timeout=$timeout")
-
-  import context.dispatcher
-
-  // NOTE: the mapper and reducers will be terminated when this master is terminated.
-  private val mapper = actors.createActor(context, Some(Master.sMpr), mapperProps)
-  private val nReducers = config.getInt("reducers")
-  log.debug(s"creating $nReducers reducers")
-  private val reducers = for i <- 1 to nReducers yield
-    actors.createActor(context, Some(s"${Master.sReducer}-$i"), reducerProps(g, z))
-  if Master.isForgiving(config) then log.debug("setting forgiving mode")
-
-  /**
-   * @return an instance of Props appropriate to the the given parameters
-   */
-  def mapperProps: Props =
-    if Master.isForgiving(config)
-    then Props.create(classOf[Mapper_Forgiving[K1, V1, K2, W]], f)
-    else Props.create(classOf[Mapper[K1, V1, K2, W]], f)
-
-  /**
-   * @param g the reducer function which combines two values (an V2 and a W) into one V2
-   * @param z the "zero" or "unit" (i.e. initializer) function which creates an "empty" V2.
-   * @return an instance of Props appropriate to the the given parameters
-   */
-  def reducerProps(g: (V2, W) => V2, z: () => V2): Props
-
-  /**
-   * Handles incoming messages of different types and performs the appropriate processing.
-   * Specifically, it processes `Map[K1, V1]` and `Seq[(K1, V1)]` inputs by performing
-   * a map-reduce operation and sending results or failures to the original sender.
-   * Any unhandled message types are delegated to the superclass.
-   *
-   * @return A partial function that takes `Any` input and performs the corresponding
-   *         handling logic based on the type of the input.
-   */
-  override def receive: PartialFunction[Any, Unit] =
-    case v1K1m: Map[K1, V1] @unchecked =>
-      log.debug(s"Master received Map[K1,V1]: with ${v1K1m.size} elements")
-      val caller = sender()
-      doMapReduce(KeyValuePairs.map[K1, V1](v1K1m)).onComplete {
-        case Success(v2XeK2m) =>
-          maybeLog("response: {}", v2XeK2m)
-          caller ! Response.create(v2XeK2m)
-        case Failure(x) =>
-          log.error(x, s"no response--failure")
-          caller ! akka.actor.Status.Failure(x)
-      }
-    case v1s: Seq[(K1, V1)] @unchecked =>
-      log.debug(s"Master received Seq[(K1,V1)]: with ${v1s.length} elements")
-      val caller = sender()
-      doMapReduce(KeyValuePairs[K1, V1](v1s)).onComplete {
-        case Success(v2XeK2m) => caller ! Response.create(v2XeK2m)
-        case Failure(x) => caller ! akka.actor.Status.Failure(x)
-      }
-    case q =>
-      super.receive(q)
-
-  /**
-   * The main map-reduce method.
-   * This takes a KeyValuePairs object and returns a map of K2 and either a Throwable or a V2, all wrapped in Future.
-   *
-   * CONSIDER why are we using Either[Throwable, V2] instead of Try[V2]?
-   *
-   * @param i the incoming KeyValuePairs.
-   * @return a Map[K2, Try[V2]\] wrapped in Future.
-   */
-  def doMapReduce(i: KeyValuePairs[K1, V1]): Future[Map[K2, Either[Throwable, V2]]] = for
-    wsK2m <- doMap(i)
-    v2XeK2m <- doDistributeReduceCollate(wsK2m)
-  yield v2XeK2m
-
-
-  /**
-   * Closes resources associated with this instance, including the actor system and any associated
-   * non-actor resources. This ensures proper cleanup of internal states and avoids potential resource leaks.
-   * TESTME
-   *
-   * @return Unit, as the method performs a cleanup operation and does not produce a return value.
-   */
-  override def close(): Unit = {
-    actors.close()
-    super.close()
-  }
-
-  private def doMap(i: KeyValuePairs[K1, V1]): Future[Map[K2, Seq[W]]] =
-    // NOTE this involves a cast to the parametric type Z which can result in a ClassCastException
-    def iToMapper[Z: ClassTag]: Future[Z] = (mapper ? i).mapTo[Z]
-
-    iToMapper[(Map[K2, Seq[W]], Seq[Throwable])] flatMap {
-      case (m, xs) =>
-        if xs.nonEmpty && !Master.isForgiving(config)
-        then Future.failed[Map[K2, Seq[W]]](xs.head)
-        else
-          xs.foreach(logException)
-          Future.successful(m)
     }
 
   /**
-   * Distributes work, performs asynchronous reduction, and collates results into a final map.
-   * This method takes a mapping of keys to sequences of intermediate work items,
-   * distributes the work across available actors, performs reduction operations asynchronously,
-   * and finally collates the results into a single map.
+   * Returns the zero value of the specified type `V`. The generic zero value is
+   * obtained by casting the integer 0 to the provided type `V`.
+   * TESTME
    *
-   * @param wsK2m A map where each key (of type K2) is associated with a sequence of work items (of type W).
-   *              Represents the input mapping for the distribute-reduce-collate process.
-   * @return A Future containing a map where each key (of type K2) is associated with either a successful result (Right[V2])
-   *         or an error (Left[Throwable]). This map represents the final collated output of the process.
+   * @tparam V the type for which the zero value is desired
+   * @return the zero value of type `V`
    */
-  private def doDistributeReduceCollate(wsK2m: Map[K2, Seq[W]]): Future[Map[K2, Either[Throwable, V2]]] =
-    if wsK2m.isEmpty
-    then log.warning("mapper returned empty map" + (if (Master.isForgiving(config: Config)) ""
-    else ": see log for problem and consider using Mapper_Forgiving instead"))
-    val v2XeK2fs = for ((k2, ws), a) <- distributeWork(wsK2m) yield doReductionAsync(k2, ws, a)
-    // TODO Where are we getting a null from?
-    for wXeK2s <- Future.sequence(v2XeK2fs) yield wXeK2s.toMap
+  def zero[V](): V = 0.asInstanceOf[V]
 
-  // NOTE this involves a cast to the parametric type (K2, Either[Throwable, V2]) which can result in a ClassCastException
-  private def doReductionAsync(k2: K2, ws: Seq[W], actor: ActorRef): Future[(K2, Either[Throwable, V2])] = (actor ? Intermediate(k2, ws)).mapTo[(K2, Either[Throwable, V2])]
+  /**
+   * method isForgiving which looks up the value of the forgiving property of the configuration.
+   *
+   * @param config an instance of Config which defines a suitable configuration
+   * @return true/false according to the property's value in config
+   */
+  def isForgiving(config: Config): Boolean = config.getBoolean("forgiving")
 
-  // NOTE that this method operates in real time, without the protection of Try
-  private def distributeWork(wsK2m: Map[K2, Seq[W]]): Seq[((K2, Seq[W]), ActorRef)] = {
-    val rs = LazyList.continually(reducers.to(LazyList)).flatten
-    val wsK2s = for ((k2, ws) <- wsK2m.to(Seq)) yield (k2, ws)
-    wsK2s zip rs
-  }
+  /**
+   * Method unitize which takes a function A=>B and returns a (Unit,A)=>B
+   *
+   * @param f the function to be lifted
+   * @tparam A input type: the input type of the function f.
+   * @tparam B output type: the output type of the function f.
+   * @return a function of (Unit,A)=>B
+   */
+  def unitize[A, B](f: A => B): (Unit, A) => B =
+    (_, v) => f(v)
 
-  // TEST
-  private def logException(x: Throwable): Unit = actors.logException("mapper exception", x)
+  //noinspection SpellCheckingInspection
+  val sReducer = "rdcr"
+  val sMpr = "mpr"
+
+/**
+ * @tparam K1 key type: the message which this actor responds to is of type Map[K1,V1].
+ * @tparam V1 input type: the message which this actor responds to is of type Seq[V1].
+ * @tparam K2 key type: mapper groups things by this key and reducer processes said groups.
+ * @tparam W  transitional type -- used internally
+ * @tparam V2 output type: the message which is sent on completion to the sender is of type Response[K2,V2]
+ * @param config an instance of Config which defines a suitable configuration
+ * @param f      the mapper function which takes a (K1,V1) pair and creates a key-value tuple of type (K2,W), wrapped in Try
+ * @param g      the reducer function which combines two values (a V2 and a W) into one V2
+ * @param z      the "zero" or "unit" (i.e. initializer) function which creates an "empty" V2.
+ */
+object Master_Fold:
+  def apply[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => Try[(K2, W)], g: (V2, W) => V2, z: () => V2): Behavior[MasterCommand[K1, V1, K2, V2]] =
+    Master.behavior[K1, V1, K2, W, V2](config, f, Reducer_Fold(g, z()))
+
+/**
+ * @tparam V1 input type: the message which this actor responds to is of type Seq[V1].
+ * @tparam K2 key type: mapper groups things by this key and reducer processes said groups.
+ * @tparam W  transitional type -- used internally
+ * @tparam V2 output type: the message which is sent on completion to the sender is of type Response[K2,V2]
+ * @param config an instance of Config which defines a suitable configuration
+ * @param f      the mapper function which takes a V1 and creates a key-value tuple of type (K2,W), wrapped in Try
+ * @param g      the reducer function which combines two values (a V2 and a W) into one V2
+ */
+object Master_First:
+  def apply[V1, K2, W, V2 >: W](config: Config, f: V1 => Try[(K2, W)], g: (V2, W) => V2): Behavior[MasterCommand[Unit, V1, K2, V2]] =
+    Master.behavior[Unit, V1, K2, W, V2](config, Master.unitize(f), Reducer(g))
+
+/**
+ * @tparam V1 input type: the message which this actor responds to is of type Seq[V1].
+ * @tparam K2 key type: mapper groups things by this key and reducer processes said groups.
+ * @tparam W  transitional type -- used internally
+ * @tparam V2 output type: the message which is sent on completion to the sender is of type Response[K2,V2]
+ * @param config an instance of Config which defines a suitable configuration
+ * @param f      the mapper function which takes a V1 and creates a key-value tuple of type (K2,W), wrapped in Try
+ * @param g      the reducer function which combines two values (a V2 and a W) into one V2
+ * @param z      the "zero" or "unit" (i.e. initializer) function which creates an "empty" V2.
+ */
+object Master_First_Fold:
+  def apply[V1, K2, W, V2](config: Config, f: V1 => Try[(K2, W)], g: (V2, W) => V2, z: () => V2): Behavior[MasterCommand[Unit, V1, K2, V2]] =
+    Master.behavior[Unit, V1, K2, W, V2](config, Master.unitize(f), Reducer_Fold(g, z()))
 
 /**
  * Case class used to package a response from an actor.
@@ -317,38 +256,3 @@ object Response:
 
   def create[K, V](vXeKm: Map[K, Either[Throwable, V]]): Response[K, V] =
     invokeTupled(toMap(sequenceLeftRight(vXeKm)))(apply)
-
-object Master:
-  /**
-   * Returns the zero value of the specified type `V`. The generic zero value is
-   * obtained by casting the integer 0 to the provided type `V`.
-   * TESTME
-   *
-   * @tparam V the type for which the zero value is desired
-   * @return the zero value of type `V`
-   */
-  def zero[V](): V = 0.asInstanceOf[V]
-
-  /**
-   * method isForgiving which looks up the value of the forgiving property of the configuration.
-   *
-   * @param config an instance of Config which defines a suitable configuration
-   * @return true/false according to the property's value in config
-   */
-  def isForgiving(config: Config): Boolean = config.getBoolean("forgiving")
-
-  /**
-   * Method unitize which takes a function A=>B and returns a (Unit,A)=>B
-   *
-   * @param f the function to be lifted
-   * @tparam A input type: the input type of the function f.
-   * @tparam B output type: the output type of the function f.
-   * @return a function of (Unit,A)=>B
-   */
-  def unitize[A, B](f: A => B): (Unit, A) => B =
-    (_, v) => f(v)
-
-  //noinspection SpellCheckingInspection
-  val sReducer = "rdcr"
-  val sMpr = "mpr"
-

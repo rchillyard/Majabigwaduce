@@ -4,7 +4,8 @@
 
 package com.phasmid.majabigwaduce.examples.webcrawler
 
-import akka.actor.ActorSystem
+import akka.actor.typed.ActorSystem
+import akka.actor.typed.scaladsl.Behaviors
 import akka.util.Timeout
 import com.typesafe.config.{Config, ConfigFactory}
 import org.scalamock.scalatest.MockFactory
@@ -28,7 +29,7 @@ class WebCrawlerSpec extends flatspec.AnyFlatSpec with should.Matchers with Futu
   "crawl" should "work" in {
     given config: Config = ConfigFactory.load.getConfig("majabigwaduce.WebCrawler")
 
-    given system: ActorSystem = ActorSystem(config.getString("name"))
+    given system: ActorSystem[Nothing] = ActorSystem(Behaviors.empty, config.getString("name"))
 
     given to: Timeout = WebCrawler.getTimeout(config.getString("timeout"))
     import ExecutionContext.Implicits.global
