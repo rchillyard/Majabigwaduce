@@ -20,6 +20,11 @@ class CountWordsSpec extends flatspec.AnyFlatSpec with should.Matchers with Futu
     whenReady(CountWords.countWords(hc, ws), timeout(Span(6, Seconds)))(i => assert(i == 11))
   }
 
+  "CountWords" should "succeed running doMain" in {
+    val ws = Seq("https://www.bbc.com/doc1", "https://www.bbc.com/doc2", "https://www.cnn.com/doc3")
+    whenReady(CountWords.doMain(ws))(w => assert(w == "Success: 11"))
+  }
+
   // NOTE: Issue #17 This test (and others) causes the following warning in the logs:
   // 2020-05-05 21:32:38,434 WARN  akka.stream.Materializer akka.stream.Log(akka://CountWords/system/Materializers/StreamSupervisor-1) - [outbound connection to [akka://ClusterSystem@127.0.0.1:2551], control stream] Upstream failed, cause: StreamTcpException: Tcp command [Connect(127.0.0.1:2551,None,List(),Some(5000 milliseconds),true)] failed because of java.net.ConnectException: Connection refused
   "CountWords" should "work for https://www.bbc.com/ https://www.cnn.com/ https://default/" in {
