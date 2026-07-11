@@ -151,7 +151,7 @@ abstract class MasterBase[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => Try[
   // CONSIDER using Using
   private val actors = Actors(context.system, config)
 
-  given timeout: Timeout = getTimeout(config.getString("timeout"))
+  given timeout: Timeout = Actors.getTimeout(config.getString("timeout"))
 
   log.debug(s"MasterBase: timeout=$timeout")
 

@@ -2,12 +2,10 @@ package com.phasmid.majabigwaduce.core
 
 import akka.actor.{ActorSystem, Props}
 import akka.testkit.{EventFilter, ImplicitSender, TestActorRef, TestKit}
-import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import org.scalatest.matchers.should
 import org.scalatest.{BeforeAndAfterAll, wordspec}
 
-import scala.concurrent.duration.*
 import scala.util.{Failure, Success}
 
 // NOTE: MapReduceActor is abstract only in name -- every member required by Actor is already
@@ -52,16 +50,6 @@ class MapReduceActorSpec
       val x = new RuntimeException("boom")
       ref.underlyingActor.sendReply(testActor, Failure(x))
       expectMsg(akka.actor.Status.Failure(x))
-    }
-
-    "parse a well-formed timeout string" in {
-      val ref = TestActorRef(new ProbeActor)
-      ref.underlyingActor.getTimeout("5 seconds") shouldBe Timeout(5.seconds)
-    }
-
-    "fall back to a default 10 second timeout for a malformed string" in {
-      val ref = TestActorRef(new ProbeActor)
-      ref.underlyingActor.getTimeout("garbage") shouldBe Timeout(10.seconds)
     }
   }
 }

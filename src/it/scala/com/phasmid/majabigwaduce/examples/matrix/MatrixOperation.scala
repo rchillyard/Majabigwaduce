@@ -8,7 +8,6 @@ import akka.actor.ActorSystem
 import akka.event.LoggingAdapter
 import akka.util.Timeout
 import com.phasmid.majabigwaduce.core.*
-import com.phasmid.majabigwaduce.examples.countwords.CountWords
 import com.phasmid.majabigwaduce.matrix.{IncompatibleLengthsException, Matrix2}
 import com.typesafe.config.{Config, ConfigFactory}
 
@@ -119,18 +118,14 @@ object MatrixOperation:
 @main def matrixOperationApp(): Unit =
 
   given config: Config = ConfigFactory.load.getConfig("majabigwaduce.Matrix")
-
   given system: ActorSystem = ActorSystem(config.getString("name"))
-
-  given timeout: Timeout = CountWords.getTimeout(config.getString("timeout"))
+  given ec: ExecutionContext = system.dispatcher
+  given timeout: Timeout = Actors.getTimeout(config.getString("timeout"))
+  given logger: LoggingAdapter = system.log
 
   val rows = config.getInt("rows")
   val cols = config.getInt("columns")
   val modulus = config.getInt("modulus")
-
-  given logger: LoggingAdapter = system.log
-
-  import ExecutionContext.Implicits.global
 
   val op: MatrixOperation[Double] = MatrixOperation(x => x % modulus)
 

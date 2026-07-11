@@ -80,7 +80,7 @@ sealed trait DataDefinition[K, V] extends (() => Future[Map[K, V]]):
    * @tparam W value type of other
    * @return the inner join of this and other
    */
-  def join[L >: K, W: Monoid](other: DataDefinition[L, W]): DataDefinition[L, (V, W)]
+  def join[L >: K, W: Monoid](other: DataDefinition[L, W])(using timeout: Timeout): DataDefinition[L, (V, W)]
 
   /**
    * Clean up any residual resources from this DataDefinition
@@ -129,16 +129,11 @@ case class EagerDD[K, V](kVs: Seq[(K, V)])(implicit ec: ExecutionContext) extend
    * @tparam W value type of other
    * @return the inner join of this and other
    */
-  def join[L >: K, W: Monoid](other: DataDefinition[L, W]): DataDefinition[L, (V, W)] = other match
+  def join[L >: K, W: Monoid](other: DataDefinition[L, W])(using timeout: Timeout): DataDefinition[L, (V, W)] = other match
     case edd: EagerDD[L, W] @unchecked =>
       EagerDD[L, (V, W)](joinMap(kVs.toMap.asInstanceOf[Map[L, V]], edd.kVs.toMap).toSeq)
     case bdd: BaseDD[L, W] @unchecked =>
-      import scala.concurrent.duration.*
-      given timeout: Timeout = Timeout(5.seconds)
-
       join(Await.result(bdd.evaluate, timeout.duration))
-    case _ =>
-      throw DataDefinitionException("join not supported for Eager and non-Eager DataDefinition objects")
 
   /**
    * Return the evaluated map as is
@@ -205,7 +200,7 @@ case class LazyDD[K, V, L, W: Monoid]
 (kVs: Seq[(K, V)], f: ((K, V)) => (L, W))
 (partitions: Int = DataDefinition.DefaultPartitions)
 (implicit context: DDContext)
-  extends BaseDD[L, W]()(context.ec):
+  extends BaseDD[L, W](using context.ec):
 
   private given cfs: Config = context.config
 
@@ -252,7 +247,7 @@ case class LazyDD[K, V, L, W: Monoid]
    * @tparam X value type of other
    * @return the inner join of this and other
    */
-  def join[M >: L, X: Monoid](other: DataDefinition[M, X]): DataDefinition[M, (W, X)] = other match
+  def join[M >: L, X: Monoid](other: DataDefinition[M, X])(using timeout: Timeout): DataDefinition[M, (W, X)] = other match
     case ldd: LazyDD[K, X, M, X] @unchecked =>
       import LazyDD.*
       LazyDD[K, (V, X), M, (W, X)](joinMap2(kVs.toMap, ldd.kVs.toMap, f).toSeq, joinFunction(f, ldd.f))(partitions)
@@ -325,14 +320,15 @@ sealed trait HasEvaluatedMap[K, V]:
  * @tparam K the key type
  * @tparam V the input value type
  */
-abstract class BaseDD[K, V](implicit ec: ExecutionContext) extends DataDefinition[K, V]:
+abstract class BaseDD[K, V](using ec: ExecutionContext) extends DataDefinition[K, V]:
 
   /**
    * Evaluate this DataDefinition
    *
    * @return a map of key-value pairs wrapped in Future
    */
-  override def apply(): Future[Map[K, V]] = evaluate map (_.evalMap)
+  override def apply(): Future[Map[K, V]] =
+    evaluate map (_.evalMap)
 
   /**
    * Evaluate this BaseDD as a Future[HasEvaluatedMap[K, V]
@@ -367,7 +363,7 @@ abstract class BaseDD[K, V](implicit ec: ExecutionContext) extends DataDefinitio
  * @param system  the actor system
  * @param timeout the value of timeout
  */
-case class DDContext(config: Config, system: ActorSystem, timeout: Timeout)(implicit executor: ExecutionContext):
+case class DDContext(config: Config, system: ActorSystem, timeout: Timeout):
   // NOTE: consciously using var here.
   var closeables: List[AutoCloseable] = Nil
 
@@ -403,7 +399,7 @@ case class DDContext(config: Config, system: ActorSystem, timeout: Timeout)(impl
    *
    * @return the `ExecutionContext` associated with this instance.
    */
-  def ec: ExecutionContext = executor
+  def ec: ExecutionContext = system.dispatcher
 
   // TESTME
   override def toString: String = s"DDContext: system=${system.name}, timeout=$timeout"
@@ -420,10 +416,12 @@ object DDContext:
    * @param executor an implicit parameter representing the `ExecutionContext` used for asynchronous tasks.
    * @return an instance of `DDContext` initialized with the configuration, actor system, and timeout settings.
    */
-  def apply(implicit executor: ExecutionContext): DDContext =
+  def apply: DDContext =
     val config = ConfigFactory.load().getConfig("majabigwaduce.DataDefinition")
     val timeout = FiniteDuration(config.getDuration("timeout").getSeconds, TimeUnit.SECONDS)
     val system: ActorSystem = ActorSystem(config.getString("actorSystem"))
+
+    given ec: ExecutionContext = system.dispatcher
     apply(config, system, timeout)
 
 /**
@@ -436,8 +434,6 @@ object DDContext:
  * data-related processes, and support extensible data handling operations.
  */
 object DataDefinition:
-
-  import scala.concurrent.ExecutionContext.Implicits.global
 
   given context: DDContext = DDContext.apply
 

@@ -1,7 +1,10 @@
 package com.phasmid.majabigwaduce.core
 
 import akka.actor.{ActorRef, ActorRefFactory, ActorSystem, Props}
+import akka.util.Timeout
 import com.typesafe.config.Config
+
+import scala.concurrent.duration.{DurationInt, FiniteDuration}
 
 /**
  * Case class to deal with the construction and configuration of actors.
@@ -45,7 +48,6 @@ case class Actors(system: ActorSystem, config: Config) extends AutoCloseable:
 
   private val suffix = Actors.getCount.toHexString
 
-
 object Actors:
   // A globally unique, thread-safe, monotonically increasing counter -- deliberately not
   // combined with System.nanoTime().hashCode as it previously was. Under high-frequency actor
@@ -54,4 +56,22 @@ object Actors:
   // names (InvalidActorNameException) even though the counter itself never repeats.
   private val counter = new java.util.concurrent.atomic.AtomicLong(0)
 
+  /**
+   * Retrieves the current value of the counter after incrementing it by one.
+   *
+   * @return the updated value of the globally unique, thread-safe, monotonically increasing counter.
+   */
   def getCount: Long = counter.incrementAndGet()
+
+  /**
+   * Parses a string representation of a duration and returns a corresponding Timeout object.
+   *
+   * @param t a string representing the duration in the format "number unit" (e.g., "10 seconds").
+   *          If the format is invalid, a default timeout of 10 seconds is returned.
+   * @return a Timeout object representing the parsed duration or a default of 10 seconds if parsing fails.
+   */
+  def getTimeout(t: String): Timeout =
+    val durationR = """(\d+)\s*(\w+)""".r
+    t match
+      case durationR(n, s) => new Timeout(FiniteDuration(n.toLong, s))
+      case _ => Timeout(10.seconds)

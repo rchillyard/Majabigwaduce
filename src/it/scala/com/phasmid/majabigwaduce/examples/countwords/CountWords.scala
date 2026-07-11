@@ -13,7 +13,6 @@ import com.typesafe.config.{Config, ConfigFactory}
 
 import java.net.URI
 import scala.concurrent.*
-import scala.concurrent.duration.*
 import scala.util.*
 
 type Strings = Seq[String]
@@ -29,54 +28,6 @@ type ResourceFunction = String => Resource
     case Success(i) => println(s"result = $i")
     case Failure(t) => println(s"failure: ${t.getMessage}")
   }
-
-/**
- * A trait that defines an HTTP client capable of resolving and handling resources.
- *
- * This trait serves as a contract for implementations that can fetch resources,
- * such as documents or content, from a given location represented by a URL or URI-like string.
- *
- * Key methods:
- * - apply(String): Resolves a given string into a `Resource` object.
- * - getResource(String): Delegates to `apply` to provide a resource for the specified URI.
- */
-trait HttpClient extends (ResourceFunction) {
-  def apply(w: String): Resource
-
-  def getResource(w: String): Resource = apply(w)
-}
-
-/**
- * A trait representing a resource that can be accessed, typically over a network or other location.
- *
- * This trait provides methods to retrieve the associated server information and the content of the resource.
- */
-trait Resource {
-  /**
-   * Retrieves the URI of the server associated with the resource.
-   *
-   * This method returns the server URI where the resource is hosted, typically including the scheme and host, but excluding path or query parameters.
-   * 
-   * NOTE that it is defined with parentheses (which generates a compiler warning).
-   * It's left that way for compatibility with the mock library.
-   *
-   * @return the URI of the server.
-   */
-  def getServer(): URI
-
-  /**
-   * Retrieves the content of the resource as a string.
-   *
-   * This method is used to fetch the underlying data or text associated with the resource,
-   * which may involve accessing network or local storage depending on the implementation.
-   *
-   * NOTE that it is defined with parentheses (which generates a compiler warning).
-   * It's left that way for compatibility with the mock library.
-   *
-   * @return the content of the resource as a String
-   */
-  def getContent(): String
-}
 
 /**
  * The `CountWords` class implements a word-counting pipeline using map-reduce operations.
@@ -154,15 +105,11 @@ object CountWords extends Loggables:
 
   def countWords(hc: HttpClient, args: Seq[String]): Future[Int] = {
     given config: Config = ConfigFactory.load.getConfig("majabigwaduce.CountWords")
-
     given system: ActorSystem = ActorSystem(config.getString("name"))
-
     given ec: ExecutionContext = system.dispatcher
 
-    given timeout: Timeout = getTimeout(config.getString("timeout"))
-
+    given timeout: Timeout = Actors.getTimeout(config.getString("timeout"))
     given logger: LoggingAdapter = system.log
-    //    import Init._
 
     //    val flog: Flog = Flog[CountWords.type]
     //    import flog._
@@ -173,11 +120,48 @@ object CountWords extends Loggables:
     //    "starting domains:" !! ws
     CountWords(hc.getResource).apply(ws)  }
 
-  // TODO try to combine this with the same method in MapReduceActor
-  // TODO make this more visible (it is used in matrix package also)
-  def getTimeout(t: String): Timeout =
-    val durationR = """(\d+)\s*(\w+)""".r
-    t match {
-      case durationR(n, s) => new Timeout(FiniteDuration(n.toLong, s))
-      case _ => Timeout(10.seconds)
-    }
+/**
+ * A trait that defines an HTTP client capable of resolving and handling resources.
+ *
+ * This trait serves as a contract for implementations that can fetch resources,
+ * such as documents or content, from a given location represented by a URL or URI-like string.
+ *
+ * Key methods:
+ * - apply(String): Resolves a given string into a `Resource` object.
+ * - getResource(String): Delegates to `apply` to provide a resource for the specified URI.
+ */
+trait HttpClient extends (ResourceFunction):
+  def apply(w: String): Resource
+
+  def getResource(w: String): Resource = apply(w)
+
+/**
+ * A trait representing a resource that can be accessed, typically over a network or other location.
+ *
+ * This trait provides methods to retrieve the associated server information and the content of the resource.
+ */
+trait Resource:
+  /**
+   * Retrieves the URI of the server associated with the resource.
+   *
+   * This method returns the server URI where the resource is hosted, typically including the scheme and host, but excluding path or query parameters.
+   *
+   * NOTE that it is defined with parentheses (which generates a compiler warning).
+   * It's left that way for compatibility with the mock library.
+   *
+   * @return the URI of the server.
+   */
+  def getServer(): URI
+
+  /**
+   * Retrieves the content of the resource as a string.
+   *
+   * This method is used to fetch the underlying data or text associated with the resource,
+   * which may involve accessing network or local storage depending on the implementation.
+   *
+   * NOTE that it is defined with parentheses (which generates a compiler warning).
+   * It's left that way for compatibility with the mock library.
+   *
+   * @return the content of the resource as a String
+   */
+  def getContent(): String

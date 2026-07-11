@@ -15,6 +15,10 @@ import scala.concurrent.Future
 
 class DataDefinitionSpec extends flatspec.AnyFlatSpec with should.Matchers with Futures with ScalaFutures with Inside {
 
+  import scala.concurrent.duration.*
+
+  given timeout: Timeout = Timeout(5.seconds)
+
   behavior of "LazyDD of Map"
   it should "apply correctly with single partition" in {
     // given
@@ -32,9 +36,6 @@ class DataDefinitionSpec extends flatspec.AnyFlatSpec with should.Matchers with 
     // when
     val mf: Future[Map[String, Int]] = target()
     // then
-    import scala.concurrent.duration.*
-    given timeout: Timeout = Timeout(5.seconds)
-
     whenReady(mf) { m => m.toSeq.size shouldBe 2 }
     target.clean()
   }
@@ -260,9 +261,6 @@ class DataDefinitionSpec extends flatspec.AnyFlatSpec with should.Matchers with 
     // when
     val mf: Future[Map[String, Int]] = target.map(tupleLift(_ * 2)).apply()
     // then
-    import scala.concurrent.duration.*
-    given timeout: Timeout = Timeout(5.seconds)
-
     whenReady(mf) { m => m.values.sum shouldBe 6 }
     target.clean()
   }
@@ -312,9 +310,6 @@ class DataDefinitionSpec extends flatspec.AnyFlatSpec with should.Matchers with 
     // when
     val mf: Future[Map[String, Int]] = target()
     // then
-    import scala.concurrent.duration.*
-    given timeout: Timeout = Timeout(5.seconds)
-
     whenReady(mf) { m => m.toSeq.size shouldBe 2 }
     target.clean()
   }
@@ -523,9 +518,6 @@ class DataDefinitionSpec extends flatspec.AnyFlatSpec with should.Matchers with 
     // when
     val mf: Future[Map[String, Int]] = target.map(tupleLift(_ * 2)).apply()
     // then
-    import scala.concurrent.duration.*
-    given timeout: Timeout = Timeout(5.seconds)
-
     whenReady(mf) { m => m.values.sum shouldBe 6 }
     target.clean()
   }

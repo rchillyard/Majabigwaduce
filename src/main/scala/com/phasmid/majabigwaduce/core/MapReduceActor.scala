@@ -5,11 +5,9 @@
 package com.phasmid.majabigwaduce.core
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Status}
-import akka.util.Timeout
 import com.phasmid.majabigwaduce.core.FP.*
 
 import scala.collection.mutable
-import scala.concurrent.duration.*
 import scala.reflect.ClassTag
 import scala.util.*
 
@@ -79,25 +77,6 @@ abstract class MapReduceActor extends Actor with ActorLogging with AutoCloseable
    *         a result.
    */
   def maybeLog(w: String, z: => Any): Unit = if (log.isDebugEnabled) then log.debug(w, z)
-
-  /**
-   * Parses the given timeout string and converts it into a `Timeout` object.
-   * The timeout string should specify a duration and its unit (e.g., "10 seconds").
-   * If the input format is invalid, a default timeout of 10 seconds is returned.
-   * Logs the resolved timeout value at the debug level.
-   * TODO resolve duplicate code fragment
-   *
-   * @param t The timeout string specifying the duration and time unit.
-   * @return A `Timeout` instance based on the provided string, or a default value if the string is invalid.
-   */
-  def getTimeout(t: String): Timeout =
-    val durationR = """(\d+)\s*(\w+)""".r
-    val timeout = t match
-      case durationR(n, s) => new Timeout(FiniteDuration(n.toLong, s))
-      case _ => Timeout(10.seconds)
-
-    log.debug(s"setting timeout to: $timeout")
-    timeout
 
   /**
    * Closes any non-actor resources associated with this component.
