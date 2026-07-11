@@ -63,12 +63,6 @@ class MatrixOperationFuncSpec extends flatspec.AnyFlatSpec with should.Matchers 
   }
 
   "main program" should "work" in {
-    given config: Config = ConfigFactory.load.getConfig("majabigwaduce.Matrix")
-
-    given system: ActorSystem = ActorSystem(config.getString("name"))
-
-    given timeout: Timeout = getTimeout(config.getString("timeout"))
-
     matrixOperationApp()
   }
 

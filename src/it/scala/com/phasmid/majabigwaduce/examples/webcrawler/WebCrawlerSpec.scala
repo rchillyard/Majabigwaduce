@@ -40,12 +40,6 @@ class WebCrawlerSpec extends flatspec.AnyFlatSpec with should.Matchers with Futu
   }
 
   "webCrawlerApp main program" should "work" in {
-    given config: Config = ConfigFactory.load.getConfig("majabigwaduce.WebCrawler")
-
-    given system: ActorSystem = ActorSystem(config.getString("name"))
-
-    given timeout: Timeout = WebCrawler.getTimeout(config.getString("timeout"))
-
     webCrawlerApp()
   }
 }
