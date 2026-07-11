@@ -22,7 +22,7 @@ class CountWordsSpec extends flatspec.AnyFlatSpec with should.Matchers with Futu
 
   "CountWords" should "succeed running doMain" in {
     val ws = Seq("https://www.bbc.com/doc1", "https://www.bbc.com/doc2", "https://www.cnn.com/doc3")
-    whenReady(CountWords.doMain(ws))(w => assert(w == "Success: 11"))
+    whenReady(CountWords.doMain(ws))(w => assert(w == "Word count = 11"))
   }
 
   // NOTE: Issue #17 This test (and others) causes the following warning in the logs:

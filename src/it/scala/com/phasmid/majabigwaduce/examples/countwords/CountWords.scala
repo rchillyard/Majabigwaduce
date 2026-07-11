@@ -22,7 +22,7 @@ type ResourceFunction = String => Resource
 @main def wordCounter(args: String*): Unit =
   import ExecutionContext.Implicits.global
   CountWords.doMain(args).onComplete {
-    case Success(s) => println(s)
+    case Success(s) => println(s);
     case Failure(x) => println(s"Failure: ${x.getMessage}")
   }
 
@@ -115,7 +115,7 @@ object CountWords: // extends Loggables:
       then args
       else Seq("https://www.bbc.com/doc1", "https://www.bbc.com/doc2", "https://www.cnn.com/doc3")
     //    "starting domains:" !! ws
-    CountWords(hc.getResource).apply(ws)
+    CountWords(hc.getResource).apply(ws).andThen { case _ => system.terminate() }
 
   /**
    * Executes the main application logic for processing a sequence of URLs to count words.
@@ -124,11 +124,10 @@ object CountWords: // extends Loggables:
    * @param args A varargs parameter representing the URLs to process.
    * @return Unit as the computation runs asynchronously and results are logged or handled.
    */
-  def doMain(args: Strings): Future[String] = {
+  def doMain(args: Strings): Future[String] =
     import ExecutionContext.Implicits.global
     val hc = new ResourceHttpClient("/countwords")
-    CountWords.countWords(hc, args).map(w => s"Success: $w")
-  }
+    CountWords.countWords(hc, args).map(x => s"Word count = $x")
 
 /**
  * A trait that defines an HTTP client capable of resolving and handling resources.
