@@ -115,7 +115,7 @@ object CountWords: // extends Loggables:
       then args
       else Seq("https://www.bbc.com/doc1", "https://www.bbc.com/doc2", "https://www.cnn.com/doc3")
     //    "starting domains:" !! ws
-    CountWords(hc.getResource).apply(ws).andThen { case _ => system.terminate() }
+    CountWords(hc.getResource).apply(ws).andThen ( _ => system.terminate() )
 
   /**
    * Executes the main application logic for processing a sequence of URLs to count words.
