@@ -438,6 +438,19 @@ object DataDefinition:
   given context: DDContext = DDContext.apply
 
   /**
+   * Terminates the ActorSystem backing this object's shared DDContext.
+   *
+   * DataDefinition's actor context is a JVM-wide singleton, created lazily the first time this
+   * object is touched, and there was previously no way to explicitly tear it down. Any
+   * short-lived process (or test/benchmark) which embeds DataDefinition should call this once
+   * it's done, so the underlying ActorSystem doesn't keep the JVM alive indefinitely.
+   *
+   * @return Unit
+   */
+  def shutdown(): Unit =
+    context.system.terminate()
+
+  /**
    * Creates a lazy `DataDefinition` from a sequence of key-value pairs, partitioning the data into the specified
    * number of partitions. The provided sequence can contain duplicate keys, and the values associated with duplicate
    * keys will be combined using the `Monoid` instance for the value type.

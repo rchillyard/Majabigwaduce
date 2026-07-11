@@ -23,7 +23,9 @@ import scala.util.Random
  * independently configurable here -- DataDefinition's actor context (DDContext) is a JVM-wide
  * singleton built once, lazily, from the global application config the first time the
  * DataDefinition object is touched. See MatrixBenchmark's doc comment for the full
- * explanation; the same forced-exit delay per fork applies here too.
+ * explanation. We do explicitly tear down its ActorSystem in @TearDown below (via
+ * DataDefinition.shutdown()), so each fork exits promptly instead of paying JMH's forced-exit
+ * timeout.
  *
  * Run with: benchmarks/Jmh/run -i 10 -wi 5 -f1 -t1 .*DataDefinitionBenchmark.*
  */
@@ -50,6 +52,11 @@ class DataDefinitionBenchmark {
   def setup(): Unit = {
     val r = new Random(42)
     kvs = (0 until size).map(i => i -> r.nextInt(1000))
+  }
+
+  @TearDown(Level.Trial)
+  def teardown(): Unit = {
+    DataDefinition.shutdown()
   }
 
   @Benchmark
