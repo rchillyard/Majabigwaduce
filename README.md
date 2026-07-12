@@ -72,7 +72,11 @@ val dd = DataDefinition(list, f, partitions)
 where `list` is a `Seq[V]` and where `f` is a function of type `V=>K` (the mapper function).
 
 In all cases, `partitions` represents the desired number of partitions for the data definition,
-but can be omitted, in which case it will default to 2.
+but can be omitted, in which case it will default to 4. When `partitions < 2` the pipeline is
+evaluated sequentially, in-thread, with no actors at all; when `partitions >= 2`, evaluation is
+routed through the actor-based `MapReducePipe` machinery, and `partitions` also sets the number
+of reducer actors used (since 2.0.1 -- previously this value was accepted but silently ignored
+for reducer-count purposes).
 
 There are three types of transformation function currently supported:
 
@@ -212,8 +216,8 @@ Master
 ------
 
 The `Master` (or one of its three siblings) is the only class which an application needs to be concerned with.
-The `Master`, itself an actor, creates a mapper and a number of reducers as appropriate at startup and destroys them at
-the end.
+The `Master`, itself an actor, creates a number of mapper and reducer actors as appropriate at startup and destroys
+them at the end.
 The input message and the constructor format are slightly different according to which form of the `Master`
 (see below) you are employing.
 
@@ -224,6 +228,11 @@ Each has its own small, sealed command protocol (e.g. `MasterCommand`, with `Com
 cases) whose "compute" cases carry an explicit `replyTo: ActorRef[...]`, and a `Close` case that stops the actor
 (and, transitively, its children) -- there is no more implicit `sender()`, and no more `system.stop`. None of this
 affects the mid-level (`MapReduce`) or high-level (`DataDefinition`) APIs described above, which are unchanged.
+
+Since version 2.0.1, the map phase is parallelized too: `Master` spawns `mappers` (a config key,
+default 4) mapper actors instead of one, splitting the incoming batch into contiguous chunks
+and fanning them out across the pool, then merging the results back together. Previously,
+mapping always ran sequentially inside a single actor regardless of reducer count.
 
 Generally, there are five polymorphic types which describe the definition of `Master`: `K1, V1, K2, W,` and `V2`.
 Of these, `W` is not involved in messages going to or from the master--it is internal only.
@@ -236,7 +245,7 @@ And, again generally, the constructor for the `Master` takes the following param
 
 where
 
-* `config` is used for various configuration settings, such as the number of reducers to be created;
+* `config` is used for various configuration settings, such as the number of mapper and reducer actors to be created;
 * `f` is described in `Mapper` below
 * `g` and `z` are described in `Reducer` below
 
@@ -389,7 +398,7 @@ Here is a simplified version (see the current code for the full version, includi
 ```scala
 case class CountWords(resourceFunc: String => Resource)
     (using system: ActorSystem[Nothing], logger: Logger, config: Config, timeout: Timeout, ec: ExecutionContext)
-  extends (Seq[String] => Future[Int]) {
+  extends (Seq[String] => Future[Int]) with AutoCloseable {
 
   type Strings = Seq[String]
 
@@ -403,21 +412,31 @@ case class CountWords(resourceFunc: String => Resource)
   }
   implicit object IntZeros extends IntZeros
 
-  override def apply(ws: Strings): Future[Int] =
-    given actors: Actors = Actors(summon[ActorSystem[Nothing]], summon[Config])
-    val stage1 = MapReduceFirstFold.create(
-      { (w: String) => val u = resourceFunc(w); (u.getServer(), u.getContent()) },
-      appendString
-    )(actors, timeout)
+  // Built once, here, and reused across every call to apply(ws) -- resourceFunc never changes
+  // for a given CountWords instance, only the data (ws) does.
+  given actors: Actors = Actors(summon[ActorSystem[Nothing]], summon[Config])
 
-    val stage2 = MapReducePipe.create[URI, Strings, URI, Int, Int](
-      (w, gs) => w -> (countFields(gs) reduce addInts),
-      addInts,
-      1
-    )
-    val stage3 = Reduce[URI, Int, Int](addInts)
-    val mr = stage1 & stage2 | stage3
-    mr(ws)
+  private val stage1 = MapReduceFirstFold.create(
+    { (w: String) => val u = resourceFunc(w); (u.getServer(), u.getContent()) },
+    appendString
+  )(actors, timeout)
+
+  private val stage2 = MapReducePipe.create[URI, Strings, URI, Int, Int](
+    (w, gs) => w -> (countFields(gs) reduce addInts),
+    addInts,
+    1
+  )
+  private val stage3 = Reduce[URI, Int, Int](addInts)
+  private val mr = stage1 & stage2 | stage3
+
+  override def apply(ws: Strings): Future[Int] = mr(ws)
+
+  // Releases the actors backing this instance -- since apply(ws) can be called repeatedly
+  // against the same instance, this isn't invoked automatically after each apply() call.
+  def close(): Unit = {
+    stage1.close()
+    stage2.close()
+  }
 
   private def countFields(gs: Strings) = for (g <- gs) yield g.split("""\s+""").length
   private def addInts(x: Int, y: Int) = x + y
@@ -425,7 +444,11 @@ case class CountWords(resourceFunc: String => Resource)
 }
 ```
 
-It is a three-stage map-reduce problem, including a final reduce stage.
+It is a three-stage map-reduce problem, including a final reduce stage. Note that the actors and
+pipeline stages are built once, in the case-class body, and reused across every call to
+`apply(ws)` -- building them fresh on every call (as earlier versions of this example did) pays
+the full actor create/destroy cost every time for no reason, since only the data changes between
+calls, not the functions.
 
 Stage 1 takes a `Seq[String]` (representing URIs) and produces a `Map[URI,Seq[String]]`.
 The mapper for the first stage returns a tuple of the `URI` (corresponding to the server for the string),
@@ -515,3 +538,10 @@ Revision History
 * 2.0.0 Migrated the `core` actors (`Master`, `Mapper`, `Reducer`) from Akka Classic to Akka Typed. See
   `doc/TypedActorsMigration.md` for the design rationale. The mid-level (`MapReduce`) and high-level
   (`DataDefinition`) APIs are unaffected.
+* 2.0.1 Addressed the three design limitations deferred by the 2.0.0 migration: actors are now
+  built once and reused across repeated calls where the call site allows it (see the `CountWords`
+  example); `Master` parallelizes the map phase across `mappers` actors, not just the reduce
+  phase; and `DataDefinition`'s `partitions` argument now actually sizes the reducer pool
+  (previously silently ignored). `DataDefinition.DefaultPartitions` changed from 2 to 4 to keep
+  this behavior-preserving for existing callers. See `benchmarks/README.md`'s "Design limitations
+  found via benchmarking" for the full before/after.

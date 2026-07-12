@@ -32,23 +32,23 @@ class MatrixFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with Futu
   behavior of "Matrix2"
 
   it should "implement product by identity correctly (N=250)" taggedAs Slow in {
-    given atMost: Duration = duration.FiniteDuration(1, "minute")
+    given atMost: Duration = duration.FiniteDuration(2, "second")
 
     productByIdentity(250)
   }
 
   // NOTE This runs just fine but it is really slow so normally, we ignore it.
-  ignore should "implement product by identity correctly (N=500)" taggedAs Slow in {
-    given atMost: Duration = duration.FiniteDuration(1, "minute")
+  it should "implement product by identity correctly (N=500)" taggedAs Slow in {
+    given atMost: Duration = duration.FiniteDuration(10, "second")
 
     productByIdentity(500)
   }
 
   // NOTE This runs just fine but it is really slow so normally, we ignore it.
-  ignore should "implement product by identity correctly (N=1000)" taggedAs Slow in {
+  ignore should "implement product by identity correctly (N=2000)" taggedAs Slow in {
     given atMost: Duration = duration.FiniteDuration(5, "minute")
 
-    productByIdentity(1000)
+    productByIdentity(2000)
   }
 
   private def productByIdentity(N: Int)(implicit atMost: Duration): Unit = Try {
