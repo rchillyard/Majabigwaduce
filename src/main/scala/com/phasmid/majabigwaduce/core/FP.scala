@@ -3,7 +3,8 @@ package com.phasmid.majabigwaduce.core
 import com.phasmid.majabigwaduce.matrix.IncompatibleLengthsException
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success, Try}
+import scala.util.Using.Releasable
+import scala.util.{Failure, Success, Try, Using}
 
 /**
  * This module contains functional programming methods which can also be found in the FP module of LaScala
@@ -206,6 +207,165 @@ object FP:
   def invokeTupled[T1, T2, R](t: (T1, T2))(f: (T1, T2) => R): R = f.tupled(t)
 
   /**
+   * Executes the provided computation if the given condition is true; otherwise, returns a Failure.
+   *
+   * @param p a Boolean condition that determines whether the computation should be executed.
+   * @param x a computation represented as a call-by-name parameter, which returns an X when evaluated.
+   * @tparam X the underlying type.
+   * @return a Try[X] representing the result of the computation if the condition is true, or a Failure if the condition is false.
+   */
+  def whenTry[X](p: Boolean)(x: => X): Try[X] =
+    if p then Success(x) else Failure(new Exception(s"condition $p is not satisfied"))
+
+  /**
+   * Executes the provided computation if the given condition is true; otherwise, returns a Failure.
+   * Unlike `whenTry`, the computation itself yields a `Try[X]`, so the result is flattened.
+   *
+   * @param p a Boolean condition that determines whether the computation should be executed.
+   * @param x a computation represented as a call-by-name parameter, which returns a Try[X] when evaluated.
+   * @tparam X the underlying type.
+   * @return a Try[X] representing the result of the computation if the condition is true, or a Failure if the condition is false.
+   */
+  def wheneverTry[X](p: Boolean)(x: => Try[X]): Try[X] =
+    whenTry(p)(x).flatten
+
+  /**
+   * Executes the provided block of code conditionally based on the given boolean predicate.
+   * If the predicate is true, the block of code is executed and its result is returned.
+   * If the predicate is false, None is returned.
+   *
+   * @param p the boolean predicate that determines whether the block of code should be executed.
+   * @param x a by-name parameter representing the block of code returning an Option of type X.
+   * @tparam X the underlying type.
+   * @return an Option containing the result of the block of code if `p` is true, or None if `p` is false.
+   */
+  def whenever[X](p: Boolean)(x: => Option[X]): Option[X] =
+    Option.when(p)(x).flatten
+
+  /**
+   * Method to convert a None value to a given exception (rather than the NoSuchElement exception).
+   *
+   * @param to an Option[T].
+   * @param x  a Throwable to be thrown if to is None.
+   * @tparam T the underlying type of to.
+   * @return t if to is Some(t); otherwise x will be thrown.
+   */
+  def recover[T](to: Option[T])(x: => Throwable): T = to.getOrElse(throw x)
+
+  /**
+   * Converts an `Option` into a `Try`, providing a failure cause if the `Option` is `None`.
+   *
+   * @param to the optional value to convert into a `Try`.
+   * @param x  the throwable to use as the failure cause if the `Option` is `None`.
+   * @tparam T the underlying type of to.
+   * @return a `Success` containing the value from the `Option` if it is `Some`, or a `Failure` if it is `None`.
+   */
+  def recoverAsTry[T](to: Option[T])(x: => Throwable): Try[T] = to match
+    case Some(t) => Success(t)
+    case None => Failure(x)
+
+  /**
+   * Converts an `Option` into a `Try`, falling back to the given `Try` if the `Option` is `None`.
+   *
+   * @param to the optional value to convert into a `Try`.
+   * @param x  the `Try` to fall back to if the `Option` is `None`.
+   * @tparam T the underlying type of to.
+   * @return a `Success` containing the value from the `Option` if it is `Some`, or `x` if it is `None`.
+   */
+  def recoverWithTry[T](to: Option[T])(x: => Try[T]): Try[T] = to match
+    case Some(t) => Success(t)
+    case None => x
+
+  /**
+   * Method to convert an `Option` into a `Try`, given a default `Try` to use if the `Option` is `None`.
+   *
+   * @param xo      an Option[X].
+   * @param default a Try[X] to use if `xo` is `None`.
+   * @tparam X the underlying type of both input and output.
+   * @return if `xo` is `Some(x)` then `Success(x)` else `default`.
+   */
+  def toTry[X](xo: Option[X])(default: => Try[X]): Try[X] =
+    xo map (Success(_)) getOrElse default
+
+  /**
+   * Converts a `Try` instance into an `Option`. Any exception in the input is, of course, lost.
+   *
+   * @param xy the `Try` instance to be converted.
+   * @tparam X the underlying type.
+   * @return an `Option` containing the value if the `Try` is a `Success`, or `None` if the `Try` is a `Failure`.
+   */
+  def toOption[X](xy: => Try[X]): Option[X] =
+    toOptionWithLog(_ => ())(xy)
+
+  /**
+   * Converts a `Try` instance into an `Option`. Any exception in the input is logged according to the `log` function.
+   *
+   * @param log a function to log the exception, if any.
+   * @param xy  the `Try` instance to be converted.
+   * @tparam X the underlying type.
+   * @return an `Option` containing the value if the `Try` is a `Success`, or `None` if the `Try` is a `Failure`.
+   */
+  def toOptionWithLog[X](log: Throwable => Unit)(xy: => Try[X]): Option[X] = xy match
+    case Success(x) => Some(x)
+    case Failure(x) => log(x); None
+
+  /**
+   * This method is a substitute for `Try.apply` in the case that we want it as a function
+   * (otherwise, we run into a type inference problem).
+   *
+   * @param x an X.
+   * @tparam X the type of x.
+   * @return Success(x)
+   */
+  def identityTry[X](x: X): Try[X] = Success(x)
+
+  /**
+   * Method to yield an Option of T according to whether the predicate p yields true.
+   *
+   * @param p a predicate on T.
+   * @param t an actual value of T.
+   * @tparam T the type of t (and the underlying type of the result).
+   * @return Some(t) if p(t) is true, otherwise None.
+   */
+  def optional[T](p: T => Boolean)(t: T): Option[T] =
+    Some(t).filter(p)
+
+  /**
+   * Sequence method to invert the order of types Option/Try.
+   *
+   * @param xyo an Option of Try[X].
+   * @tparam X the underlying type.
+   * @return a Try of Option[X].
+   */
+  def sequence[X](xyo: Option[Try[X]]): Try[Option[X]] = xyo match
+    case Some(Success(x)) => Success(Some(x))
+    case Some(Failure(x)) => Failure(x)
+    case None => Success(None)
+
+  /**
+   * Sequence method to combine elements of type Option[X].
+   *
+   * @param xos an Iterable of Option[X].
+   * @tparam X the underlying type.
+   * @return if `xos` contains any `None`s, the result will be `None`, otherwise `Some(...)`.
+   *         NOTE: that the output collection type will be Seq, regardless of the input type.
+   */
+  def sequence[X](xos: Iterable[Option[X]]): Option[Seq[X]] =
+    xos.foldLeft(Option(Seq[X]())) {
+      (xso, xo) => for xs <- xso; x <- xo yield xs :+ x
+    }
+
+  /**
+   * Sequence method to combine elements of type Option[X].
+   *
+   * @param xos an Iterator of Option[X].
+   * @tparam X the underlying type.
+   * @return an Option of Iterator[X].
+   */
+  def sequence[X](xos: Iterator[Option[X]]): Option[Iterator[X]] =
+    sequence(xos.to(List)).map(_.iterator)
+
+  /**
    * Method to make a compatibility check on two vectors (not currently used).
    * The result is successful if the vectors are of the same (non-zero) size.
    *
@@ -232,3 +392,36 @@ object FP:
    */
   def checkCompatibleX[A, B](as: Seq[A], bss: Seq[Seq[B]]): Try[(Seq[A], Seq[Seq[B]])] =
     checkCompatible(as, bss.transpose)
+
+/**
+ * The `TryUsing` object provides utility methods to manage resources safely
+ * and effectively using Scala's `Using` and `Try`.
+ * It encapsulates resource management in a functional way, ensuring proper release of resources.
+ * The methods in this object extend the functionality of `Using.apply`
+ * by offering flattening operations over nested `Try`.
+ */
+object TryUsing:
+  /**
+   * This method is to `Using.apply` as `flatMap` is to `map`.
+   *
+   * @param resource a resource which is used by f and will be managed via `Using.apply`
+   * @param f        a function of R => Try[A].
+   * @tparam R the resource type.
+   * @tparam A the underlying type of the result.
+   * @return a Try[A]
+   */
+  def apply[R: Releasable, A](resource: => R)(f: R => Try[A]): Try[A] = Using(resource)(f).flatten
+
+  /**
+   * This method is similar to `apply(r)` but it takes a `Try[R]` as its parameter.
+   * The definition of `f` is the same as in the other apply, however.
+   *
+   * TESTME
+   *
+   * @param ry a Try[R] which is passed into f and will be managed via `Using.apply`
+   * @param f  a function of R => Try[A].
+   * @tparam R the resource type.
+   * @tparam A the underlying type of the result.
+   * @return a Try[A]
+   */
+  def apply[R: Releasable, A](ry: Try[R])(f: R => Try[A]): Try[A] = for (r <- ry; a <- apply(r)(f)) yield a
