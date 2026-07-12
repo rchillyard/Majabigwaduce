@@ -30,12 +30,7 @@ class WebCrawlerSpec extends flatspec.AnyFlatSpec with should.Matchers with Futu
   // But sometimes when run with all the specs in Majabigwaduce, this runs -- but in the logs we see exceptions thrown
   "crawl" should "work" in {
     given config: Config = ConfigFactory.load.getConfig("majabigwaduce.WebCrawler")
-
-    given system: ActorSystem[Nothing] = ActorSystem(Behaviors.empty, config.getString("name"))
-
-    given to: Timeout = WebCrawler.getTimeout(config.getString("timeout"))
-    import ExecutionContext.Implicits.global
-    val ws = Seq(config.getString("start"))
+    val start = config.getString("start")
 
     // NOTE: WebCrawler's own reduce function is deliberately forgiving of a failed fetch (it
     // logs and moves on, rather than crashing a whole crawl over one bad link) -- appropriate for
@@ -44,11 +39,18 @@ class WebCrawlerSpec extends flatspec.AnyFlatSpec with should.Matchers with Futu
     // of the seed page directly, up front: if it's unreachable, this is an environment problem,
     // not a code problem, and we cancel (not fail) the test; if it's reachable, a low link count
     // is a real regression and the strict assertion below should hold.
-    if !WebCrawlerSpec.isReachable(ws.head)
-    then cancel(s"seed URL ${ws.head} is not reachable from this environment -- skipping live-network crawl test")
+    //
+    // NOTE: the ActorSystem is deliberately constructed only after this check (not before) --
+    // WebCrawler.apply() terminates it once the crawl completes (see WebCrawler.scala), but if
+    // we cancel before ever calling apply(), a system built beforehand would never be terminated.
+    if !WebCrawlerSpec.isReachable(start)
+    then cancel(s"seed URL $start is not reachable from this environment -- skipping live-network crawl test")
     else
+      given system: ActorSystem[Nothing] = ActorSystem(Behaviors.empty, config.getString("name"))
+      given to: Timeout = WebCrawler.getTimeout(config.getString("timeout"))
+      import ExecutionContext.Implicits.global
       val crawler = WebCrawler(config.getInt("depth"))
-      val xf = crawler(ws)
+      val xf = crawler(Seq(start))
       whenReady(xf, timeout(Span(300, Seconds)))( // The actual number is approximate and will vary (currently 9)
         i => assert(i > 5 && i < 200))
   }

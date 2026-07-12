@@ -123,4 +123,192 @@ class FPSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers with Fut
     whenReady(eventualInt) { x => x should matchPattern { case 1 => } }
     //    whenReady(toFuture(Failure[Int](new Exception("bad")))) { x => p shouldBe new Exception("bad")}
   }
+
+  behavior of "whenTry"
+  it should "succeed when the condition is true" in {
+    whenTry(true)(42) shouldBe Success(42)
+  }
+  it should "fail when the condition is false" in {
+    whenTry(false)(42) should matchPattern { case Failure(_) => }
+  }
+
+  behavior of "wheneverTry"
+  it should "flatten a Success when the condition is true" in {
+    wheneverTry(true)(Success(42)) shouldBe Success(42)
+  }
+  it should "flatten a Failure when the condition is true" in {
+    val x = MapReduceException("boom")
+    wheneverTry(true)(Failure(x)) shouldBe Failure(x)
+  }
+  it should "fail when the condition is false" in {
+    wheneverTry(false)(Success(42)) should matchPattern { case Failure(_) => }
+  }
+
+  behavior of "whenever"
+  it should "flatten a Some when the condition is true" in {
+    whenever(true)(Some(42)) shouldBe Some(42)
+  }
+  it should "flatten a None when the condition is true" in {
+    whenever(true)(None) shouldBe None
+  }
+  it should "yield None when the condition is false" in {
+    whenever(false)(Some(42)) shouldBe None
+  }
+
+  behavior of "recover"
+  it should "return the value when Some" in {
+    recover(Some(42))(new Exception("boom")) shouldBe 42
+  }
+  it should "throw the given exception when None" in {
+    val x = new Exception("boom")
+    a[Exception] should be thrownBy recover(None)(x)
+  }
+
+  behavior of "recoverAsTry"
+  it should "return a Success when Some" in {
+    recoverAsTry(Some(42))(new Exception("boom")) shouldBe Success(42)
+  }
+  it should "return a Failure when None" in {
+    val x = new Exception("boom")
+    recoverAsTry(None)(x) shouldBe Failure(x)
+  }
+
+  behavior of "recoverWithTry"
+  it should "return a Success when Some" in {
+    recoverWithTry(Some(42))(Failure(new Exception("boom"))) shouldBe Success(42)
+  }
+  it should "fall back to the given Try when None" in {
+    val x = new Exception("boom")
+    recoverWithTry(None)(Failure(x)) shouldBe Failure(x)
+    recoverWithTry(None: Option[Int])(Success(99)) shouldBe Success(99)
+  }
+
+  behavior of "toTry"
+  it should "return a Success when Some" in {
+    toTry(Some(42))(Failure(new Exception("boom"))) shouldBe Success(42)
+  }
+  it should "fall back to the default when None" in {
+    val x = new Exception("boom")
+    toTry(None)(Failure(x)) shouldBe Failure(x)
+  }
+
+  behavior of "toOption"
+  it should "return Some for a Success" in {
+    toOption(Success(42)) shouldBe Some(42)
+  }
+  it should "return None for a Failure" in {
+    toOption(Failure(new Exception("boom"))) shouldBe None
+  }
+
+  behavior of "toOptionWithLog"
+  it should "return Some for a Success and never invoke the log" in {
+    var logged = false
+    toOptionWithLog[Int](_ => logged = true)(Success(42)) shouldBe Some(42)
+    logged shouldBe false
+  }
+  it should "return None for a Failure and invoke the log with the exception" in {
+    val x = new Exception("boom")
+    var logged: Option[Throwable] = None
+    toOptionWithLog[Int](t => logged = Some(t))(Failure(x)) shouldBe None
+    logged shouldBe Some(x)
+  }
+
+  behavior of "identityTry"
+  it should "wrap a value in a Success" in {
+    identityTry(42) shouldBe Success(42)
+  }
+
+  behavior of "optional"
+  it should "return Some when the predicate holds" in {
+    optional[Int](_ > 0)(42) shouldBe Some(42)
+  }
+  it should "return None when the predicate fails" in {
+    optional[Int](_ > 0)(-1) shouldBe None
+  }
+
+  behavior of "sequence(Option[Try[X]])"
+  it should "return Success(None) for None" in {
+    sequence(None: Option[Try[Int]]) shouldBe Success(None)
+  }
+  it should "return Success(Some(x)) for Some(Success(x))" in {
+    sequence(Some(Success(42))) shouldBe Success(Some(42))
+  }
+  it should "return Failure(x) for Some(Failure(x))" in {
+    val x = MapReduceException("boom")
+    sequence(Some(Failure(x)): Option[Try[Int]]) shouldBe Failure(x)
+  }
+
+  behavior of "sequence(Iterable[Option[X]])"
+  it should "return Some(Seq(...)) when all elements are Some" in {
+    sequence(Seq(Some(1), Some(2), Some(3))) shouldBe Some(Seq(1, 2, 3))
+  }
+  it should "return None when any element is None" in {
+    sequence(Seq(Some(1), None, Some(3))) shouldBe None
+  }
+  it should "return Some(Nil) for an empty input" in {
+    sequence(Seq.empty[Option[Int]]) shouldBe Some(Nil)
+  }
+
+  behavior of "sequence(Iterator[Option[X]])"
+  it should "return Some(Iterator(...)) when all elements are Some" in {
+    sequence(Iterator(Some(1), Some(2), Some(3))).map(_.toSeq) shouldBe Some(Seq(1, 2, 3))
+  }
+  it should "return None when any element is None" in {
+    sequence(Iterator(Some(1), None, Some(3))) shouldBe None
+  }
+}
+
+class TryUsingSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers {
+
+  behavior of "TryUsing"
+
+  class Resource(value: Int) extends AutoCloseable {
+    var closed: Boolean = false
+
+    def get: Int = value
+
+    def close(): Unit = closed = true
+  }
+
+  it should "flatten a Success(Success(...)) into a Success and close the resource" in {
+    val resource = new Resource(42)
+    val result = TryUsing(resource)(r => Success(r.get * 2))
+    result shouldBe Success(84)
+    resource.closed shouldBe true
+  }
+
+  it should "flatten a Success(Failure(...)) into a Failure and still close the resource" in {
+    val resource = new Resource(1)
+    val x = MapReduceException("boom")
+    val result = TryUsing(resource)(_ => Failure(x))
+    result shouldBe Failure(x)
+    resource.closed shouldBe true
+  }
+
+  it should "fail (and never invoke f) if constructing the resource throws" in {
+    def resource: Resource = throw new RuntimeException("cannot construct")
+
+    var invoked = false
+    val result = TryUsing(resource) { r => invoked = true; Success(r.get) }
+    result should matchPattern { case Failure(_) => }
+    invoked shouldBe false
+  }
+
+  it should "short-circuit (and never construct the resource) when given an already-failed Try[R]" in {
+    val x = MapReduceException("upstream failure")
+    var constructed = false
+
+    def resource: Resource = { constructed = true; new Resource(1) }
+
+    val result = TryUsing(Failure(x): Try[Resource])(r => Success(r.get))
+    result shouldBe Failure(x)
+    constructed shouldBe false
+  }
+
+  it should "delegate to the resource-based apply when given a successful Try[R]" in {
+    val resource = new Resource(7)
+    val result = TryUsing(Success(resource): Try[Resource])(r => Success(r.get + 1))
+    result shouldBe Success(8)
+    resource.closed shouldBe true
+  }
 }

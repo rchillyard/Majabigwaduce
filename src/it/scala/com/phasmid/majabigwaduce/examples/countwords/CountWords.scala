@@ -53,7 +53,7 @@ type ResourceFunction = String => Resource
  * @param timeout      An implicit `Timeout` for specifying operation timeout durations.
  * @param ec           An implicit `ExecutionContext` for managing asynchronous computations.
  */
-case class CountWords(resourceFunc: ResourceFunction)(using system: ActorSystem[Nothing], logger: Logger, config: Config, timeout: Timeout, ec: ExecutionContext) extends (Seq[String] => Future[Int]) {
+case class CountWords(resourceFunc: ResourceFunction)(using system: ActorSystem[Nothing], logger: Logger, config: Config, timeout: Timeout, ec: ExecutionContext) extends (Seq[String] => Future[Int]) with AutoCloseable {
 
   trait StringsZeros extends Zero[Strings] {
     def zero: Strings = Nil: Strings
@@ -67,19 +67,34 @@ case class CountWords(resourceFunc: ResourceFunction)(using system: ActorSystem[
 
   implicit object IntZeros extends IntZeros
 
-  override def apply(ws: Strings): Future[Int] =
-    given actors: Actors = Actors(summon[ActorSystem[Nothing]], summon[Config])
-    //    val stage1 = MapReduceFirstFold.create({ w: String => val u = resourceFunc("stage1 map" !! w); (u.getServer, u.getContent) }, appendString)(actors, timeout)
-    val stage1 = MapReduceFirstFold.create({ (w: String) => val u = resourceFunc(w); (u.getServer(), u.getContent()) }, appendString)(actors, timeout)
+  // NOTE: actors and the pipeline stages are built once, here, and reused across every call to
+  // apply(ws) -- resourceFunc (and therefore the mapper/reducer functions) never changes for a
+  // given CountWords instance, only the data (ws) does. Building these fresh inside apply() on
+  // every call (as this used to do) paid the full actor create/destroy cost every time for no
+  // reason -- the single biggest cost the benchmarks measured (see benchmarks/README.md).
+  given actors: Actors = Actors(summon[ActorSystem[Nothing]], summon[Config])
 
-    val stage2 = MapReducePipe.create[URI, Strings, URI, Int, Int](
-      (w, gs) => w -> (countFields(gs) reduce addInts),
-      addInts,
-      1
-    )
-    val stage3 = Reduce[URI, Int, Int](addInts)
-    val mr = stage1 & stage2 | stage3
-    mr(ws)
+  //    val stage1 = MapReduceFirstFold.create({ w: String => val u = resourceFunc("stage1 map" !! w); (u.getServer, u.getContent) }, appendString)(actors, timeout)
+  private val stage1 = MapReduceFirstFold.create({ (w: String) => val u = resourceFunc(w); (u.getServer(), u.getContent()) }, appendString)(actors, timeout)
+
+  private val stage2 = MapReducePipe.create[URI, Strings, URI, Int, Int](
+    (w, gs) => w -> (countFields(gs) reduce addInts),
+    addInts,
+    1
+  )
+  private val stage3 = Reduce[URI, Int, Int](addInts)
+  private val mr = stage1 & stage2 | stage3
+
+  override def apply(ws: Strings): Future[Int] = mr(ws)
+
+  /**
+   * Releases the actors backing this CountWords instance. Since apply(ws) can be called
+   * repeatedly against the same instance, this must be called explicitly once the instance is
+   * no longer needed -- it is not invoked automatically after each apply() call.
+   */
+  def close(): Unit =
+    stage1.close()
+    stage2.close()
 
   private def countFields(gs: Strings) = for (g <- gs) yield g.split("""\s+""").length
 

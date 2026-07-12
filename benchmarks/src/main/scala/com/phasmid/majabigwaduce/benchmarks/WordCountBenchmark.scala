@@ -13,7 +13,7 @@ import org.openjdk.jmh.annotations.*
 
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.*
-import scala.concurrent.{Await, ExecutionContext}
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.Random
 
 /**
@@ -54,11 +54,22 @@ class WordCountBenchmark {
   @Param(Array("-1"))
   var reducers: Int = _
 
+  // true: build the Actors/pipeline once (in @Setup) and reuse it across every @Benchmark
+  // invocation in the trial -- the fixed behavior. false: build a fresh Actors/pipeline on
+  // every single invocation and close it at the end (the pre-2.0.1 behavior), kept as an
+  // explicit, labeled "cold" comparison point. See benchmarks/README.md.
+  @Param(Array("true", "false"))
+  var reuseInstance: Boolean = _
+
   private var system: ActorSystem[Nothing] = _
   private var docIds: Strings = _
   private var ec: ExecutionContext = _
   private var config: com.typesafe.config.Config = _
   private var resolvedKeyCardinality: Int = _
+
+  // Populated in @Setup only when reuseInstance == true; closed in @TearDown.
+  private var reusableMr: Strings => Future[Int] = _
+  private var reusableClose: () => Unit = _
 
   private val timeout: Timeout = Timeout(30.seconds)
 
@@ -79,10 +90,29 @@ class WordCountBenchmark {
     val baseConfig = ConfigFactory.load().getConfig("majabigwaduce")
     config = baseConfig.withValue("reducers", ConfigValueFactory.fromAnyRef(resolvedReducers))
     docIds = (0 until documents).map(i => s"doc-$i")
+
+    if reuseInstance then
+      given actors: Actors = Actors(system, config)
+      given ExecutionContext = ec
+      given Timeout = timeout
+
+      val stage1 = MapReduceFirstFold.create({ (w: String) => (serverFor(w), contentFor(w)) }, appendString)(actors, timeout)
+      val stage2 = MapReducePipe.create[String, Strings, String, Int, Int](
+        (w, gs) => w -> (countFields(gs) reduce addInts),
+        addInts,
+        1
+      )
+      val stage3 = Reduce[String, Int, Int](addInts)
+      reusableMr = stage1 & stage2 | stage3
+      reusableClose = () => {
+        stage1.close()
+        stage2.close()
+      }
   }
 
   @TearDown(Level.Trial)
   def teardown(): Unit = {
+    if reuseInstance then reusableClose()
     system.terminate()
     Await.ready(system.whenTerminated, 30.seconds)
   }
@@ -98,28 +128,29 @@ class WordCountBenchmark {
   private def addInts(x: Int, y: Int): Int = x + y
 
   @Benchmark
-  def wordCount(): Int = {
-    // A fresh Actors instance per invocation: its actor-name suffix is fixed at construction,
-    // so reusing one instance across invocations would collide on actor names since the
-    // previous invocation's actors are still alive (see stage1/stage2 close() below).
-    given actors: Actors = Actors(system, config)
-    given ExecutionContext = ec
-    given Timeout = timeout
+  def wordCount(): Int =
+    if reuseInstance then
+      Await.result(reusableMr(docIds), timeout.duration)
+    else
+      // The "cold" comparison point: a fresh Actors/pipeline built and torn down on every
+      // single invocation -- the pre-2.0.1 behavior for every caller of this benchmark.
+      given actors: Actors = Actors(system, config)
+      given ExecutionContext = ec
+      given Timeout = timeout
 
-    val stage1 = MapReduceFirstFold.create({ (w: String) => (serverFor(w), contentFor(w)) }, appendString)(actors, timeout)
-    val stage2 = MapReducePipe.create[String, Strings, String, Int, Int](
-      (w, gs) => w -> (countFields(gs) reduce addInts),
-      addInts,
-      1
-    )
-    val stage3 = Reduce[String, Int, Int](addInts)
-    val mr = stage1 & stage2 | stage3
-    try Await.result(mr(docIds), timeout.duration)
-    finally {
-      stage1.close()
-      stage2.close()
-    }
-  }
+      val stage1 = MapReduceFirstFold.create({ (w: String) => (serverFor(w), contentFor(w)) }, appendString)(actors, timeout)
+      val stage2 = MapReducePipe.create[String, Strings, String, Int, Int](
+        (w, gs) => w -> (countFields(gs) reduce addInts),
+        addInts,
+        1
+      )
+      val stage3 = Reduce[String, Int, Int](addInts)
+      val mr = stage1 & stage2 | stage3
+      try Await.result(mr(docIds), timeout.duration)
+      finally {
+        stage1.close()
+        stage2.close()
+      }
 }
 
 object WordCountBenchmark {

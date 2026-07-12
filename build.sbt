@@ -2,7 +2,7 @@ organization := "com.phasmidsoftware"
 
 name := "Majabigwaduce"
 
-version := "2.0.0"
+version := "2.0.1"
 
 scalaVersion := "3.3.8"
 

@@ -17,8 +17,15 @@ import org.scalatest.time.{Seconds, Span}
 
 import scala.concurrent.duration.*
 import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.util.Using
 
 class MatrixOperationFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with Futures with ScalaFutures with Inside {
+
+  // NOTE: MatrixOperation itself doesn't terminate the ActorSystem it's given, so each test owns
+  // that responsibility. Using.resource guarantees system.terminate() runs even if the whenReady
+  // assertion below fails -- a bare trailing statement (the previous approach) would not.
+  private given releasable: Using.Releasable[ActorSystem[Nothing]] = _.terminate()
+
   "MatrixOperation" should "apply vector" in {
     given config: Config = ConfigFactory.load.getConfig("majabigwaduce.Matrix")
 
@@ -28,19 +35,19 @@ class MatrixOperationFuncSpec extends flatspec.AnyFlatSpec with should.Matchers 
 
     given logger: Logger = LoggerFactory.getLogger(classOf[MatrixOperation[?]])
     import ExecutionContext.Implicits.global
-    val op: MatrixOperation[Int] = MatrixOperation(x => x % 10)
-    val matrix = Seq(Seq(1, 1), Seq(2, 1))
-    val vector = Seq(3, 5)
-    val isf: Future[Seq[Int]] = op(matrix, vector)
 
-    whenReady(isf, timeout(Span(300, Seconds))) {
-      (is: Seq[Int]) =>
-        val ok = for (i1 <- is.headOption; i2 <- is.tail.headOption) yield i1 == 8 && i2 == 11
-        ok should matchPattern { case Some(true) => }
+    Using.resource(system) { _ =>
+      val op: MatrixOperation[Int] = MatrixOperation(x => x % 10)
+      val matrix = Seq(Seq(1, 1), Seq(2, 1))
+      val vector = Seq(3, 5)
+      val isf: Future[Seq[Int]] = op(matrix, vector)
+
+      whenReady(isf, timeout(Span(300, Seconds))) {
+        (is: Seq[Int]) =>
+          val ok = for (i1 <- is.headOption; i2 <- is.tail.headOption) yield i1 == 8 && i2 == 11
+          ok should matchPattern { case Some(true) => }
+      }
     }
-
-    system.terminate()
-    Await.ready(system.whenTerminated, 5.seconds)
   }
 
   it should "create product of matrices" in {
@@ -52,17 +59,17 @@ class MatrixOperationFuncSpec extends flatspec.AnyFlatSpec with should.Matchers 
 
     given logger: Logger = LoggerFactory.getLogger(classOf[MatrixOperation[?]])
     import ExecutionContext.Implicits.global
-    val op: MatrixOperation[Int] = MatrixOperation(x => x % 10)
-    val matrix1 = Seq(Seq(1, 2, 3), Seq(4, 5, 6))
-    val matrix2 = Seq(Seq(7, 8), Seq(9, 10), Seq(11, 12))
-    val isf: Future[Seq[Seq[Int]]] = op.product(matrix1, matrix2)
 
-    whenReady(isf, timeout(Span(300, Seconds))) {
-      (is: Seq[Seq[Int]]) => assert(is.head == Seq(58, 64) && is.tail.head == Seq(139, 154))
+    Using.resource(system) { _ =>
+      val op: MatrixOperation[Int] = MatrixOperation(x => x % 10)
+      val matrix1 = Seq(Seq(1, 2, 3), Seq(4, 5, 6))
+      val matrix2 = Seq(Seq(7, 8), Seq(9, 10), Seq(11, 12))
+      val isf: Future[Seq[Seq[Int]]] = op.product(matrix1, matrix2)
+
+      whenReady(isf, timeout(Span(300, Seconds))) {
+        (is: Seq[Seq[Int]]) => assert(is.head == Seq(58, 64) && is.tail.head == Seq(139, 154))
+      }
     }
-
-    system.terminate()
-    Await.ready(system.whenTerminated, 5.seconds)
   }
 
   "main program" should "work" in {

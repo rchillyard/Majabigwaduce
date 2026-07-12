@@ -11,7 +11,7 @@ import com.phasmid.majabigwaduce.core.{Actors, MapReducePipe, Monoid, Zero}
 import com.phasmid.majabigwaduce.dd.DataDefinition.IterableMonoid
 import com.phasmid.majabigwaduce.dd.LazyDD.joinMap
 import com.phasmidsoftware.flog.{Flog, Loggable}
-import com.typesafe.config.{Config, ConfigFactory}
+import com.typesafe.config.{Config, ConfigFactory, ConfigValueFactory}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.concurrent.duration.FiniteDuration
@@ -277,7 +277,12 @@ case class LazyDD[K, V, L, W: Monoid]
     if partitions < 2
     then Future(EagerDD(applyFunction))(scala.concurrent.ExecutionContext.Implicits.global)
     else
-      given actors: Actors = Actors(summon[ActorSystem[Nothing]], summon[Config])
+      // NOTE: sizes the reducer pool to this LazyDD's own partitions value, rather than the
+      // ignored, JVM-wide DDContext config default -- Config is immutable, so this only affects
+      // the Actors/Master built for THIS evaluate() call, not the shared context.config used by
+      // any other DataDefinition instance. See benchmarks/README.md's "Design limitations" item 3.
+      val perCallConfig: Config = summon[Config].withValue("reducers", ConfigValueFactory.fromAnyRef(partitions))
+      given actors: Actors = Actors(summon[ActorSystem[Nothing]], perCallConfig)
 
       val mr = MapReducePipe.create[K, V, L, W, W]((k, v) => f((k, v)), summon[Monoid[W]].combine, 1)
       context.register(mr)
@@ -488,7 +493,7 @@ object DataDefinition:
    * @return a lazily evaluated `DataDefinition` partitioned into the specified number of parts
    */
   def apply[K, V: Monoid](kVm: Map[K, V], partitions: Int): DataDefinition[K, V] =
-    apply(kVm.toSeq)
+    apply(kVm.toSeq, partitions)
 
   /**
    * Creates a `DataDefinition` from a map of key-value pairs, where the value type has a `Monoid` defined.
@@ -565,7 +570,11 @@ object DataDefinition:
 
   private def vToWToTupleToTuple[K, V, W](f: V => W)(t: (K, V)): (K, W) = (t._1, f(t._2))
 
-  val DefaultPartitions: Int = 2
+  // NOTE: bumped from 2 to 4 in 2.0.1, when `partitions` started actually driving reducer
+  // count (see LazyDD.evaluate) -- this keeps reducer count unchanged (still 4) for the many
+  // existing callers who don't pass `partitions` explicitly, matching what they already got
+  // via the previously-ignored `reducers` config default.
+  val DefaultPartitions: Int = 4
 
 /**
  * An object containing utility methods for performing operations on keyed collections
