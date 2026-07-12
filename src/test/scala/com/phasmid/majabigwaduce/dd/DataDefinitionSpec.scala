@@ -24,6 +24,16 @@ class DataDefinitionSpec extends flatspec.AnyFlatSpec with should.Matchers with 
 
   given timeout: Timeout = Timeout(5.seconds)
 
+  // NOTE: DataDefinition's actors all run inside the shared, JVM-wide DDContext singleton
+  // ActorSystem (built lazily the first time DataDefinition is touched, terminated only via the
+  // explicit DataDefinition.shutdown() -- see its doc comment). Deliberately NOT terminated here:
+  // this singleton is shared with other spec classes in the same JVM (e.g. MatrixSpec, since
+  // Matrix/Matrix2 are built on DataDefinition), and sbt runs all specs in one JVM by default, so
+  // any one spec's afterAll() terminating it would break whichever other spec happens to run
+  // afterward and still needs it (confirmed: this exact thing broke MatrixSpec when tried).
+  // Individual tests still call target.clean() to close their own Master/Mapper/Reducer actors;
+  // the ActorSystem itself is reclaimed when the whole test-run JVM process exits.
+
   behavior of "LazyDD of Map"
   it should "apply correctly with single partition" in {
     // given

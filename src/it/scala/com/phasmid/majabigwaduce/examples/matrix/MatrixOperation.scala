@@ -15,7 +15,7 @@ import org.slf4j.{Logger, LoggerFactory}
 import scala.concurrent.duration.*
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.language.postfixOps
-import scala.util.{Failure, Random, Try}
+import scala.util.{Failure, Random, Try, Using}
 
 /**
  * This case class is a framework for performing matrix operations.
@@ -124,19 +124,26 @@ object MatrixOperation:
   given timeout: Timeout = Actors.getTimeout(config.getString("timeout"))
   given logger: Logger = LoggerFactory.getLogger("MatrixOperationApp")
 
-  val rows = config.getInt("rows")
-  val cols = config.getInt("columns")
-  val modulus = config.getInt("modulus")
+  // NOTE: MatrixOperation itself doesn't terminate the ActorSystem it's given (unlike
+  // WebCrawler.apply()), so this app owns that responsibility -- Using.resource guarantees
+  // system.terminate() runs even if Await.result throws (timeout, failed Future, etc.), which a
+  // bare trailing statement would not.
+  given Using.Releasable[ActorSystem[Nothing]] = _.terminate()
 
-  val op: MatrixOperation[Double] = MatrixOperation(x => x % modulus)
+  Using.resource(system) { _ =>
+    val rows = config.getInt("rows")
+    val cols = config.getInt("columns")
+    val modulus = config.getInt("modulus")
 
-  def row(i: Int): Seq[Double] =
-    val r = new Random(i)
-    (LazyList.from(0) take cols) map (_ => r.nextDouble())
+    val op: MatrixOperation[Double] = MatrixOperation(x => x % modulus)
 
-  val matrix: Seq[Seq[Double]] = LazyList.tabulate(rows)(row)
-  val vector: Seq[Double] = row(-1)
-  val isf: Future[Seq[Double]] = op(matrix, vector)
-  Await.result(isf, 10.minutes)
-  isf foreach println
-  system.terminate()
+    def row(i: Int): Seq[Double] =
+      val r = new Random(i)
+      (LazyList.from(0) take cols) map (_ => r.nextDouble())
+
+    val matrix: Seq[Seq[Double]] = LazyList.tabulate(rows)(row)
+    val vector: Seq[Double] = row(-1)
+    val isf: Future[Seq[Double]] = op(matrix, vector)
+    Await.result(isf, 10.minutes)
+    isf foreach println
+  }

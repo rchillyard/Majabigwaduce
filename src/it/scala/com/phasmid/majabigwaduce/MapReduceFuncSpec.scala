@@ -20,7 +20,7 @@ import org.slf4j.{Logger, LoggerFactory}
 import scala.concurrent.ExecutionContext.Implicits.global
 
 import java.net.URL
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 import scala.util._
 
@@ -32,7 +32,7 @@ case class MockURL(w: String) {
   def asTuple: (URL, String) = url -> content
 }
 
-class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with Futures with ScalaFutures with Inside {
+class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with Futures with ScalaFutures with Inside with BeforeAndAfterAll {
   given system: ActorSystem[Nothing] = ActorSystem(Behaviors.empty, "MapReduceFuncSpec")
 
   given timeout: Timeout = Timeout(5.seconds)
@@ -40,6 +40,13 @@ class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with F
   given scheduler: Scheduler = system.scheduler
 
   private val logger: Logger = LoggerFactory.getLogger(classOf[MapReduceFuncSpec])
+
+  // NOTE: system is shared across every test in this class (each test just closes its own
+  // Master via CloseMaster()), so it's only safe to terminate once, after they've all run --
+  // previously this was never terminated at all.
+  override def afterAll(): Unit =
+    system.terminate()
+    Await.ready(system.whenTerminated, 5.seconds)
 
   private val config = ConfigFactory.load().getConfig("majabigwaduce")
   val spec0 = "WC"

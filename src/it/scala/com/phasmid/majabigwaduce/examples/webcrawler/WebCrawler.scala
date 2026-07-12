@@ -64,7 +64,10 @@ case class WebCrawler(depth: Int)(implicit system: ActorSystem[Nothing], config:
    * @return a Future containing the total count of processed URLs as an integer.
    */
   override def apply(ws: Strings): Future[Int] =
-    doCrawl(ws, Nil, depth) transform( { n => val z = n.length; system.terminate(); z }, { x => logger.error("Map/reduce error (typically in map function)", x); x })
+    doCrawl(ws, Nil, depth) transform(
+      { n => val z = n.length; system.terminate(); z },
+      { x => logger.error("Map/reduce error (typically in map function)", x); system.terminate(); x }
+    )
 
   private def doCrawl(ws: Strings, all: Strings, depth: Int): Future[Strings] =
     if depth < 0
