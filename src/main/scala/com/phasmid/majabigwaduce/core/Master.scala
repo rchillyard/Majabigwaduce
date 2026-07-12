@@ -57,9 +57,10 @@ object Master:
     behavior(config, f, Reducer(g))
 
   /**
-   * Builds the shared Master behavior. On setup, spawns one mapper and `reducers` (per config)
-   * reducer children, then handles ComputeMap/ComputeSeq/Close commands by driving the
-   * map -> distribute -> reduce -> collate pipeline and replying to each request's `replyTo`.
+   * Builds the shared Master behavior. On setup, spawns `mappers` (per config) mapper children
+   * and `reducers` (per config) reducer children, then handles ComputeMap/ComputeSeq/Close
+   * commands by driving the map -> distribute -> reduce -> collate pipeline and replying to
+   * each request's `replyTo`.
    *
    * Shared by Master, Master_Fold, Master_First and Master_First_Fold -- the only difference
    * between them is which reducer Behavior is spawned (plain Reducer vs Reducer_Fold), and, for
@@ -75,10 +76,13 @@ object Master:
       given ec: ExecutionContext = context.executionContext
       given scheduler: Scheduler = context.system.scheduler
 
-      // NOTE: the mapper and reducers will be terminated when this master is terminated.
+      // NOTE: the mappers and reducers will be terminated when this master is terminated.
       val mapperBehavior = if Master.isForgiving(config) then Mapper_Forgiving(f) else Mapper(f)
-      val mapper: ActorRef[MapperCommand[K1, V1, K2, W]] =
-        actors.createActor[MapperCommand[K1, V1, K2, W]]((b, n) => context.spawn(b, n), Some(Master.sMpr), mapperBehavior)
+      val nMappers = config.getInt("mappers")
+      logger.debug(s"creating $nMappers mappers")
+      val mappers: Seq[ActorRef[MapperCommand[K1, V1, K2, W]]] =
+        for i <- 1 to nMappers yield
+          actors.createActor[MapperCommand[K1, V1, K2, W]]((b, n) => context.spawn(b, n), Some(s"${Master.sMpr}-$i"), mapperBehavior)
 
       val nReducers = config.getInt("reducers")
       logger.debug(s"creating $nReducers reducers")
@@ -87,10 +91,19 @@ object Master:
           actors.createActor[ReducerCommand[K2, W, V2]]((b, n) => context.spawn(b, n), Some(s"${Master.sReducer}-$i"), reducerBehavior)
       if Master.isForgiving(config) then logger.debug("setting forgiving mode")
 
+      // Splits the incoming batch across the mapper pool and fans out one DoMap per chunk,
+      // mirroring distributeWork/doReductionAsync below -- but by position, not by key, since
+      // there's no key yet at this stage (that's what mapping produces). Unlike the reduce
+      // side, chunks.length <= mappers.length always holds by construction (ceil-division), so
+      // a plain zip suffices -- no round-robin cycling is needed here.
       // NOTE this involves a cast to the parametric type Z which can result in a ClassCastException,
       // the same way the classic-actor `ask.mapTo[Z]` did.
       def doMap(i: KeyValuePairs[K1, V1]): Future[Map[K2, Seq[W]]] =
-        mapper.ask[MapperResponse[K2, W]](replyTo => DoMap(i, replyTo)).flatMap {
+        val chunks = Master.splitIntoChunks(i.m, mappers.length)
+        val responses: Seq[Future[MapperResponse[K2, W]]] =
+          for (chunk, mapperRef) <- chunks.zip(mappers) yield
+            mapperRef.ask[MapperResponse[K2, W]](replyTo => DoMap(KeyValuePairs(chunk), replyTo))
+        Future.sequence(responses).map(Master.mergeMapperResponses).flatMap {
           case MapperResponse(m, xs) =>
             if xs.nonEmpty && !Master.isForgiving(config)
             then Future.failed[Map[K2, Seq[W]]](xs.head)
@@ -146,6 +159,38 @@ object Master:
           Behaviors.stopped
       }
     }
+
+  /**
+   * Splits `xs` into at most `n` contiguous chunks (never more than `n`, by construction of the
+   * ceiling division below). Used to fan an incoming batch out across the mapper pool.
+   *
+   * @param xs the input sequence.
+   * @param n  the desired (maximum) number of chunks.
+   * @return a sequence of at most `n` non-empty chunks; empty if `xs` is empty.
+   */
+  private[core] def splitIntoChunks[A](xs: Seq[A], n: Int): Seq[Seq[A]] =
+    if xs.isEmpty || n <= 1 then Seq(xs).filter(_.nonEmpty)
+    else
+      val chunkSize = math.ceil(xs.length / n.toDouble).toInt
+      xs.grouped(chunkSize).toSeq
+
+  /**
+   * Merges the `MapperResponse`s from each mapper chunk back into one: deep-merges the
+   * `Map[K2,Seq[W]]` results (a key can appear in more than one chunk's result, so same-key
+   * sequences are concatenated, not overwritten) and concatenates the `exceptions` lists.
+   *
+   * @param responses one MapperResponse per mapper chunk.
+   * @return the single, combined MapperResponse.
+   */
+  private[core] def mergeMapperResponses[K2, W](responses: Seq[MapperResponse[K2, W]]): MapperResponse[K2, W] =
+    val merged: Map[K2, Seq[W]] =
+      responses.foldLeft(Map.empty[K2, Seq[W]]) { (acc, r) =>
+        r.result.foldLeft(acc) { case (m, (k2, ws)) =>
+          m.updated(k2, m.getOrElse(k2, Nil) ++ ws)
+        }
+      }
+    val exceptions: Seq[Throwable] = responses.flatMap(_.exceptions)
+    MapperResponse(merged, exceptions)
 
   /**
    * Returns the zero value of the specified type `V`. The generic zero value is

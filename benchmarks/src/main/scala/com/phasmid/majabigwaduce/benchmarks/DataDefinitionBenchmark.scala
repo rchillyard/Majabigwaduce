@@ -14,18 +14,25 @@ import scala.util.Random
 
 /**
  * Baseline throughput benchmark for DataDefinition's filter/map/reduce pipeline (the
- * RDD-style API), ahead of the planned migration to typed actors. `partitions < 2` runs the
- * pipeline sequentially in-thread; `partitions >= 2` routes evaluation through the actor-based
- * MapReducePipe machinery -- `forceActors` toggles between the two so the same data size can
- * be compared both ways.
+ * RDD-style API), ahead of the planned migration to typed actors. `reducers < 2` runs the
+ * pipeline sequentially in-thread; `reducers >= 2` routes evaluation through the actor-based
+ * MapReducePipe machinery, with that many reducer actors.
  *
- * NOTE: as with MatrixBenchmark, the number of reducer actors used on the actor path isn't
- * independently configurable here -- DataDefinition's actor context (DDContext) is a JVM-wide
- * singleton built once, lazily, from the global application config the first time the
- * DataDefinition object is touched. See MatrixBenchmark's doc comment for the full
- * explanation. We do explicitly tear down its ActorSystem in @TearDown below (via
- * DataDefinition.shutdown()), so each fork exits promptly instead of paying JMH's forced-exit
- * timeout.
+ * NOTE: prior to 2.0.1, `DataDefinition`'s `partitions` argument was silently ignored for
+ * reducer-count purposes -- every actor-path evaluation always used the same fixed
+ * `majabigwaduce.reducers` config default (4), regardless of what value was passed in. This is
+ * now fixed (`LazyDD.evaluate` sizes its Master's reducer pool from `partitions` directly, via a
+ * per-call Config overlay -- see `DataDefinition.scala`), so the `reducers` param below now
+ * genuinely varies reducer count, which this benchmark demonstrates. See benchmarks/README.md's
+ * "Design limitations found via benchmarking" item 3.
+ *
+ * NOTE: the `pipeline` (a `DataDefinition`, built from `kvs`/`filter`/`map`) is built once per
+ * trial, in @Setup, rather than fresh on every @Benchmark invocation -- that wrapper
+ * construction was needless per-invocation overhead. This does NOT mean the underlying actors
+ * are reused across invocations, though: `pipeline.reduce(...)` still triggers
+ * `LazyDD.evaluate()`, which still builds a fresh Master/Mapper/Reducer set on every single
+ * call (see benchmarks/README.md's "Design limitations" item 1 -- reusing DataDefinition's
+ * actors across separate evaluations is a real correctness hazard and is explicitly deferred).
  *
  * Run with: benchmarks/Jmh/run -i 10 -wi 5 -f1 -t1 .*DataDefinitionBenchmark.*
  */
@@ -37,21 +44,27 @@ import scala.util.Random
 @Fork(1)
 class DataDefinitionBenchmark {
 
-  // Number of synthetic (key, value) pairs in the pipeline's input.
+  // Number of synthetic (key, value) pairs in the pipeline's input -- also the key cardinality,
+  // since every key (0 until size) is unique.
   @Param(Array("100", "1000", "10000"))
   var size: Int = _
 
-  // true: force the actor-based (MapReducePipe) evaluation path (partitions = 4).
-  // false: force the sequential in-thread path (partitions = 1).
-  @Param(Array("true", "false"))
-  var forceActors: Boolean = _
+  // Number of reducer actors Master spins up on the actor path. 1 forces the sequential
+  // in-thread path (DataDefinition treats partitions < 2 as "no actors"); values >= 2 route
+  // through MapReducePipe with that many reducers.
+  @Param(Array("1", "4", "16", "64"))
+  var reducers: Int = _
 
-  private var kvs: Seq[(Int, Int)] = _
+  private var pipeline: DataDefinition[Int, Int] = _
 
   @Setup(Level.Trial)
   def setup(): Unit = {
     val r = new Random(42)
-    kvs = (0 until size).map(i => i -> r.nextInt(1000))
+    val kvs = (0 until size).map(i => i -> r.nextInt(1000))
+    val dd: DataDefinition[Int, Int] = DataDefinition(kvs, reducers)
+    pipeline = dd
+      .filter((kv: (Int, Int)) => kv._2 % 2 == 0)
+      .map((kv: (Int, Int)) => (kv._1, kv._2 * 2))
   }
 
   @TearDown(Level.Trial)
@@ -60,12 +73,6 @@ class DataDefinitionBenchmark {
   }
 
   @Benchmark
-  def filterMapReduce(): Int = {
-    val partitions = if (forceActors) 4 else 1
-    val dd: DataDefinition[Int, Int] = DataDefinition(kvs, partitions)
-    val pipeline = dd
-      .filter((kv: (Int, Int)) => kv._2 % 2 == 0)
-      .map((kv: (Int, Int)) => (kv._1, kv._2 * 2))
+  def filterMapReduce(): Int =
     Await.result(pipeline.reduce[Int](_ + _), 30.seconds)
-  }
 }

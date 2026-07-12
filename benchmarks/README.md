@@ -33,8 +33,9 @@ iterations to report a mean with an error margin instead of one noisy sample.
   `.dependsOn(root)`) so JMH's dependencies never leak into the published library jar.
 - Benchmark classes live under `benchmarks/src/main/scala/com/phasmid/majabigwaduce/benchmarks/`:
   `WordCountBenchmark.scala` (the map/pipe/reduce word-count pipeline), `MatrixBenchmark.scala`
-  (`Matrix2`'s actor-vs-sequential row processing), and `DataDefinitionBenchmark.scala`
-  (the filter/map/reduce RDD-style pipeline).
+  (`Matrix2`'s actor-vs-sequential row processing), `DataDefinitionBenchmark.scala`
+  (the filter/map/reduce RDD-style pipeline), and `MapperParallelismBenchmark.scala`
+  (map-side parallelism specifically, with a deliberately CPU-heavy mapper function).
 
 ## The annotations, explained
 
@@ -92,6 +93,14 @@ Using `WordCountBenchmark` as the reference example:
 - **`reducers`** — number of reducer actors `Master` spins up to parallelize the reduce stage
   (set via the `reducers` config key that `Master` reads at construction time). This is
   actor-pool parallelism, a different concern from `keyCardinality`.
+- **`reuseInstance`** — `true`: build the `Actors`/pipeline once in `@Setup` and reuse it across
+  every `@Benchmark` invocation in the trial (the fixed behavior, since 2.0.1 — see "Design
+  limitations" item 1 below). `false`: build a fresh `Actors`/pipeline on every single
+  invocation and close it at the end (the pre-2.0.1 behavior), kept as an explicit, labeled
+  "cold" comparison point in the same run/table. JMH's own warmup iterations can't distinguish
+  this on their own, since they just call the same `@Benchmark` method body repeatedly — only a
+  `@Param` that changes what the method body constructs can separate "JVM/JIT warm" from
+  "actor-instance warm."
 
 `keyCardinality` and `reducers` default to `-1`, a sentinel meaning "use `executors`." JMH
 `@Param` default arrays must be compile-time constant literals, so a field can't directly
@@ -130,16 +139,21 @@ JVM.
 
 ## DataDefinitionBenchmark's parameters
 
-- **`size`** — number of synthetic `(key, value)` pairs in the pipeline's input. The
-  data-volume knob.
-- **`forceActors`** — the benchmark runs `dd.filter(...).map(...).reduce(...)`, where `dd` is
-  built via `DataDefinition(kvs, partitions)`. `LazyDD.evaluate` takes the sequential in-thread
-  path when `partitions < 2`, and the actor-based (`MapReducePipe`) path when `partitions >= 2`
-  — `forceActors` maps directly to `partitions = 4` (`true`) or `partitions = 1` (`false`), so
-  the same `size` can be measured both ways, same idea as `MatrixBenchmark`'s `forceActors`.
+- **`size`** — number of synthetic `(key, value)` pairs in the pipeline's input (also the key
+  cardinality, since every key `0 until size` is unique). The data-volume knob.
+- **`reducers`** — the benchmark runs `dd.filter(...).map(...).reduce(...)`, where `dd` is
+  built via `DataDefinition(kvs, reducers)`. `LazyDD.evaluate` takes the sequential in-thread
+  path when `reducers < 2`, and the actor-based (`MapReducePipe`) path when `reducers >= 2`,
+  with that many reducer actors — so `-p reducers=1,4,16,64` sweeps both the sequential-vs-actor
+  crossover (same idea as `MatrixBenchmark`'s `forceActors`) *and* the effect of reducer count on
+  the actor path, in one parameter.
 
-Same limitation as `MatrixBenchmark`: `DataDefinition`'s reducer-actor count isn't
-independently configurable per run, for the same JVM-wide-singleton reason described above.
+**Fixed in 2.0.1** (previously a limitation): unlike `MatrixBenchmark`, `DataDefinition`'s
+reducer-actor count *is* independently configurable per call now — `LazyDD.evaluate` builds a
+per-call `Config` overlay (`cfs.withValue("reducers", ...)`) from its own `partitions` argument,
+rather than reading the shared, JVM-wide `DDContext.config` directly. `Config` is immutable, so
+this doesn't mutate anything shared; every other `DataDefinition` instance in the JVM is
+unaffected. See "Design limitations found via benchmarking" item 3 below.
 
 ### A real bug this benchmark exposed
 
@@ -169,6 +183,20 @@ This is a real fix to core library code (`src/main/scala/.../core/Actors.scala`)
 `benchmarks/` — any consumer creating actors at high frequency could have hit the same
 collision. Full test suite re-verified green (125 tests) after the change.
 
+## MapperParallelismBenchmark's parameters
+
+Added in 2.0.1 to demonstrate map-side parallelism (see "Design limitations found via
+benchmarking" item 2 below) — none of the other benchmarks in this suite have a mapper function
+CPU-heavy enough to show a signal above `ask`-overhead/message-passing noise.
+
+- **`items`** — number of synthetic `(key, value)` pairs in the batch.
+- **`mappers`** — number of mapper actors `Master` spins up to parallelize the map phase (set
+  via the `mappers` config key). The mapper function itself (`expensiveHash`) is a
+  fixed-iteration hash-mixing loop, deliberately expensive per element, so total sequential
+  cost is measurable (tens to hundreds of ms) rather than dominated by JIT/dispatch noise. The
+  reducer function is a trivial pass-through (every key is unique, so `reduceLeft` never
+  actually combines anything), isolating the measurement to the map phase.
+
 ## Design limitations found via benchmarking
 
 Not bugs — the classic-actor implementation behaves exactly as designed in each case below —
@@ -189,6 +217,20 @@ reusable pool of actors that survives across separate operations (rather than on
 call) would remove this cost for repeated/small-workload use, and is a natural fit for
 something like Akka Typed's routers or cluster sharding.
 
+**Partially resolved in 2.0.1.** A single `MapReduceFirst`/`Pipe`/`FirstFold`/`PipeFold`
+instance already reused its Master/Mapper/Reducers across repeated `.apply()` calls — the cost
+was entirely from *call sites* (`CountWords`, `WordCountBenchmark`) constructing a fresh
+instance per top-level operation instead of reusing one. Fixed: `CountWords` now builds its
+actors/pipeline once (in the case-class body, gaining an explicit `close()`), and
+`WordCountBenchmark` gained a `reuseInstance` param making warm-vs-cold an explicit, measured
+comparison in the same run (see "WordCountBenchmark's parameters" above). `DataDefinition`'s
+per-`evaluate()` cost is a separate, harder problem: a `DataDefinition` bundles data with its
+transform pipeline, so "reuse the same instance" doesn't apply the same way — closing this gap
+would mean caching a Master/Mapper/Reducer set in `DDContext` keyed by pipeline shape (e.g.
+closure `getClass`), which is a real correctness hazard (two evaluations sharing a `getClass`
+but capturing different free variables could silently reuse a stale, wrong actor). Explicitly
+deferred again, to a future release.
+
 **2. Only the reduce side is parallelized — the map side isn't.**
 `MasterBase`'s constructor creates exactly **one** `Mapper` actor
 (`private val mapper = actors.createActor(context, Some(Master.sMpr), mapperProps)`) alongside
@@ -197,6 +239,19 @@ reduction gets spread across a pool. For CPU-heavy mapping work this is a real, 
 unclaimed parallelism opportunity — the classic "map-reduce" name promises parallelism on both
 sides, but only one side delivers it today.
 
+**Fixed in 2.0.1.** `Master.scala` now spawns `mappers` (a new config key, default 4) mapper
+actors instead of one, splits the incoming batch into at most `mappers` contiguous chunks
+(`Master.splitIntoChunks`), fans out one `DoMap` per chunk, and merges the resulting
+`MapperResponse`s back together (`Master.mergeMapperResponses` deep-merges same-key results and
+concatenates exceptions — a key can land in more than one chunk). No changes were needed to
+`Mapper.scala` itself; its `DoMap` handler was already stateless per message. `benchmarks/`'s
+new `MapperParallelismBenchmark` (see above) demonstrates a real crossover with a deliberately
+CPU-heavy mapper function: `mappers=1` vs. `mappers=4` on a 400-item batch measured ~163ms vs.
+~88ms in a smoke run — none of the *other* benchmarks' mapper functions are expensive enough to
+show this signal, which is why a dedicated benchmark was needed. As with reducers, raising
+`mappers` above 1 can be a net loss for cheap mapper functions/small batches, due to `ask`
+overhead — measure before increasing it.
+
 **3. Reducer pool size is fixed by config, not by workload.**
 The number of reducer actors comes from the `reducers` config key (default 4) regardless of
 how much data exists or how many distinct keys it has. For a workload with only a handful of
@@ -204,6 +259,23 @@ keys, some of those actors never receive meaningful work; for a very large key s
 be too few. Sizing the pool relative to the actual workload (or making it elastic) would help
 both ends of that range, rather than a single static default trying to serve all workload
 shapes.
+
+**Partially resolved in 2.0.1.** `DataDefinition`'s `partitions` argument previously did
+nothing for reducer count at all — it was used only as a binary cutoff (sequential vs. actor
+path), and the actor path always spawned whatever the shared, JVM-wide `DDContext` config
+resolved to (4), regardless of the `partitions` value passed in. `LazyDD.evaluate` now builds a
+per-call `Config` overlay from `partitions` (immutable, so the shared context is never mutated),
+so `nReducers == partitions` directly. A second bug was found and fixed alongside this: the
+`DataDefinition(map, partitions)` overload silently discarded `partitions` entirely, always
+falling through to the single-argument overload's default. `DataDefinition.DefaultPartitions`
+was bumped from 2 to 4, so callers who don't pass `partitions` explicitly see no behavior change
+now that the value genuinely drives reducer count. True dynamic/elastic sizing (resizing
+reducers based on each request's *discovered* key cardinality, rather than a value the caller
+chooses up front) is explicitly deferred again — `Master`'s actors are spawned once at startup,
+before any request arrives, and are meant to be reused across many subsequent requests with
+different data shapes (see item 1); true elasticity would mean either reintroducing per-request
+actor churn or picking a static upper-bound pool size, which just moves the same sizing problem
+up one level.
 
 ## Running it
 

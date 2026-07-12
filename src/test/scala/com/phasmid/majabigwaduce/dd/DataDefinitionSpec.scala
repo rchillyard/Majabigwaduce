@@ -5,13 +5,18 @@
 package com.phasmid.majabigwaduce.dd
 
 import akka.util.Timeout
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.classic.{Logger => LogbackLogger}
+import ch.qos.logback.core.read.ListAppender
 import com.phasmid.majabigwaduce.dd.DataDefinition.*
 import org.scalatest.*
 import org.scalatest.concurrent.*
 import org.scalatest.matchers.should
+import org.slf4j.LoggerFactory
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
+import scala.jdk.CollectionConverters.*
 
 class DataDefinitionSpec extends flatspec.AnyFlatSpec with should.Matchers with Futures with ScalaFutures with Inside {
 
@@ -519,6 +524,41 @@ class DataDefinitionSpec extends flatspec.AnyFlatSpec with should.Matchers with 
     val mf: Future[Map[String, Int]] = target.map(tupleLift(_ * 2)).apply()
     // then
     whenReady(mf) { m => m.values.sum shouldBe 6 }
+    target.clean()
+  }
+
+  // Attaches a Logback ListAppender to the Master logger for the duration of `block`, since
+  // Master.behavior already logs "creating $nReducers reducers" -- this gives a white-box way
+  // to assert the actual reducer count without needing new production introspection hooks.
+  private def capturingMasterLogs[A](block: => A): (A, Seq[String]) =
+    val logbackLogger = LoggerFactory.getLogger("com.phasmid.majabigwaduce.core.Master").asInstanceOf[LogbackLogger]
+    val appender = new ListAppender[ILoggingEvent]()
+    appender.start()
+    logbackLogger.addAppender(appender)
+    try
+      val result = block
+      (result, appender.list.asScala.map(_.getFormattedMessage).toSeq)
+    finally logbackLogger.detachAppender(appender)
+
+  behavior of "reducer count"
+
+  it should "be sized from partitions for a Seq-based DataDefinition" in {
+    // given
+    val target = DataDefinition(Seq("a" -> 1, "b" -> 2, "c" -> 3), 7)
+    // when
+    val (_, logs) = capturingMasterLogs { Await.result(target(), 5.seconds) }
+    // then
+    logs should contain("creating 7 reducers")
+    target.clean()
+  }
+
+  it should "be sized from partitions for a Map-based DataDefinition (regression: this overload used to silently discard partitions)" in {
+    // given
+    val target = DataDefinition(Map("a" -> 1, "b" -> 2, "c" -> 3), 7)
+    // when
+    val (_, logs) = capturingMasterLogs { Await.result(target(), 5.seconds) }
+    // then
+    logs should contain("creating 7 reducers")
     target.clean()
   }
 
