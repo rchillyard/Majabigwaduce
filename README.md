@@ -381,6 +381,24 @@ The example applications are in the `it` directory, given that they are not real
 If you wish to suppress the integration tests temporarily, simply un-mark `it/scala` as a test source root.
 Or, you could comment out the appropriate entry (`unmanagedSourceDirectories`) in `build.sbt`.
 
+Clustering
+==========
+
+_In progress for 2.1.0 (not yet released)._ The separate `majabigwaduce-cluster` artifact (in `cluster/`)
+lets a job's reducers run on other nodes of a Pekko cluster, with the same `MapReduce` API.
+A Master uses the cluster whenever its `ActorSystem` is a cluster member:
+
+1. Depend on `majabigwaduce-cluster` as well as `majabigwaduce`.
+2. Configure each node as a cluster member (`pekko.actor.provider = cluster`, seed nodes, etc.) and set
+   `pekko.actor.allow-java-serialization = on`. The reducer functions are sent to the other nodes with
+   Java serialization, so **only do this on a trusted network**.
+3. Call `ClusterWorker.start(system)` on each node which should run reducers (the master node too, if you like).
+4. Run your jobs on the master node as usual.
+
+Functions sent to a cluster must capture only serializable values -- in particular, not `this` when it holds
+an `ActorSystem`. Defining them in an object (as the `CountWords` example now does) avoids that.
+See [doc/Clustering.md](doc/Clustering.md) for the design, and `cluster/src/test` for two-node examples.
+
 Benchmarks
 ==========
 

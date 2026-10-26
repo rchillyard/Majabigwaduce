@@ -120,24 +120,43 @@ trait WorkerPool:
 
 ### Cluster module (`majabigwaduce-cluster`)
 
-- **Worker nodes** run a `ClusterWorker` behavior that registers with the typed `Receptionist`
-  under a `ServiceKey[WorkerCommand]`. Its protocol:
-  - `SpawnReducer(g, z, jobId, replyTo)`: spawn a local `Reducer(g)` / `Reducer_Fold(g, z)` and
-    reply with its `ActorRef` (Pekko serializes `ActorRef`s natively).
-  - `StopJob(jobId)`: stop everything spawned for that job.
-- **The master node** uses a `ClusterWorkerPool`: it subscribes to the Receptionist listing,
-  and when a job starts, asks each available worker to `SpawnReducer`, collecting the remote refs.
-  From there the existing pipeline runs unchanged; `distributeWork` already spreads keys across
-  however many reducer refs it is given.
-- **Configuration**: `majabigwaduce.cluster { reducers-per-worker, min-workers, ... }` plus the
-  usual `pekko.cluster` seed-node settings.
+**Built** (`cluster/`), with remote reducers only so far:
+
+- **`ClusterWorker`** (start one with `ClusterWorker.start(system)` on every node which should
+  run reducers, the master node included if you like) registers with the typed `Receptionist`
+  under `ClusterWorker.key`. Its one command, `SpawnReducers(reducer, n, master, replyTo)`,
+  carries the `ReducerDef`, function included. For each job the worker starts a small job actor
+  which spawns the `n` reducers as its children, replies with their refs (`ReducersSpawned`),
+  and watches the Master: when the Master stops, or its node leaves the cluster, the job actor
+  stops and takes its reducers with it. So no separate `StopJob` message is needed.
+- **`ClusterWorkerPool`** is what `WorkerPool.forSystem` returns for a cluster member. In
+  `acquire` it spawns the mappers locally, then checks that Java serialization is on, checks
+  that the `ReducerDef` serializes (failing fast with a message that names the likely cause),
+  finds at least `min-workers` workers through the Receptionist, and asks each for its share of
+  the job's `reducers` (the existing setting: the total is split as evenly as possible). The
+  refs are interleaved by node, so the Master's round-robin distribution alternates between
+  nodes. From there the Master's pipeline runs unchanged.
+- **Configuration** (`cluster/src/main/resources/reference.conf`):
+  `majabigwaduce.cluster { worker-pool, min-workers = 1, discovery-timeout = 10s, spawn-timeout = 5s }`,
+  plus the usual `pekko.cluster` seed-node settings and, deliberately not set by the module,
+  `pekko.actor.allow-java-serialization = on`.
+
+**Lesson learned while building it:** the fail-fast check found a real problem in core.
+`MapReduceFirstFold` and `MapReducePipeFold` created their zero function as
+`() => summon[Zero[V1]].zero`, and `summon` there reads a field of the enclosing object, so the
+lambda captured `this`, which holds the `ActorSystem`. Core now takes the `Zero` into a local
+value first, and `Zero` itself is `Serializable`. The `CountWords` example had the same problem
+with its reducer functions and zeros, which were members of the class; they now live in its
+companion object. Expect students (and the other examples) to hit this too.
 
 ### Phasing
 
 1. **Spike** (throwaway) -- done; see "Spike results" above.
 2. **`WorkerPool` refactor in core** (local only) -- done.
 3. **2.1.0**: `majabigwaduce-cluster` with remote **reducers**; mapping still runs on the master
-   node. Two-node `CountWords` example.
+   node. Two-node `CountWords` example -- done (as tests: `TwoNodeSpec`, `MasterAsWorkerSpec`).
+   Still to do for 2.1.0: the matrix and `DataDefinition` examples on a cluster, and a runnable
+   two-terminal `CountWords` demo.
 4. **Later**: remote **mappers**, so input chunks are mapped where they're sent.
 
 A note on expectations: with only reducers distributed, the master still does all the mapping
@@ -164,13 +183,23 @@ rather than assume it.
   serialization even locally, which catches non-serializable captures early.
 - Pekko's multi-node test kit can come later if needed.
 
-## Open questions
+## Decisions (2026-10-26)
 
-1. Is "trusted cluster only" acceptable for the intended uses (coursework, a lab or departmental
-   cluster)? If not, option B or C moves up.
-2. Should a job be able to run on the master node too (master is also a worker), or only on
-   dedicated worker nodes?
-3. How should the cluster variant be selected: a different `Actors` / `ActorSystem` setup with
-   the same `MapReduce` API, or explicit `ClusterMapReduce` constructors?
-4. Which examples matter most for the course: `CountWords` over two nodes, the matrix example,
-   or `DataDefinition`?
+The four open questions from the first draft, answered:
+
+1. **Trusted cluster only: yes.** Java serialization (option A) it is. Because Pekko's Java
+   serialization can't be restricted to our own messages (spike result 5), the cluster module
+   does not switch it on for you: an application must set
+   `pekko.actor.allow-java-serialization = on` itself, and the cluster pool fails with a clear
+   message if it hasn't.
+2. **The master node can be a worker too: yes.** Any node that starts a `ClusterWorker` offers
+   reducers, including the node the Master runs on. A one-machine demo is then just a cluster of
+   one; dedicated worker nodes simply don't run a Master.
+3. **Same API, chosen by the `ActorSystem`.** There are no `ClusterMapReduce` constructors. A
+   Master picks its pool from the `ActorSystem` it runs in: if the system is a cluster member
+   (`pekko.actor.provider = cluster`) and the cluster module is on the classpath (its
+   `reference.conf` names `majabigwaduce.cluster.worker-pool`), it uses that pool; otherwise
+   `LocalWorkerPool`. So existing code such as `CountWords` runs clustered just by being given a
+   cluster `ActorSystem`.
+4. **Examples: `CountWords` first**, then the matrix example and `DataDefinition`, which will all
+   be needed soon.
