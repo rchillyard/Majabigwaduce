@@ -4,9 +4,9 @@
 
 package com.phasmid.majabigwaduce.benchmarks
 
-import akka.actor.typed.ActorSystem
-import akka.actor.typed.scaladsl.Behaviors
-import akka.util.Timeout
+import org.apache.pekko.actor.typed.ActorSystem
+import org.apache.pekko.actor.typed.scaladsl.Behaviors
+import org.apache.pekko.util.Timeout
 import com.phasmid.majabigwaduce.core.*
 import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 import org.openjdk.jmh.annotations.*

@@ -4,8 +4,8 @@
 
 package com.phasmid.majabigwaduce.core
 
-import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
-import akka.actor.typed.{Behavior, PostStop}
+import org.apache.pekko.actor.typed.scaladsl.{ActorContext, Behaviors}
+import org.apache.pekko.actor.typed.{Behavior, PostStop}
 import com.phasmid.majabigwaduce.core.FP.*
 import org.slf4j.Logger
 

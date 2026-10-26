@@ -1,8 +1,8 @@
 package com.phasmid.majabigwaduce.core
 
-import akka.actor.testkit.typed.scaladsl.ScalaTestWithActorTestKit
-import akka.actor.typed.scaladsl.Behaviors
-import akka.actor.typed.{ActorRef, Behavior}
+import org.apache.pekko.actor.testkit.typed.scaladsl.ScalaTestWithActorTestKit
+import org.apache.pekko.actor.typed.scaladsl.Behaviors
+import org.apache.pekko.actor.typed.{ActorRef, Behavior}
 import org.scalatest.matchers.should
 import org.scalatest.wordspec.AnyWordSpecLike
 import org.slf4j.LoggerFactory

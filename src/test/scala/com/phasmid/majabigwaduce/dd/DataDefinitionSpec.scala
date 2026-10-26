@@ -4,7 +4,7 @@
 
 package com.phasmid.majabigwaduce.dd
 
-import akka.util.Timeout
+import org.apache.pekko.util.Timeout
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.classic.{Logger => LogbackLogger}
 import ch.qos.logback.core.read.ListAppender
