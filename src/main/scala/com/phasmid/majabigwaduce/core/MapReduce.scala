@@ -189,7 +189,10 @@ case class MapReduceFirstFold[V0, K1, W, V1: Zero](f: V0 => Try[(K1, W)], g: (V1
   // CONSIDER implementing an apply method in MapReduce for this signature
   //  def this(fy: V0 => (K1, W), g: (V1, W) => V1)(actors: Actors, timeout: Timeout) = this(MapReduce.lift(fy), g)(actors, timeout)
   def createBehavior: Behavior[MasterCommand[Unit, V0, K1, V1]] =
-    Master_First_Fold(actors.config, f, g, () => summon[Zero[V1]].zero)
+    // NOTE the zero function must capture only the Zero, not `this` (which holds the ActorSystem),
+    // so that it can be sent with its reducer to another node of a cluster.
+    val zero = summon[Zero[V1]]
+    Master_First_Fold(actors.config, f, g, () => zero.zero)
 
   def toMasterPair(t: V0): (Unit, V0) = () -> t
 
@@ -245,7 +248,10 @@ case class MapReducePipeFold[K0, V0, K1, W, V1: Zero](f: (K0, V0) => Try[(K1, W)
    * @return a `Behavior` instance for creating the `Master_Fold` actor.
    */
   def createBehavior: Behavior[MasterCommand[K0, V0, K1, V1]] =
-    Master_Fold(actors.config, f, g, () => summon[Zero[V1]].zero)
+    // NOTE the zero function must capture only the Zero, not `this` (which holds the ActorSystem),
+    // so that it can be sent with its reducer to another node of a cluster.
+    val zero = summon[Zero[V1]]
+    Master_Fold(actors.config, f, g, () => zero.zero)
 
   def toMasterPair(t: (K0, V0)): (K0, V0) = t
 

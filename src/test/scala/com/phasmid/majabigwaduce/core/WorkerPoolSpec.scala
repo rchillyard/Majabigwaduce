@@ -22,7 +22,7 @@ class WorkerPoolSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike with
 
   private val config: Config = ConfigFactory.load.getConfig("majabigwaduce.Matrix")
 
-  "Worker specs" must {
+  "Worker definitions" must {
     "survive Java serialization, including functions which capture serializable values" in {
       val stop = Set("the")
       val mapper = roundTrip(MapperDef[Unit, String, String, Int]((_, w) => if stop(w) then Failure(new Exception(w)) else Success(w -> 1), forgiving = true))
@@ -46,7 +46,7 @@ class WorkerPoolSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike with
           val ready = LocalWorkerPool.acquire(context, actors, mapper, nMappers, reducer, nReducers)
           promise.future.flatMap(_ => ready)(using context.executionContext)
 
-      val master = spawn(Master.behavior[String, Int, String, Int, Int](config, MapperDef((k, v) => Success(k -> v), forgiving = false), FoldDef(_ + _, () => 0), LatePool))
+      val master = spawn(Master.behavior[String, Int, String, Int, Int](config, MapperDef((k, v) => Success(k -> v), forgiving = false), FoldDef(_ + _, () => 0), _ => LatePool))
       val probe = createTestProbe[Try[Response[String, Int]]]()
       master ! ComputeSeq(Seq("a" -> 1, "a" -> 2, "b" -> 3), probe.ref)
       probe.expectNoMessage(200.millis)
@@ -59,10 +59,16 @@ class WorkerPoolSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike with
         def acquire[K1, V1, K2, W, V2](context: ActorContext[?], actors: Actors, mapper: MapperDef[K1, V1, K2, W], nMappers: Int, reducer: ReducerDef[K2, W, V2], nReducers: Int): Future[Workers[K1, V1, K2, W, V2]] =
           Future.failed(MapReduceException("no workers available"))
 
-      val master = spawn(Master.behavior[String, Int, String, Int, Int](config, MapperDef((k, v) => Success(k -> v), forgiving = false), FoldDef(_ + _, () => 0), FailingPool))
+      val master = spawn(Master.behavior[String, Int, String, Int, Int](config, MapperDef((k, v) => Success(k -> v), forgiving = false), FoldDef(_ + _, () => 0), _ => FailingPool))
       val probe = createTestProbe[Try[Response[String, Int]]]()
       master ! ComputeSeq(Seq("a" -> 1), probe.ref)
       probe.expectMessage(Failure(MapReduceException("no workers available")))
+    }
+  }
+
+  "WorkerPool.forSystem" must {
+    "choose LocalWorkerPool for a non-cluster ActorSystem" in {
+      WorkerPool.forSystem(system) shouldBe LocalWorkerPool
     }
   }
 }

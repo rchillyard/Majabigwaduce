@@ -22,9 +22,12 @@ trait Monoid[X] extends Zero[X]:
 /**
  * Type-class Zero is used to add behavior of initialization (or zeroing) of X.
  *
+ * NOTE Zero is Serializable because a fold's zero travels with its reducer when the reducer
+ * runs on another node of a cluster (see doc/Clustering.md).
+ *
  * @tparam X the type which we want to create a zero value for.
  */
-trait Zero[X]:
+trait Zero[X] extends Serializable:
   /**
    * Method to create a zero/empty/nothing value of X
    *

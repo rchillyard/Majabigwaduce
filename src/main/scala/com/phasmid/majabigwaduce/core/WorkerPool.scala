@@ -5,7 +5,7 @@
 package com.phasmid.majabigwaduce.core
 
 import org.apache.pekko.actor.typed.scaladsl.ActorContext
-import org.apache.pekko.actor.typed.{ActorRef, Behavior}
+import org.apache.pekko.actor.typed.{ActorRef, ActorSystem, Behavior}
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.Future
@@ -53,6 +53,36 @@ final case class Workers[K1, V1, K2, W, V2](mappers: Seq[ActorRef[MapperCommand[
  */
 trait WorkerPool:
   def acquire[K1, V1, K2, W, V2](context: ActorContext[?], actors: Actors, mapper: MapperDef[K1, V1, K2, W], nMappers: Int, reducer: ReducerDef[K2, W, V2], nReducers: Int): Future[Workers[K1, V1, K2, W, V2]]
+
+object WorkerPool:
+  private val logger = LoggerFactory.getLogger(classOf[WorkerPool])
+
+  /** The configuration key which a clustering module uses to name its WorkerPool object. */
+  val clusterPoolKey = "majabigwaduce.cluster.worker-pool"
+
+  /**
+   * Chooses the WorkerPool for a Master running in `system`: the pool named by
+   * `majabigwaduce.cluster.worker-pool` if `system` is a cluster member (and that key is set,
+   * i.e. the majabigwaduce-cluster module is on the classpath); otherwise LocalWorkerPool.
+   *
+   * @param system the ActorSystem in which the Master runs.
+   * @return the WorkerPool to use.
+   */
+  def forSystem(system: ActorSystem[?]): WorkerPool =
+    val config = system.settings.config
+    val provider = config.getString("pekko.actor.provider")
+    val isCluster = provider == "cluster" || provider.endsWith(".ClusterActorRefProvider")
+    if isCluster && config.hasPath(clusterPoolKey) then
+      val name = config.getString(clusterPoolKey)
+      logger.debug(s"using cluster worker pool: $name")
+      load(name)
+    else
+      if isCluster then logger.warn(s"$system is a cluster member but $clusterPoolKey is not set (is majabigwaduce-cluster on the classpath?): workers will be local")
+      LocalWorkerPool
+
+  // NOTE a Scala object compiles to a class named with a trailing '$', whose instance is in MODULE$.
+  private def load(name: String): WorkerPool =
+    Class.forName(name + "$").getField("MODULE$").get(null).asInstanceOf[WorkerPool]
 
 /**
  * The default WorkerPool: spawns the workers as local children of the Master, so they are

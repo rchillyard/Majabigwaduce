@@ -6,7 +6,7 @@ package com.phasmid.majabigwaduce.core
 
 import org.apache.pekko.actor.typed.scaladsl.AskPattern.*
 import org.apache.pekko.actor.typed.scaladsl.Behaviors
-import org.apache.pekko.actor.typed.{ActorRef, Behavior, Scheduler}
+import org.apache.pekko.actor.typed.{ActorRef, ActorSystem, Behavior, Scheduler}
 import org.apache.pekko.util.Timeout
 import com.typesafe.config.Config
 import org.slf4j.LoggerFactory
@@ -68,8 +68,10 @@ object Master:
    *
    * The pool's workers arrive as a Future, and each request is chained onto it. With the default
    * LocalWorkerPool that Future is already complete; a remote pool may complete it later.
+   *
+   * By default the pool is chosen from the ActorSystem in which this Master runs (see WorkerPool.forSystem).
    */
-  private[core] def behavior[K1, V1, K2, W, V2](config: Config, mapperDef: MapperDef[K1, V1, K2, W], reducerDef: ReducerDef[K2, W, V2], pool: WorkerPool = LocalWorkerPool): Behavior[MasterCommand[K1, V1, K2, V2]] =
+  private[core] def behavior[K1, V1, K2, W, V2](config: Config, mapperDef: MapperDef[K1, V1, K2, W], reducerDef: ReducerDef[K2, W, V2], poolFor: ActorSystem[?] => WorkerPool = WorkerPool.forSystem): Behavior[MasterCommand[K1, V1, K2, V2]] =
     MapReduceActor.withLifecycle(logger) { context =>
       val actors = Actors(context.system, config)
 
@@ -81,7 +83,7 @@ object Master:
 
       // NOTE: with LocalWorkerPool, the mappers and reducers will be terminated when this master is terminated.
       val workersF: Future[Workers[K1, V1, K2, W, V2]] =
-        pool.acquire(context, actors, mapperDef, config.getInt("mappers"), reducerDef, config.getInt("reducers"))
+        poolFor(context.system).acquire(context, actors, mapperDef, config.getInt("mappers"), reducerDef, config.getInt("reducers"))
       if Master.isForgiving(config) then logger.debug("setting forgiving mode")
 
       // Splits the incoming batch across the mapper pool and fans out one DoMap per chunk,
