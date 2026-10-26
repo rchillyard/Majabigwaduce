@@ -381,6 +381,19 @@ The example applications are in the `it` directory, given that they are not real
 If you wish to suppress the integration tests temporarily, simply un-mark `it/scala` as a test source root.
 Or, you could comment out the appropriate entry (`unmanagedSourceDirectories`) in `build.sbt`.
 
+Benchmarks
+==========
+
+JMH benchmarks live in the separate `benchmarks` subproject (so JMH never leaks into the published jar).
+For example, a quick smoke test of the word-count benchmark:
+
+```bash
+sbt "benchmarks/Jmh/run -i 1 -wi 1 -f1 -t1 -p documents=10 -p executors=4 .*WordCountBenchmark.*"
+```
+
+See [benchmarks/README.md](benchmarks/README.md) for how to run, configure and save benchmark results,
+and for the design limitations the benchmarks have uncovered.
+
 Examples
 ========
 
