@@ -564,3 +564,6 @@ Revision History
 * 2.0.2 Moved from Akka 2.8 to Apache Pekko 1.7: dependencies are now `org.apache.pekko` modules,
   imports are `org.apache.pekko.*`, and actor-system configuration moves from `akka { ... }` to
   `pekko { ... }`. No API changes.
+* 2.0.3 Dropped the unused `pekko-cluster`, `pekko-remote` and `pekko-cluster-metrics` dependencies
+  (nothing in the library used them), so consumers no longer download them. Clustering is planned
+  for 2.1.0 as a separate module.

@@ -2,7 +2,7 @@ organization := "com.phasmidsoftware"
 
 name := "Majabigwaduce"
 
-version := "2.0.2"
+version := "2.0.3"
 
 scalaVersion := "3.3.9" // LTS version
 
@@ -21,9 +21,6 @@ libraryDependencies ++= Seq(
 	"com.phasmidsoftware" %% "flog" % flogVersion,
 	pekkoGroup %% "pekko-actor-typed" % pekkoVersion,
 	pekkoGroup %% "pekko-slf4j" % pekkoVersion,
-	pekkoGroup %% "pekko-cluster" % pekkoVersion,
-	pekkoGroup %% "pekko-remote" % pekkoVersion,
-	pekkoGroup %% "pekko-cluster-metrics" % pekkoVersion,
 	"com.typesafe" % "config" % configVersion,
 	"ch.qos.logback" % "logback-classic" % logBackVersion % Test,
 	pekkoGroup %% "pekko-actor-testkit-typed" % pekkoVersion % Test,
