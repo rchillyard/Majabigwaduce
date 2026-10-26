@@ -1,7 +1,7 @@
 package com.phasmid.majabigwaduce.core
 
-import akka.actor.testkit.typed.scaladsl.ScalaTestWithActorTestKit
-import akka.util.Timeout
+import org.apache.pekko.actor.testkit.typed.scaladsl.ScalaTestWithActorTestKit
+import org.apache.pekko.util.Timeout
 import com.typesafe.config.{Config, ConfigFactory, ConfigValueFactory}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should

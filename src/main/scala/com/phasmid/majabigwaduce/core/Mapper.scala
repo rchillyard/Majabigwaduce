@@ -4,8 +4,8 @@
 
 package com.phasmid.majabigwaduce.core
 
-import akka.actor.typed.scaladsl.Behaviors
-import akka.actor.typed.{ActorRef, Behavior}
+import org.apache.pekko.actor.typed.scaladsl.Behaviors
+import org.apache.pekko.actor.typed.{ActorRef, Behavior}
 import org.slf4j.LoggerFactory
 
 import scala.util.*

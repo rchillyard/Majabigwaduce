@@ -1,7 +1,7 @@
 package com.phasmid.majabigwaduce.core
 
-import akka.actor.typed.{ActorRef, ActorSystem, Behavior}
-import akka.util.Timeout
+import org.apache.pekko.actor.typed.{ActorRef, ActorSystem, Behavior}
+import org.apache.pekko.util.Timeout
 import com.typesafe.config.Config
 import org.slf4j.LoggerFactory
 

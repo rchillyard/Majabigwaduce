@@ -9,6 +9,9 @@ work started and has been updated to reflect what was actually built,
 including a couple of corrections that only surfaced once the code was
 written.
 
+> **Note (2026-10-26, version 2.0.2):** Majabigwaduce has since moved from Akka to Apache Pekko.
+> The design below is unchanged; read `akka.` package names as `org.apache.pekko.` for the current code.
+
 ## Context
 
 Majabigwaduce was, until this migration, built entirely on Akka Classic

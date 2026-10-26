@@ -4,10 +4,10 @@
 
 package com.phasmid.majabigwaduce.core
 
-import akka.actor.typed.scaladsl.AskPattern.*
-import akka.actor.typed.scaladsl.Behaviors
-import akka.actor.typed.{ActorRef, Behavior, Scheduler}
-import akka.util.Timeout
+import org.apache.pekko.actor.typed.scaladsl.AskPattern.*
+import org.apache.pekko.actor.typed.scaladsl.Behaviors
+import org.apache.pekko.actor.typed.{ActorRef, Behavior, Scheduler}
+import org.apache.pekko.util.Timeout
 import com.typesafe.config.Config
 import org.slf4j.LoggerFactory
 

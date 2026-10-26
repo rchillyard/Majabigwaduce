@@ -4,9 +4,9 @@
 
 package com.phasmid.majabigwaduce.examples.matrix
 
-import akka.actor.typed.ActorSystem
-import akka.actor.typed.scaladsl.Behaviors
-import akka.util.Timeout
+import org.apache.pekko.actor.typed.ActorSystem
+import org.apache.pekko.actor.typed.scaladsl.Behaviors
+import org.apache.pekko.util.Timeout
 import com.phasmid.majabigwaduce.core.*
 import com.phasmid.majabigwaduce.matrix.{IncompatibleLengthsException, Matrix2}
 import com.typesafe.config.{Config, ConfigFactory}

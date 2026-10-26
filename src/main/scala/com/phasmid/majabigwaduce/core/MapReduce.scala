@@ -4,9 +4,9 @@
 
 package com.phasmid.majabigwaduce.core
 
-import akka.actor.typed.scaladsl.AskPattern.*
-import akka.actor.typed.{ActorRef, Behavior, Scheduler}
-import akka.util.Timeout
+import org.apache.pekko.actor.typed.scaladsl.AskPattern.*
+import org.apache.pekko.actor.typed.{ActorRef, Behavior, Scheduler}
+import org.apache.pekko.util.Timeout
 import com.phasmid.majabigwaduce.{ASync, RF}
 
 import scala.concurrent.*
@@ -375,12 +375,12 @@ abstract class MapReduce_Base[T, K1M, V1M, K, V](actors: Actors)(using timeout: 
   /**
    * Processes a sequence of input items, communicates with the master actor to retrieve results,
    * and optionally reports the response.
+   * NOTE: currently, we ignore the value of report, but we could pass back a tuple that includes ok and the resulting map
    *
    * @param ts the sequence of input items to be processed
    * @return a Future containing a map of key-value pairs representing the computed results
    */
   def apply(ts: Seq[T]): Future[Map[K, V]] =
-    // Note: currently, we ignore the value of report but we could pass back a tuple that includes ok and the resulting map
     for
       t <- master.ask[Try[Response[K, V]]](replyTo => ComputeSeq(ts.map(toMasterPair), replyTo))
       vKr <- Future.fromTry(t)

@@ -1,8 +1,8 @@
 package com.phasmid.majabigwaduce.core
 
-import akka.actor.testkit.typed.scaladsl.ScalaTestWithActorTestKit
-import akka.actor.typed.scaladsl.Behaviors
-import akka.util.Timeout
+import org.apache.pekko.actor.testkit.typed.scaladsl.ScalaTestWithActorTestKit
+import org.apache.pekko.actor.typed.scaladsl.Behaviors
+import org.apache.pekko.util.Timeout
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.classic.{Level, Logger => LogbackLogger}
 import ch.qos.logback.core.read.ListAppender
@@ -45,7 +45,7 @@ class ActorsSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike with sho
   "Actors.logException" must {
     // NOTE: Actors.logException now logs via a plain SLF4J logger (not through the actor system's
     // own logging adapter), so we capture it with a Logback ListAppender rather than
-    // akka's LoggingTestKit (which only observes log events published via the actor system).
+    // Pekko's LoggingTestKit (which only observes log events published via the actor system).
     def withCapturedLogs(test: ListAppender[ILoggingEvent] => Unit): Unit =
       val logbackLogger = LoggerFactory.getLogger(classOf[Actors]).asInstanceOf[LogbackLogger]
       val appender = new ListAppender[ILoggingEvent]()

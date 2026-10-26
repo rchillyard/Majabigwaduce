@@ -12,7 +12,9 @@ Majabigwaduce
 =============
 
 Majabigwaduce\* (aka _Akka/MapReduce_) is a framework for implementing map-reduce using [Scala](http://www.scala-lang.org)
-and [Akka](http://akka.io) actors.
+and [Apache Pekko](https://pekko.apache.org) actors.
+(Majabigwaduce was originally built on Akka; Pekko is its Apache-licensed fork, so most Akka 2.6
+documentation applies once `akka.` is read as `org.apache.pekko.`.)
 I tried to use only the intrinsic notion of map and reduce.
 Thus, it is not exactly like Hadoop's map-reduce (although it is similar).
 
@@ -20,7 +22,7 @@ __Why__ would anyone want to do map-reduce using actors? It's a good question.
 For me, it arose initially because I needed an example of using actors for the class I was teaching on Scala and Big Data.
 I also wanted to ensure that the students understood the essence of map-reduce rather than some derived version of it.
 Of course, it turns out that it's a perfect application for actors and indeed demonstrates many of the proper
-techniques to be used when programming with (Akka) actors.
+techniques to be used when programming with actors.
 
 \* Majabigwaduce was the Native American name for the site of the battle of Penobscot Bay, Maine in 1779,
 see [Penobscot Expedition](https://en.wikipedia.org/wiki/Penobscot_Expedition)
@@ -222,8 +224,8 @@ The input message and the constructor format are slightly different according to
 (see below) you are employing.
 
 Since version 2.0.0, the actors in the `core` package (`Master`, `Mapper`, `Reducer`) are implemented using
-Akka Typed rather than Akka Classic. `Master`/`Mapper`/`Reducer` are now factory functions which return a
-typed `Behavior`, spawned with `context.spawn`/`system.systemActorOf` rather than constructed via `Props`.
+typed actors (originally Akka Typed, now Pekko Typed) rather than classic actors.
+`Master`/`Mapper`/`Reducer` are now factory functions which return a typed `Behavior`, spawned with `context.spawn`/`system.systemActorOf` rather than constructed via `Props`.
 Each has its own small, sealed command protocol (e.g. `MasterCommand`, with `ComputeMap`/`ComputeSeq`/`CloseMaster`
 cases) whose "compute" cases carry an explicit `replyTo: ActorRef[...]`, and a `Close` case that stops the actor
 (and, transitively, its children) -- there is no more implicit `sender()`, and no more `system.stop`. None of this
@@ -355,7 +357,8 @@ This takes an additional function `z` which is able to initialize the accumulato
 Configuration
 ============
 
-Configuration is based on Typesafe `Config` (as is normal with Akka applications).
+Configuration is based on Typesafe `Config` (as is normal with Pekko/Akka applications).
+Note that actor-system settings live under the `pekko { ... }` key (not `akka { ... }`).
 Please see the `reference.conf` file in the `main/resources` directory for the list of
 configurable parameters with their explanations.
 
@@ -365,7 +368,7 @@ Dependencies
 The components that are used by this project are:
 
 * Scala (3.3.x)
-* Akka Typed (2.8.x)
+* Apache Pekko Typed (1.7.x)
 * Typesafe Configuration (1.4.x)
 * ...and dependencies thereof
 
@@ -377,6 +380,19 @@ By default, all tests are in the classpath.
 The example applications are in the `it` directory, given that they are not really unit tests.
 If you wish to suppress the integration tests temporarily, simply un-mark `it/scala` as a test source root.
 Or, you could comment out the appropriate entry (`unmanagedSourceDirectories`) in `build.sbt`.
+
+Benchmarks
+==========
+
+JMH benchmarks live in the separate `benchmarks` subproject (so JMH never leaks into the published jar).
+For example, a quick smoke test of the word-count benchmark:
+
+```bash
+sbt "benchmarks/Jmh/run -i 1 -wi 1 -f1 -t1 -p documents=10 -p executors=4 .*WordCountBenchmark.*"
+```
+
+See [benchmarks/README.md](benchmarks/README.md) for how to run, configure and save benchmark results,
+and for the design limitations the benchmarks have uncovered.
 
 Examples
 ========
@@ -545,3 +561,6 @@ Revision History
   (previously silently ignored). `DataDefinition.DefaultPartitions` changed from 2 to 4 to keep
   this behavior-preserving for existing callers. See `benchmarks/README.md`'s "Design limitations
   found via benchmarking" for the full before/after.
+* 2.0.2 Moved from Akka 2.8 to Apache Pekko 1.7: dependencies are now `org.apache.pekko` modules,
+  imports are `org.apache.pekko.*`, and actor-system configuration moves from `akka { ... }` to
+  `pekko { ... }`. No API changes.

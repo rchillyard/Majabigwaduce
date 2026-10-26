@@ -215,7 +215,7 @@ crossed over even at size=10000 (actors still ~4× slower than sequential there)
 per-element work is cheap enough that this fixed cost is never amortized. A long-lived,
 reusable pool of actors that survives across separate operations (rather than one rebuilt per
 call) would remove this cost for repeated/small-workload use, and is a natural fit for
-something like Akka Typed's routers or cluster sharding.
+something like Pekko Typed's routers or cluster sharding.
 
 **Partially resolved in 2.0.1.** A single `MapReduceFirst`/`Pipe`/`FirstFold`/`PipeFold`
 instance already reused its Master/Mapper/Reducers across repeated `.apply()` calls — the cost

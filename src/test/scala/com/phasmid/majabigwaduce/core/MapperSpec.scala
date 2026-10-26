@@ -1,6 +1,6 @@
 package com.phasmid.majabigwaduce.core
 
-import akka.actor.testkit.typed.scaladsl.ScalaTestWithActorTestKit
+import org.apache.pekko.actor.testkit.typed.scaladsl.ScalaTestWithActorTestKit
 import org.scalatest.matchers.should
 import org.scalatest.wordspec.AnyWordSpecLike
 
