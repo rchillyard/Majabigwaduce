@@ -1,6 +1,6 @@
 # Majabigwaduce: Clustering Design (2.1.0)
 
-*2026-10-26 — draft*
+*2026-10-26 — draft; updated after the serialization spike and the WorkerPool refactor*
 
 This document proposes how to let Majabigwaduce run its reducers (and later its mappers) on
 other nodes of a Pekko cluster. It is written as a plan before any code exists, in the same
@@ -67,12 +67,29 @@ the network is a well-known remote-code-execution risk. Options:
 | B. Named jobs: `f`/`g` defined in code on every node, messages carry only a job name | No Java serialization of code; data can use Jackson | New API (jobs registered by name); can't pass an ad-hoc lambda at the call site |
 | C. Kryo (e.g. a Pekko Kryo serializer) for everything | Faster, more compact than Java serialization | Extra dependency; closure support needs checking; same trust caveat |
 
-**Recommendation: A for 2.1.0**, documented clearly as "trusted cluster only", with the
-serialization bindings limited to Majabigwaduce's own message types (a marker trait such as
-`MajabigwaduceSerializable`). B or C can come later if someone needs to run on an untrusted
-network or wants better throughput. This needs a spike first (see below), because it must be
-confirmed exactly how Pekko 1.7 behaves when `allow-java-serialization` is on but Java
-serialization is bound only to specific classes.
+**Recommendation: A for 2.1.0**, documented clearly as "trusted cluster only". B or C can come
+later if someone needs to run on an untrusted network or wants better throughput.
+
+### Spike results (Pekko 1.7.1, Scala 3.3.9)
+
+Two `ActorSystem`s in one JVM, joined as a cluster over Artery TCP on `127.0.0.1`, with
+`allow-java-serialization = on` and Java serialization bound to a marker trait:
+
+1. **Discovery works.** The master node finds a worker on the other node through the typed
+   `Receptionist`.
+2. **Shipping a closure works.** A `SpawnFolder(g, z, replyTo)` message carrying a lambda that
+   captures a `Set[String]` reaches the worker, which spawns a folding actor from it and replies
+   with that actor's (remote) `ActorRef`. Folding through that ref gives the right answer.
+3. **Exceptions come back intact.** A `NumberFormatException` thrown on the worker arrives on
+   the master node as `Left(NumberFormatException)`.
+4. **A non-serializable capture fails silently.** Pekko logs `Failed to serialize message` with
+   `NotSerializableException` on the sending side and drops the message, so the caller's ask
+   simply times out. Majabigwaduce must therefore check serializability itself (by serializing
+   the definition locally) before sending, to fail fast with a clear message.
+5. **A marker-trait binding does not restrict anything.** With `allow-java-serialization = on`,
+   an unrelated `Serializable` case class that does *not* extend the marker trait was also
+   accepted. Switching Java serialization on is effectively all-or-nothing, which is why this
+   must be described as trusted-cluster only, not merely "limited to our message types".
 
 With Java serialization, the data side is also simple: generic `K2`, `W`, `V2` values only need
 to be `Serializable` (case classes, `String`, numbers and standard collections already are), and
@@ -82,18 +99,24 @@ the `Throwable`s carried in `MapperResponse`, `ReduceResult` and `Response` seri
 
 ### Core refactor (in the core library, still 2.1.0)
 
-Introduce a small abstraction for "where workers come from", and make today's behavior its
-local implementation:
+**Done** (`core/WorkerPool.scala`). The Master no longer spawns its workers; it asks a pool:
 
 ```scala
 trait WorkerPool:
-  def reducers[K2, W, V2](g: ...): Future[Seq[ActorRef[ReducerCommand[K2, W, V2]]]]
-  def mappers[K1, V1, K2, W](f: ...): Future[Seq[ActorRef[MapperCommand[K1, V1, K2, W]]]]
+  def acquire[K1, V1, K2, W, V2](context: ActorContext[?], actors: Actors,
+      mapper: MapperDef[K1, V1, K2, W], nMappers: Int,
+      reducer: ReducerDef[K2, W, V2], nReducers: Int): Future[Workers[K1, V1, K2, W, V2]]
 ```
 
-`LocalWorkerPool` does what `Master.behavior` does now (`context.spawn` children). The Master
-gets its refs from the pool instead of spawning directly. This is a no-op refactor for local
-users and can be merged and released on its own.
+- `MapperDef(f, forgiving)` and `ReducerDef` (`ReduceDef(g)` or `FoldDef(g, z)`) describe the
+  workers as data -- the functions plus mode -- rather than as `Behavior`s, and are
+  `Serializable`, so a remote pool can ship them. Each has a `behavior` method that builds the
+  actual behavior wherever it runs. `FoldDef` keeps `z` as a function so that every reduction
+  still starts from a fresh zero, as `Reducer_Fold` did.
+- `acquire` returns a `Future`, and the Master chains each request onto it. That lets a remote
+  pool supply workers asynchronously, with no stashing or protocol change; a pool failure is
+  passed back to the caller as a `Failure`.
+- `LocalWorkerPool`, the default, spawns local children exactly as before. No public API change.
 
 ### Cluster module (`majabigwaduce-cluster`)
 
@@ -111,10 +134,8 @@ users and can be merged and released on its own.
 
 ### Phasing
 
-1. **Spike** (throwaway): two `ActorSystem`s in one JVM joined as a cluster; send a message
-   carrying a lambda from one to the other with Java serialization bound to a marker trait;
-   apply it on the far side. Confirms the serialization config before anything else is built.
-2. **2.1.0-M1**: `WorkerPool` refactor in core (local only), released or at least merged.
+1. **Spike** (throwaway) -- done; see "Spike results" above.
+2. **`WorkerPool` refactor in core** (local only) -- done.
 3. **2.1.0**: `majabigwaduce-cluster` with remote **reducers**; mapping still runs on the master
    node. Two-node `CountWords` example.
 4. **Later**: remote **mappers**, so input chunks are mapped where they're sent.
@@ -130,7 +151,8 @@ rather than assume it.
 - A worker that leaves or crashes mid-job makes its asks time out, so the job fails with a
   clear error rather than hanging. No retries in 2.1.0.
 - A function that can't be serialized fails when the job starts, before any data moves, with
-  an error that names the job and suggests what was captured.
+  an error that names the job and suggests what was captured. (The spike showed that Pekko on
+  its own would just drop the message and let the ask time out.)
 - Workers stop a job's reducers on `StopJob`, or when the master node leaves the cluster.
 
 ## Testing
