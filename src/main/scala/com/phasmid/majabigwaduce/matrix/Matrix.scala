@@ -5,7 +5,7 @@
 package com.phasmid.majabigwaduce.matrix
 
 import com.phasmid.majabigwaduce.core.Monoid
-import com.phasmid.majabigwaduce.dd.DataDefinition
+import com.phasmid.majabigwaduce.dd.{DDContext, DataDefinition}
 import com.phasmid.majabigwaduce.dd.DataDefinition.*
 import org.slf4j.{Logger, LoggerFactory}
 
@@ -32,11 +32,12 @@ trait Matrix[X]:
    * @param ev     evidence of Monoid[X]
    * @param atMost duration of total MapReduce time
    * @param cutoff the maximum size we should implement in current thread
+   * @param context the DDContext in which any DataDefinition is evaluated (by default, DDContext.default)
    * @tparam Y the underlying type of m
    * @tparam Z the underlying type of the result
    * @return a Matrix which is the product of this and m
    */
-  def product[Y: Numeric, Z: Product : Monoid : Numeric](m: Matrix[Y])(implicit ev: Monoid[X], atMost: Duration, cutoff: Dimensions): Matrix[Z] =
+  def product[Y: Numeric, Z: Product : Monoid : Numeric](m: Matrix[Y])(implicit ev: Monoid[X], atMost: Duration, cutoff: Dimensions, context: DDContext): Matrix[Z] =
     product(m.rows)
 
   /**
@@ -46,12 +47,13 @@ trait Matrix[X]:
    * @param ev     evidence of Monoid[X]
    * @param atMost duration of total MapReduce time
    * @param cutoff the maximum size we should implement in current thread
+   * @param context the DDContext in which any DataDefinition is evaluated (by default, DDContext.default)
    * @tparam Y the type of the multiplicand rows
    * @tparam Z the underlying type of the result
    * @return a Matrix which is the product of this and m
    */
-  def product[Y: Numeric, Z: Product : Monoid : Numeric](ys: Seq[Y])(implicit ev: Monoid[X], atMost: Duration, cutoff: Dimensions): Matrix[Z] =
-    build(forRows(productSpecial(_, ys))(summon[Monoid[Z]], ev, atMost, cutoff))
+  def product[Y: Numeric, Z: Product : Monoid : Numeric](ys: Seq[Y])(implicit ev: Monoid[X], atMost: Duration, cutoff: Dimensions, context: DDContext): Matrix[Z] =
+    build(forRows(productSpecial(_, ys))(summon[Monoid[Z]], ev, atMost, cutoff, context))
 
   /**
    * The rows of this Matrix
@@ -78,10 +80,11 @@ trait Matrix[X]:
    * @param ev     evidence of Monoid[X]
    * @param atMost duration of total MapReduce time
    * @param cutoff the maximum size we should implement in current thread
+   * @param context the DDContext in which any DataDefinition is evaluated (by default, DDContext.default)
    * @tparam Z the underlying type of the result
    * @return a Matrix which is the product of this and m
    */
-  protected def forRows[Z: Monoid](g: X => Z)(implicit ev: Monoid[X], atMost: Duration, cutoff: Dimensions): Seq[Z]
+  protected def forRows[Z: Monoid](g: X => Z)(implicit ev: Monoid[X], atMost: Duration, cutoff: Dimensions, context: DDContext): Seq[Z]
 
   /**
    * Method to pair an X and a Seq[Y] to yield a Z.
@@ -123,10 +126,11 @@ abstract class BaseMatrix[X] extends Matrix[X]:
    * @param ev     evidence of Monoid[X]
    * @param atMost duration of total MapReduce time
    * @param cutoff the maximum size we should implement in current thread
+   * @param context the DDContext in which any DataDefinition is evaluated (by default, DDContext.default)
    * @tparam Z the underlying type of the result
    * @return a Matrix which is the product of this and m
    */
-  protected def forRows[Z: Monoid](g: X => Z)(implicit ev: Monoid[X], atMost: Duration, cutoff: Dimensions): Seq[Z] =
+  protected def forRows[Z: Monoid](g: X => Z)(implicit ev: Monoid[X], atMost: Duration, cutoff: Dimensions, context: DDContext): Seq[Z] =
     if size < cutoff
     then for t <- rows yield g(t)
     else
@@ -175,18 +179,19 @@ case class Matrix2[T: Numeric](rows: Seq[Seq[T]]) extends BaseMatrix[Seq[T]]:
    * @param ev     evidence that Seq[T] is a monoid.
    * @param atMost max duration.
    * @param cutoff the cutoff (see Dimensions).
+   * @param context the DDContext in which any DataDefinition is evaluated (by default, DDContext.default).
    * @tparam Y the underlying type of the other Matrix2.
    * @tparam Z the underlying type of the resulting Matrix.
    * @return the product of this and other as a Matrix
    */
-  def product2[Y: Numeric, Z: Product : Monoid : Numeric](other: Matrix2[Y])(implicit ev: Monoid[Seq[T]], atMost: Duration, cutoff: Dimensions): Matrix[Seq[Z]] =
+  def product2[Y: Numeric, Z: Product : Monoid : Numeric](other: Matrix2[Y])(implicit ev: Monoid[Seq[T]], atMost: Duration, cutoff: Dimensions, context: DDContext): Matrix[Seq[Z]] =
     implicit object MonoidSeqZ extends Monoid[Seq[Z]]:
       def combine(x: Seq[Z], y: Seq[Z]): Seq[Z] = x ++ y
 
       def zero: Seq[Z] = Nil
 
     if c == other.r
-    then Matrix2(forRows(ts => for us <- other.cols yield productSpecial(ts, us))(summon[Monoid[Seq[Z]]], ev, atMost, cutoff))
+    then Matrix2(forRows(ts => for us <- other.cols yield productSpecial(ts, us))(summon[Monoid[Seq[Z]]], ev, atMost, cutoff, context))
     else throw IncompatibleDimensionsException(c, other.rows.length)
 
   private def cols: Seq[Seq[T]] = rows.transpose

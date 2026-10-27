@@ -177,6 +177,31 @@ between the two. If no worker is up, the master fails after `discovery-timeout` 
 with a message asking whether `ClusterWorker.start` has been called. The Artery `WARN` lines
 about an aborted connection when the master shuts down are expected.
 
+### `DataDefinition` and `Matrix` on a cluster
+
+`MatrixOperation` (the mid-level matrix example) needed no change: like `CountWords`, it runs
+clustered when it's given a cluster `ActorSystem`. The high-level API needed two changes in core:
+
+- **Choosing the `ActorSystem`.** `DataDefinition`'s factory methods (`apply`, `create`) used to
+  build every `LazyDD` in the JVM-wide `DataDefinition.context`, so they could never use a
+  cluster. They (and `Matrix`'s `product`, `product2` and `forRows`) now take a `DDContext` as a
+  `using`/implicit parameter. The default, `DDContext.default`, lives in `DDContext`'s companion
+  object, so it's found when there's no other `DDContext` in scope: existing code compiles and
+  behaves as before. To run on a cluster, define a `given DDContext` built on a cluster
+  `ActorSystem`. This is decision 3 again, applied to the high-level API: same API, with the
+  appropriate `ActorSystem`. `DataDefinition.context` is still there, as a plain method returning
+  the default. It's no longer a `given`, so importing `DataDefinition.*` doesn't bring a second
+  candidate into scope. (Adding the parameter is source-compatible but not binary-compatible.)
+- **Another captured `this`.** `LazyDD.evaluate` built its reducer as
+  `summon[Monoid[W]].combine`, which captured the `LazyDD`, and through it the `DDContext` and its
+  `ActorSystem`. The pre-check caught it at once. The monoid is now taken into a local value first,
+  as in the earlier `MapReduceFirstFold` fix.
+
+`ExamplesClusterSpec` runs `MatrixOperation`, a `LazyDD`, `DataDefinition.map`/`reduce` and a
+25 × 25 `Matrix2.product2` (just above the default 20 × 20 cutoff below which no map-reduce is
+used) on a master node with no worker. A local run would give the same answers, so each test also
+checks, from the worker's log, that the worker spawned that job's reducers.
+
 ### Phasing
 
 1. **Spike** (throwaway) -- done; see "Spike results" above.
@@ -184,7 +209,8 @@ about an aborted connection when the master shuts down are expected.
 3. **2.1.0**: `majabigwaduce-cluster` with remote **reducers**; mapping still runs on the master
    node. Two-node `CountWords` example -- done, both as tests (`TwoNodeSpec`,
    `MasterAsWorkerSpec`) and as a two-terminal demo (see "Two-terminal demo" above).
-   Still to do for 2.1.0: the matrix and `DataDefinition` examples on a cluster.
+   The matrix and `DataDefinition` examples -- done (`ExamplesClusterSpec`: see
+   "`DataDefinition` and `Matrix` on a cluster" above).
 4. **Later**: remote **mappers**, so input chunks are mapped where they're sent.
 
 A note on expectations: with only reducers distributed, the master still does all the mapping

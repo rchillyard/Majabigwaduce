@@ -94,6 +94,9 @@ of type `(W,V)=>W` where `W` is constrained by a context bound: `W: Zero`.
 * `count` which yields the number of key-value pairs in the `DataDefinition`, wrapped in `Future`.
 
 An additional type `DDContext` is used implicitly when calling the `apply` methods of the `DataDefinition` object.
+By default this is `DDContext.default`, a JVM-wide context with its own `ActorSystem`. To use a different
+`ActorSystem` (for example, a member of a cluster: see "Clustering" below), define your own `given DDContext`
+where you create your `DataDefinition`s (or call `Matrix`'s `product` methods).
 
 For an example of using this higher-level API, please see the `Matrix` class.
 Because this class is useful in its own right, it can be found in the main source area under the `matrix` package.
@@ -393,10 +396,13 @@ A Master uses the cluster whenever its `ActorSystem` is a cluster member:
    `pekko.actor.allow-java-serialization = on`. The reducer functions are sent to the other nodes with
    Java serialization, so **only do this on a trusted network**.
 3. Call `ClusterWorker.start(system)` on each node which should run reducers (the master node too, if you like).
-4. Run your jobs on the master node as usual.
+4. Run your jobs on the master node as usual. For the `DataDefinition` API (and `Matrix`), define a
+   `given DDContext` built on the master node's `ActorSystem`, e.g. `DDContext(config, system, timeout)`.
 
 Functions sent to a cluster must capture only serializable values -- in particular, not `this` when it holds
 an `ActorSystem`. Defining them in an object (as the `CountWords` example now does) avoids that.
+The `CountWords`, `MatrixOperation`, `DataDefinition` and `Matrix2` examples all run on a cluster
+(see `cluster/src/test`).
 To see it working, run `CountWords` across two JVMs: start a worker node in one terminal,
 
 ```bash

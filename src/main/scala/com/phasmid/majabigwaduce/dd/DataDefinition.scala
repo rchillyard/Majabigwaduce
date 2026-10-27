@@ -284,7 +284,11 @@ case class LazyDD[K, V, L, W: Monoid]
       val perCallConfig: Config = summon[Config].withValue("reducers", ConfigValueFactory.fromAnyRef(partitions))
       given actors: Actors = Actors(summon[ActorSystem[Nothing]], perCallConfig)
 
-      val mr = MapReducePipe.create[K, V, L, W, W]((k, v) => f((k, v)), summon[Monoid[W]].combine, 1)
+      // NOTE the monoid is taken into a local value first: `summon[Monoid[W]]` reads a field of this
+      // LazyDD, so a reducer built from it directly would capture `this` (which holds an ActorSystem),
+      // and couldn't then be sent to the other nodes of a cluster (see doc/Clustering.md).
+      val monoid = summon[Monoid[W]]
+      val mr = MapReducePipe.create[K, V, L, W, W]((k, v) => f((k, v)), monoid.combine, 1)
       context.register(mr)
       for (x <- mr(kVs)) yield EagerDD(x.toSeq)
 
@@ -430,6 +434,16 @@ object DDContext:
     given ec: ExecutionContext = system.executionContext
     apply(config, system, timeout)
 
+  /**
+   * The default DDContext, a JVM-wide singleton created (by `apply`) the first time it's needed.
+   *
+   * NOTE: it is defined here, in DDContext's companion object, so that it is the given which is
+   * found when there's no other DDContext in scope. To evaluate DataDefinitions with a different
+   * ActorSystem (for example, a member of a cluster: see doc/Clustering.md), define your own
+   * `given DDContext` where you create them.
+   */
+  given default: DDContext = DDContext.apply
+
 /**
  * Represents a singleton object that provides definitions or metadata for data-related functionalities.
  *
@@ -441,7 +455,10 @@ object DDContext:
  */
 object DataDefinition:
 
-  given context: DDContext = DDContext.apply
+  /**
+   * The default (JVM-wide) DDContext: see DDContext.default.
+   */
+  def context: DDContext = DDContext.default
 
   /**
    * Terminates the ActorSystem backing this object's shared DDContext.
@@ -468,7 +485,7 @@ object DataDefinition:
    * @tparam V The type of the values in the key-value pairs. The values must form a monoid.
    * @return A `DataDefinition` representing the lazily computed data with the specified partitions.
    */
-  def apply[K, V: Monoid](kVs: Seq[(K, V)], partitions: Int): DataDefinition[K, V] = LazyDD(kVs, identity[(K, V)])(partitions)
+  def apply[K, V: Monoid](kVs: Seq[(K, V)], partitions: Int)(using context: DDContext): DataDefinition[K, V] = LazyDD(kVs, identity[(K, V)])(partitions)
 
   /**
    * Creates a new `DataDefinition` from a sequence of key-value pairs, where the values
@@ -479,7 +496,7 @@ object DataDefinition:
    * @tparam V the type of the values in the sequence, which must have a `Monoid` implementation
    * @return a lazily evaluated `DataDefinition` based on the provided key-value sequence
    */
-  def apply[K, V: Monoid](kVs: Seq[(K, V)]): DataDefinition[K, V] =
+  def apply[K, V: Monoid](kVs: Seq[(K, V)])(using context: DDContext): DataDefinition[K, V] =
     LazyDD(kVs, identity[(K, V)])()
 
   /**
@@ -492,7 +509,7 @@ object DataDefinition:
    * @tparam V the type of the values in the map, which must have a `Monoid` implementation
    * @return a lazily evaluated `DataDefinition` partitioned into the specified number of parts
    */
-  def apply[K, V: Monoid](kVm: Map[K, V], partitions: Int): DataDefinition[K, V] =
+  def apply[K, V: Monoid](kVm: Map[K, V], partitions: Int)(using context: DDContext): DataDefinition[K, V] =
     apply(kVm.toSeq, partitions)
 
   /**
@@ -503,7 +520,7 @@ object DataDefinition:
    * @tparam V the type of the values in the map, which must have a `Monoid` instance.
    * @return a `DataDefinition` containing the provided key-value pairs.
    */
-  def apply[K, V: Monoid](kVm: Map[K, V]): DataDefinition[K, V] =
+  def apply[K, V: Monoid](kVm: Map[K, V])(using context: DDContext): DataDefinition[K, V] =
     LazyDD(kVm.toSeq, identity[(K, V)])()
 
   /**
@@ -527,7 +544,7 @@ object DataDefinition:
    * @tparam V the underlying type of vs.
    * @return a LazyDD.
    */
-  def apply[K, V: Monoid](vs: Seq[V], f: V => K, partitions: Int = DefaultPartitions): DataDefinition[K, V] =
+  def apply[K, V: Monoid](vs: Seq[V], f: V => K, partitions: Int = DefaultPartitions)(using context: DDContext): DataDefinition[K, V] =
     LazyDD[Any, V, K, V](expandTuples(vs), t => (f(t._2), t._2))(partitions)
 
   /**
@@ -539,7 +556,7 @@ object DataDefinition:
    * @tparam V the underlying type of vs.
    * @return a LazyDD.
    */
-  def create[K, V: Monoid](vs: Seq[V], f: V => K): DataDefinition[K, V] =
+  def create[K, V: Monoid](vs: Seq[V], f: V => K)(using context: DDContext): DataDefinition[K, V] =
     apply(vs, f, DefaultPartitions)
 
   /**
