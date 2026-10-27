@@ -10,3 +10,6 @@ metastore_db
 
 *.class
 benchmarks/results/*.log
+
+# logs written by forked runs (e.g. the cluster demo, which runs in cluster/)
+**/logs/

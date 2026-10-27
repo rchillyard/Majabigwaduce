@@ -55,17 +55,7 @@ type ResourceFunction = String => Resource
  */
 case class CountWords(resourceFunc: ResourceFunction)(using system: ActorSystem[Nothing], logger: Logger, config: Config, timeout: Timeout, ec: ExecutionContext) extends (Seq[String] => Future[Int]) with AutoCloseable {
 
-  trait StringsZeros extends Zero[Strings] {
-    def zero: Strings = Nil: Strings
-  }
-
-  implicit object StringsZeros extends StringsZeros
-
-  trait IntZeros extends Zero[Int] {
-    def zero: Int = 0
-  }
-
-  implicit object IntZeros extends IntZeros
+  import CountWords.{*, given}
 
   // NOTE: actors and the pipeline stages are built once, here, and reused across every call to
   // apply(ws) -- resourceFunc (and therefore the mapper/reducer functions) never changes for a
@@ -96,11 +86,6 @@ case class CountWords(resourceFunc: ResourceFunction)(using system: ActorSystem[
     stage1.close()
     stage2.close()
 
-  private def countFields(gs: Strings) = for (g <- gs) yield g.split("""\s+""").length
-
-  private def addInts(x: Int, y: Int) = x + y
-
-  private def appendString(a: Strings, v: String) = a :+ v
 }
 
 /**
@@ -115,6 +100,22 @@ case class CountWords(resourceFunc: ResourceFunction)(using system: ActorSystem[
  * @author scalaprof
  */
 object CountWords: // extends Loggables:
+
+  // NOTE the reducer functions and zeros live here, in the companion object, rather than in the
+  // CountWords class. A lambda which calls a method of the class captures `this` -- and a
+  // CountWords instance holds an ActorSystem, which can't be serialized. Defined here, they
+  // capture nothing, so the reducers can be sent to other nodes of a cluster (doc/Clustering.md).
+  given stringsZero: Zero[Strings] with
+    def zero: Strings = Nil
+
+  given intZero: Zero[Int] with
+    def zero: Int = 0
+
+  private def countFields(gs: Strings) = for (g <- gs) yield g.split("""\s+""").length
+
+  private def addInts(x: Int, y: Int) = x + y
+
+  private def appendString(a: Strings, v: String) = a :+ v
 
   def countWords(hc: HttpClient, args: Seq[String]): Future[Int] =
     given config: Config = ConfigFactory.load.getConfig("majabigwaduce.CountWords")

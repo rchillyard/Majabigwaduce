@@ -1,10 +1,10 @@
-organization := "com.phasmidsoftware"
+ThisBuild / organization := "com.phasmidsoftware"
 
 name := "Majabigwaduce"
 
-version := "2.0.3"
+ThisBuild / version := "2.1.0"
 
-scalaVersion := "3.3.9" // LTS version
+ThisBuild / scalaVersion := "3.3.9" // LTS version
 
 val flogVersion = "1.0.15"
 val pekkoGroup = "org.apache.pekko"
@@ -42,7 +42,24 @@ lazy val benchmarks = project.in(file("benchmarks"))
 	.enablePlugins(JmhPlugin)
 	.settings(
 		name := "majabigwaduce-benchmarks",
-		scalaVersion := "3.3.9",
 		publish / skip := true,
 		libraryDependencies += "ch.qos.logback" % "logback-classic" % logBackVersion % "runtime"
+	)
+
+// NOTE: clustering is a separate artifact so that users who don't cluster don't download
+// pekko-cluster (see doc/Clustering.md). Its tests reuse the root project's examples (test->test).
+lazy val cluster = project.in(file("cluster"))
+	.dependsOn(root % "compile->compile;test->test")
+	.settings(
+		name := "majabigwaduce-cluster",
+		libraryDependencies ++= Seq(
+			pekkoGroup %% "pekko-cluster-typed" % pekkoVersion,
+			"ch.qos.logback" % "logback-classic" % logBackVersion % Test,
+			pekkoGroup %% "pekko-actor-testkit-typed" % pekkoVersion % Test,
+			"org.scalatest" %% "scalatest" % scalaTestVersion % Test
+		),
+		Test / parallelExecution := false,
+		// the two-terminal demo (ClusterDemo.scala) runs each node in its own JVM, reading RETURN from the terminal
+		Test / run / fork := true,
+		Test / run / connectInput := true
 	)

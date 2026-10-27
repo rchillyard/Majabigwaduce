@@ -6,7 +6,7 @@ package com.phasmid.majabigwaduce.core
 
 import org.apache.pekko.actor.typed.scaladsl.AskPattern.*
 import org.apache.pekko.actor.typed.scaladsl.Behaviors
-import org.apache.pekko.actor.typed.{ActorRef, Behavior, Scheduler}
+import org.apache.pekko.actor.typed.{ActorRef, ActorSystem, Behavior, Scheduler}
 import org.apache.pekko.util.Timeout
 import com.typesafe.config.Config
 import org.slf4j.LoggerFactory
@@ -54,19 +54,24 @@ object Master:
   private val logger = LoggerFactory.getLogger("com.phasmid.majabigwaduce.core.Master")
 
   def apply[K1, V1, K2, W, V2 >: W](config: Config, f: (K1, V1) => Try[(K2, W)], g: (V2, W) => V2): Behavior[MasterCommand[K1, V1, K2, V2]] =
-    behavior(config, f, Reducer(g))
+    behavior(config, MapperDef(f, isForgiving(config)), ReduceDef(g))
 
   /**
-   * Builds the shared Master behavior. On setup, spawns `mappers` (per config) mapper children
-   * and `reducers` (per config) reducer children, then handles ComputeMap/ComputeSeq/Close
+   * Builds the shared Master behavior. On setup, acquires `mappers` (per config) mappers and
+   * `reducers` (per config) reducers from `pool`, then handles ComputeMap/ComputeSeq/Close
    * commands by driving the map -> distribute -> reduce -> collate pipeline and replying to
    * each request's `replyTo`.
    *
    * Shared by Master, Master_Fold, Master_First and Master_First_Fold -- the only difference
-   * between them is which reducer Behavior is spawned (plain Reducer vs Reducer_Fold), and, for
+   * between them is which reducer is specified (plain Reducer vs Reducer_Fold), and, for
    * the "First" variants, that K1=Unit and `f` has already been unitized by the caller.
+   *
+   * The pool's workers arrive as a Future, and each request is chained onto it. With the default
+   * LocalWorkerPool that Future is already complete; a remote pool may complete it later.
+   *
+   * By default the pool is chosen from the ActorSystem in which this Master runs (see WorkerPool.forSystem).
    */
-  private[core] def behavior[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => Try[(K2, W)], reducerBehavior: Behavior[ReducerCommand[K2, W, V2]]): Behavior[MasterCommand[K1, V1, K2, V2]] =
+  private[core] def behavior[K1, V1, K2, W, V2](config: Config, mapperDef: MapperDef[K1, V1, K2, W], reducerDef: ReducerDef[K2, W, V2], poolFor: ActorSystem[?] => WorkerPool = WorkerPool.forSystem): Behavior[MasterCommand[K1, V1, K2, V2]] =
     MapReduceActor.withLifecycle(logger) { context =>
       val actors = Actors(context.system, config)
 
@@ -76,19 +81,9 @@ object Master:
       given ec: ExecutionContext = context.executionContext
       given scheduler: Scheduler = context.system.scheduler
 
-      // NOTE: the mappers and reducers will be terminated when this master is terminated.
-      val mapperBehavior = if Master.isForgiving(config) then Mapper_Forgiving(f) else Mapper(f)
-      val nMappers = config.getInt("mappers")
-      logger.debug(s"creating $nMappers mappers")
-      val mappers: Seq[ActorRef[MapperCommand[K1, V1, K2, W]]] =
-        for i <- 1 to nMappers yield
-          actors.createActor[MapperCommand[K1, V1, K2, W]]((b, n) => context.spawn(b, n), Some(s"${Master.sMpr}-$i"), mapperBehavior)
-
-      val nReducers = config.getInt("reducers")
-      logger.debug(s"creating $nReducers reducers")
-      val reducers: Seq[ActorRef[ReducerCommand[K2, W, V2]]] =
-        for i <- 1 to nReducers yield
-          actors.createActor[ReducerCommand[K2, W, V2]]((b, n) => context.spawn(b, n), Some(s"${Master.sReducer}-$i"), reducerBehavior)
+      // NOTE: with LocalWorkerPool, the mappers and reducers will be terminated when this master is terminated.
+      val workersF: Future[Workers[K1, V1, K2, W, V2]] =
+        poolFor(context.system).acquire(context, actors, mapperDef, config.getInt("mappers"), reducerDef, config.getInt("reducers"))
       if Master.isForgiving(config) then logger.debug("setting forgiving mode")
 
       // Splits the incoming batch across the mapper pool and fans out one DoMap per chunk,
@@ -98,7 +93,7 @@ object Master:
       // a plain zip suffices -- no round-robin cycling is needed here.
       // NOTE this involves a cast to the parametric type Z which can result in a ClassCastException,
       // the same way the classic-actor `ask.mapTo[Z]` did.
-      def doMap(i: KeyValuePairs[K1, V1]): Future[Map[K2, Seq[W]]] =
+      def doMap(mappers: Seq[ActorRef[MapperCommand[K1, V1, K2, W]]])(i: KeyValuePairs[K1, V1]): Future[Map[K2, Seq[W]]] =
         val chunks = Master.splitIntoChunks(i.m, mappers.length)
         val responses: Seq[Future[MapperResponse[K2, W]]] =
           for (chunk, mapperRef) <- chunks.zip(mappers) yield
@@ -113,7 +108,7 @@ object Master:
         }
 
       // NOTE that this method operates in real time, without the protection of Try
-      def distributeWork(wsK2m: Map[K2, Seq[W]]): Seq[((K2, Seq[W]), ActorRef[ReducerCommand[K2, W, V2]])] =
+      def distributeWork(reducers: Seq[ActorRef[ReducerCommand[K2, W, V2]]])(wsK2m: Map[K2, Seq[W]]): Seq[((K2, Seq[W]), ActorRef[ReducerCommand[K2, W, V2]])] =
         val rs = LazyList.continually(reducers.to(LazyList)).flatten
         val wsK2s = for (k2, ws) <- wsK2m.to(Seq) yield (k2, ws)
         wsK2s zip rs
@@ -121,10 +116,10 @@ object Master:
       def doReductionAsync(k2: K2, ws: Seq[W], actor: ActorRef[ReducerCommand[K2, W, V2]]): Future[(K2, Either[Throwable, V2])] =
         actor.ask[ReduceResult[K2, V2]](replyTo => DoReduce(Intermediate(k2, ws), replyTo)).map(r => r.k2 -> r.result)
 
-      def doDistributeReduceCollate(wsK2m: Map[K2, Seq[W]]): Future[Map[K2, Either[Throwable, V2]]] =
+      def doDistributeReduceCollate(reducers: Seq[ActorRef[ReducerCommand[K2, W, V2]]])(wsK2m: Map[K2, Seq[W]]): Future[Map[K2, Either[Throwable, V2]]] =
         if wsK2m.isEmpty then
           logger.warn("mapper returned empty map" + (if Master.isForgiving(config) then "" else ": see log for problem and consider using Mapper_Forgiving instead"))
-        val v2XeK2fs = for ((k2, ws), a) <- distributeWork(wsK2m) yield doReductionAsync(k2, ws, a)
+        val v2XeK2fs = for ((k2, ws), a) <- distributeWork(reducers)(wsK2m) yield doReductionAsync(k2, ws, a)
         Future.sequence(v2XeK2fs).map(_.toMap)
 
       /**
@@ -134,8 +129,9 @@ object Master:
        * CONSIDER why are we using Either[Throwable, V2] instead of Try[V2]?
        */
       def doMapReduce(i: KeyValuePairs[K1, V1]): Future[Map[K2, Either[Throwable, V2]]] = for
-        wsK2m <- doMap(i)
-        v2XeK2m <- doDistributeReduceCollate(wsK2m)
+        workers <- workersF
+        wsK2m <- doMap(workers.mappers)(i)
+        v2XeK2m <- doDistributeReduceCollate(workers.reducers)(wsK2m)
       yield v2XeK2m
 
       {
@@ -238,7 +234,7 @@ object Master:
  */
 object Master_Fold:
   def apply[K1, V1, K2, W, V2](config: Config, f: (K1, V1) => Try[(K2, W)], g: (V2, W) => V2, z: () => V2): Behavior[MasterCommand[K1, V1, K2, V2]] =
-    Master.behavior[K1, V1, K2, W, V2](config, f, Reducer_Fold(g, z()))
+    Master.behavior[K1, V1, K2, W, V2](config, MapperDef(f, Master.isForgiving(config)), FoldDef(g, z))
 
 /**
  * @tparam V1 input type: the message which this actor responds to is of type Seq[V1].
@@ -251,7 +247,7 @@ object Master_Fold:
  */
 object Master_First:
   def apply[V1, K2, W, V2 >: W](config: Config, f: V1 => Try[(K2, W)], g: (V2, W) => V2): Behavior[MasterCommand[Unit, V1, K2, V2]] =
-    Master.behavior[Unit, V1, K2, W, V2](config, Master.unitize(f), Reducer(g))
+    Master.behavior[Unit, V1, K2, W, V2](config, MapperDef(Master.unitize(f), Master.isForgiving(config)), ReduceDef(g))
 
 /**
  * @tparam V1 input type: the message which this actor responds to is of type Seq[V1].
@@ -265,7 +261,7 @@ object Master_First:
  */
 object Master_First_Fold:
   def apply[V1, K2, W, V2](config: Config, f: V1 => Try[(K2, W)], g: (V2, W) => V2, z: () => V2): Behavior[MasterCommand[Unit, V1, K2, V2]] =
-    Master.behavior[Unit, V1, K2, W, V2](config, Master.unitize(f), Reducer_Fold(g, z()))
+    Master.behavior[Unit, V1, K2, W, V2](config, MapperDef(Master.unitize(f), Master.isForgiving(config)), FoldDef(g, z))
 
 /**
  * Case class used to package a response from an actor.

@@ -43,6 +43,11 @@ libraryDependencies += "com.phasmidsoftware" %% "majabigwaduce" % "<version>"
 ```
 
 (see the Sonatype Central badge at the top of this page for the current version number).
+To run jobs on a Pekko cluster (from 2.1.0: see "Clustering" below), add the cluster module too:
+
+```scala
+libraryDependencies += "com.phasmidsoftware" %% "majabigwaduce-cluster" % "<version>"
+```
 
 High-level API
 ---------------
@@ -94,6 +99,9 @@ of type `(W,V)=>W` where `W` is constrained by a context bound: `W: Zero`.
 * `count` which yields the number of key-value pairs in the `DataDefinition`, wrapped in `Future`.
 
 An additional type `DDContext` is used implicitly when calling the `apply` methods of the `DataDefinition` object.
+By default this is `DDContext.default`, a JVM-wide context with its own `ActorSystem`. To use a different
+`ActorSystem` (for example, a member of a cluster: see "Clustering" below), define your own `given DDContext`
+where you create your `DataDefinition`s (or call `Matrix`'s `product` methods).
 
 For an example of using this higher-level API, please see the `Matrix` class.
 Because this class is useful in its own right, it can be found in the main source area under the `matrix` package.
@@ -381,6 +389,41 @@ The example applications are in the `it` directory, given that they are not real
 If you wish to suppress the integration tests temporarily, simply un-mark `it/scala` as a test source root.
 Or, you could comment out the appropriate entry (`unmanagedSourceDirectories`) in `build.sbt`.
 
+Clustering
+==========
+
+The separate `majabigwaduce-cluster` artifact (in `cluster/`)
+lets a job's reducers run on other nodes of a Pekko cluster, with the same `MapReduce` API.
+A Master uses the cluster whenever its `ActorSystem` is a cluster member:
+
+1. Depend on `majabigwaduce-cluster` as well as `majabigwaduce`.
+2. Configure each node as a cluster member (`pekko.actor.provider = cluster`, seed nodes, etc.) and set
+   `pekko.actor.allow-java-serialization = on`. The reducer functions are sent to the other nodes with
+   Java serialization, so **only do this on a trusted network**.
+3. Call `ClusterWorker.start(system)` on each node which should run reducers (the master node too, if you like).
+4. Run your jobs on the master node as usual. For the `DataDefinition` API (and `Matrix`), define a
+   `given DDContext` built on the master node's `ActorSystem`, e.g. `DDContext(config, system, timeout)`.
+
+Functions sent to a cluster must capture only serializable values -- in particular, not `this` when it holds
+an `ActorSystem`. Defining them in an object (as the `CountWords` example now does) avoids that.
+The `CountWords`, `MatrixOperation`, `DataDefinition` and `Matrix2` examples all run on a cluster
+(see `cluster/src/test`).
+To see it working, run `CountWords` across two JVMs: start a worker node in one terminal,
+
+```bash
+sbt "cluster/Test/runMain com.phasmid.majabigwaduce.cluster.clusterWorkerNode"
+```
+
+and, once it says `worker started`, run the job on a master node in another:
+
+```bash
+sbt "cluster/Test/runMain com.phasmid.majabigwaduce.cluster.clusterCountWords"
+```
+
+The worker's log shows it spawning the job's reducers and stopping them when the job ends.
+See [doc/Clustering.md](doc/Clustering.md) for the design and more about the demo, and `cluster/src/test`
+for the two-node tests.
+
 Benchmarks
 ==========
 
@@ -567,3 +610,8 @@ Revision History
 * 2.0.3 Dropped the unused `pekko-cluster`, `pekko-remote` and `pekko-cluster-metrics` dependencies
   (nothing in the library used them), so consumers no longer download them. Clustering is planned
   for 2.1.0 as a separate module.
+* 2.1.0 Added clustering: the new `majabigwaduce-cluster` artifact runs a job's reducers on
+  other nodes of a Pekko cluster, with the same APIs (see "Clustering" above and `doc/Clustering.md`).
+  `DataDefinition`'s factory methods and `Matrix`'s `product` methods now take a `DDContext` (by default
+  `DDContext.default`), so existing source compiles unchanged, but code compiled against 2.0.x must be
+  recompiled.
