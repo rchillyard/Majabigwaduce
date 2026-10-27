@@ -605,3 +605,8 @@ Revision History
 * 2.0.3 Dropped the unused `pekko-cluster`, `pekko-remote` and `pekko-cluster-metrics` dependencies
   (nothing in the library used them), so consumers no longer download them. Clustering is planned
   for 2.1.0 as a separate module.
+* 2.1.0 (in progress) Added clustering: the new `majabigwaduce-cluster` artifact runs a job's reducers on
+  other nodes of a Pekko cluster, with the same APIs (see "Clustering" above and `doc/Clustering.md`).
+  `DataDefinition`'s factory methods and `Matrix`'s `product` methods now take a `DDContext` (by default
+  `DDContext.default`), so existing source compiles unchanged, but code compiled against 2.0.x must be
+  recompiled.
