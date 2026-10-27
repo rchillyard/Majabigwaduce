@@ -43,6 +43,11 @@ libraryDependencies += "com.phasmidsoftware" %% "majabigwaduce" % "<version>"
 ```
 
 (see the Sonatype Central badge at the top of this page for the current version number).
+To run jobs on a Pekko cluster (from 2.1.0: see "Clustering" below), add the cluster module too:
+
+```scala
+libraryDependencies += "com.phasmidsoftware" %% "majabigwaduce-cluster" % "<version>"
+```
 
 High-level API
 ---------------
@@ -387,7 +392,7 @@ Or, you could comment out the appropriate entry (`unmanagedSourceDirectories`) i
 Clustering
 ==========
 
-_In progress for 2.1.0 (not yet released)._ The separate `majabigwaduce-cluster` artifact (in `cluster/`)
+The separate `majabigwaduce-cluster` artifact (in `cluster/`)
 lets a job's reducers run on other nodes of a Pekko cluster, with the same `MapReduce` API.
 A Master uses the cluster whenever its `ActorSystem` is a cluster member:
 
@@ -605,7 +610,7 @@ Revision History
 * 2.0.3 Dropped the unused `pekko-cluster`, `pekko-remote` and `pekko-cluster-metrics` dependencies
   (nothing in the library used them), so consumers no longer download them. Clustering is planned
   for 2.1.0 as a separate module.
-* 2.1.0 (in progress) Added clustering: the new `majabigwaduce-cluster` artifact runs a job's reducers on
+* 2.1.0 Added clustering: the new `majabigwaduce-cluster` artifact runs a job's reducers on
   other nodes of a Pekko cluster, with the same APIs (see "Clustering" above and `doc/Clustering.md`).
   `DataDefinition`'s factory methods and `Matrix`'s `product` methods now take a `DDContext` (by default
   `DDContext.default`), so existing source compiles unchanged, but code compiled against 2.0.x must be
