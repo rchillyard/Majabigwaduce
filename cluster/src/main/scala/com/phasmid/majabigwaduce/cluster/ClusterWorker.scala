@@ -70,11 +70,11 @@ object ClusterWorker:
     val behavior = s.reducer.behavior
     val reducers = for i <- 1 to s.n yield context.spawn(behavior, s"${Master.sReducer}-$i")
     context.watch(s.master)
-    logger.debug(s"spawned ${s.n} reducers for ${s.master.path}")
+    logger.info(s"spawned ${s.n} reducers for ${s.master.path}")
     s.replyTo ! ReducersSpawned(reducers)
     Behaviors.receiveSignal {
       case (_, Terminated(_)) =>
-        logger.debug(s"master ${s.master.path} has stopped: stopping its reducers")
+        logger.info(s"master ${s.master.path} has stopped: stopping its reducers")
         Behaviors.stopped
     }
   }

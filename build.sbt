@@ -58,5 +58,8 @@ lazy val cluster = project.in(file("cluster"))
 			pekkoGroup %% "pekko-actor-testkit-typed" % pekkoVersion % Test,
 			"org.scalatest" %% "scalatest" % scalaTestVersion % Test
 		),
-		Test / parallelExecution := false
+		Test / parallelExecution := false,
+		// the two-terminal demo (ClusterDemo.scala) runs each node in its own JVM, reading RETURN from the terminal
+		Test / run / fork := true,
+		Test / run / connectInput := true
 	)

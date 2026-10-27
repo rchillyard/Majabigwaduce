@@ -149,14 +149,42 @@ value first, and `Zero` itself is `Serializable`. The `CountWords` example had t
 with its reducer functions and zeros, which were members of the class; they now live in its
 companion object. Expect students (and the other examples) to hit this too.
 
+### Two-terminal demo
+
+`cluster/src/test/scala/.../cluster/ClusterDemo.scala` runs `CountWords` on two JVMs on one
+machine, using `cluster/src/test/resources/cluster-demo.conf` (Artery on `127.0.0.1`, Java
+serialization on, the worker node on port 2551 as the seed node). In the first terminal, start
+the worker node:
+
+```bash
+sbt "cluster/Test/runMain com.phasmid.majabigwaduce.cluster.clusterWorkerNode"
+```
+
+Once it prints `worker started`, run `CountWords` on the master node (port 2552) in the second
+terminal:
+
+```bash
+sbt "cluster/Test/runMain com.phasmid.majabigwaduce.cluster.clusterCountWords"
+```
+
+The master prints `Word count = 11`, then leaves the cluster. The worker logs
+`spawned 4 reducers for pekko://CountWordsCluster@127.0.0.1:2552/system/...` for each of the
+pipeline's two Masters, and then `master ... has stopped: stopping its reducers`. Run the master
+again as often as you like; press RETURN in the first terminal to stop the worker. Both mains
+take an optional port as their first argument, and `clusterCountWords` takes the document URLs
+after it, so you can start a second worker (on, say, port 2553) and see the reducers split
+between the two. If no worker is up, the master fails after `discovery-timeout` (10 seconds)
+with a message asking whether `ClusterWorker.start` has been called. The Artery `WARN` lines
+about an aborted connection when the master shuts down are expected.
+
 ### Phasing
 
 1. **Spike** (throwaway) -- done; see "Spike results" above.
 2. **`WorkerPool` refactor in core** (local only) -- done.
 3. **2.1.0**: `majabigwaduce-cluster` with remote **reducers**; mapping still runs on the master
-   node. Two-node `CountWords` example -- done (as tests: `TwoNodeSpec`, `MasterAsWorkerSpec`).
-   Still to do for 2.1.0: the matrix and `DataDefinition` examples on a cluster, and a runnable
-   two-terminal `CountWords` demo.
+   node. Two-node `CountWords` example -- done, both as tests (`TwoNodeSpec`,
+   `MasterAsWorkerSpec`) and as a two-terminal demo (see "Two-terminal demo" above).
+   Still to do for 2.1.0: the matrix and `DataDefinition` examples on a cluster.
 4. **Later**: remote **mappers**, so input chunks are mapped where they're sent.
 
 A note on expectations: with only reducers distributed, the master still does all the mapping
@@ -172,7 +200,7 @@ rather than assume it.
 - A function that can't be serialized fails when the job starts, before any data moves, with
   an error that names the job and suggests what was captured. (The spike showed that Pekko on
   its own would just drop the message and let the ask time out.)
-- Workers stop a job's reducers on `StopJob`, or when the master node leaves the cluster.
+- Workers stop a job's reducers when its Master stops, or when the master node leaves the cluster.
 
 ## Testing
 

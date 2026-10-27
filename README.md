@@ -397,7 +397,21 @@ A Master uses the cluster whenever its `ActorSystem` is a cluster member:
 
 Functions sent to a cluster must capture only serializable values -- in particular, not `this` when it holds
 an `ActorSystem`. Defining them in an object (as the `CountWords` example now does) avoids that.
-See [doc/Clustering.md](doc/Clustering.md) for the design, and `cluster/src/test` for two-node examples.
+To see it working, run `CountWords` across two JVMs: start a worker node in one terminal,
+
+```bash
+sbt "cluster/Test/runMain com.phasmid.majabigwaduce.cluster.clusterWorkerNode"
+```
+
+and, once it says `worker started`, run the job on a master node in another:
+
+```bash
+sbt "cluster/Test/runMain com.phasmid.majabigwaduce.cluster.clusterCountWords"
+```
+
+The worker's log shows it spawning the job's reducers and stopping them when the job ends.
+See [doc/Clustering.md](doc/Clustering.md) for the design and more about the demo, and `cluster/src/test`
+for the two-node tests.
 
 Benchmarks
 ==========
