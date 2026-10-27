@@ -5,6 +5,8 @@ import org.apache.pekko.actor.testkit.typed.scaladsl.ScalaTestWithActorTestKit
 import org.scalatest.matchers.should
 import org.scalatest.wordspec.AnyWordSpecLike
 
+import scala.util.{Failure, Success}
+
 class ClusterWorkerPoolSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike with should.Matchers {
 
   "shares" should {
@@ -25,9 +27,11 @@ class ClusterWorkerPoolSpec extends ScalaTestWithActorTestKit with AnyWordSpecLi
   "requireJavaSerialization" should {
     "explain how to switch Java serialization on, when it is off" in {
       // NOTE the test kit's system uses the default configuration, in which Java serialization is off.
-      val x = ClusterWorkerPool.requireJavaSerialization(system).failed.get
-      x shouldBe a[MapReduceException]
-      x.getMessage should include("pekko.actor.allow-java-serialization = on")
+      ClusterWorkerPool.requireJavaSerialization(system) match
+        case Failure(x) =>
+          x shouldBe a[MapReduceException]
+          x.getMessage should include("pekko.actor.allow-java-serialization = on")
+        case Success(_) => fail("expected requireJavaSerialization to fail")
     }
   }
 }
