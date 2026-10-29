@@ -1,4 +1,4 @@
-![Sonatype Central](https://maven-badges.sml.io/sonatype-central/com.phasmidsoftware/majabigwaduce_3/badge.svg?color=blue)
+[![Sonatype Central](https://maven-badges.sml.io/sonatype-central/com.phasmidsoftware/majabigwaduce_3/badge.svg?color=blue)](https://central.sonatype.com/artifact/com.phasmidsoftware/majabigwaduce_3)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/1d777e04503246a991b88b9da4aea9ff)](https://app.codacy.com/manual/scalaprof/Majabigwaduce?utm_source=github.com&utm_medium=referral&utm_content=rchillyard/Majabigwaduce&utm_campaign=Badge_Grade_Dashboard)
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/rchillyard/Majabigwaduce/tree/master.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/rchillyard/Majabigwaduce/tree/master)
 ![GitHub Top Languages](https://img.shields.io/github/languages/top/rchillyard/Majabigwaduce)
