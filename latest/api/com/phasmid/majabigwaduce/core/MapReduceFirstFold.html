@@ -1,0 +1,900 @@
+<!DOCTYPE html><html data-pathToRoot="../../../../" data-rawLocation="com/phasmid/majabigwaduce/core/MapReduceFirstFold" data-dynamicSideMenu="false"><head><meta charset="utf-8"></meta><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"></meta><title>MapReduceFirstFold</title><link rel="shortcut icon" type="image/x-icon" href="../../../../favicon.ico"></link><script type="text/javascript" src="../../../../scripts/theme.js"></script><script type="text/javascript" src="../../../../scripts/searchData.js" defer="true"></script><script type="text/javascript" src="../../../../scripts/scastieConfiguration.js" defer="true"></script><link rel="stylesheet" href="../../../../styles/theme/bundle.css"></link><link rel="stylesheet" href="../../../../styles/theme/components/bundle.css"></link><link rel="stylesheet" href="../../../../styles/theme/components/button/bundle.css"></link><link rel="stylesheet" href="../../../../styles/theme/layout/bundle.css"></link><link rel="stylesheet" href="../../../../styles/dotty-icons.css"></link><link rel="stylesheet" href="../../../../styles/filter-bar.css"></link><link rel="stylesheet" href="../../../../styles/searchbar.css"></link><link rel="stylesheet" href="../../../../styles/social-links.css"></link><link rel="stylesheet" href="../../../../styles/versions-dropdown.css"></link><link rel="stylesheet" href="../../../../styles/content-contributors.css"></link><script type="text/javascript" src="../../../../hljs/highlight.pack.js" defer="true"></script><script type="text/javascript" src="../../../../scripts/hljs-scala3.js" defer="true"></script><script type="text/javascript" src="../../../../scripts/ux.js" defer="true"></script><script type="text/javascript" src="../../../../scripts/common/component.js" defer="true"></script><script type="text/javascript" src="../../../../scripts/common/utils.js" defer="true"></script><script type="text/javascript" src="../../../../scripts/components/FilterBar.js" defer="true"></script><script type="text/javascript" src="../../../../scripts/components/DocumentableList.js" defer="true"></script><script type="text/javascript" src="../../../../scripts/components/Input.js" defer="true"></script><script type="text/javascript" src="../../../../scripts/components/FilterGroup.js" defer="true"></script><script type="text/javascript" src="../../../../scripts/components/Filter.js" defer="true"></script><script type="text/javascript" src="../../../../scripts/scaladoc-scalajs.js" defer="true"></script><script type="text/javascript" src="../../../../scripts/contributors.js" defer="true"></script><script type="text/javascript" src="https://d3js.org/d3.v6.min.js" defer="true"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/graphlib-dot@0.6.2/dist/graphlib-dot.min.js" defer="true"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dagre-d3/0.6.1/dagre-d3.min.js" defer="true"></script><script type="text/javascript" src="https://scastie.scala-lang.org/embedded.js" defer="true"></script><script type="text/javascript" src="../../../../scripts/data.js" defer="true"></script><script>var pathToRoot = "../../../../";</script></head><body><div id=""><div id="header" class="body-small"><div class="header-container-left"><a href="../../../../" class="logo-container"><span class="project-name h300">Majabigwaduce</span></a><span onclick="dropdownHandler(event)" class="text-button with-arrow" id="dropdown-trigger"><a></a></span><div id="version-dropdown" class="dropdown-menu"></div></div><div class="header-container-right"><button id="search-toggle" class="icon-button"></button><span id="theme-toggle" class="icon-button"></span><span id="mobile-menu-toggle" class="icon-button hamburger"></span></div></div><div id="mobile-menu"><div class="mobile-menu-header body-small"><span class="mobile-menu-logo"><span class="project-name h300">Majabigwaduce</span></span><button id="mobile-menu-close" class="icon-button close"></button></div><div class="mobile-menu-container body-medium"><input id="mobile-scaladoc-searchbar-input" class="scaladoc-searchbar-input" type="search" placeholder="Find anything"></input><span id="mobile-theme-toggle" class="mobile-menu-item mode"></span></div></div><span id="mobile-sidebar-toggle" class="floating-button"></span><div id="leftColumn" class="body-small"><div class="switcher-container"><a id="api-nav-button" class="switcher h100 selected" href="../../../../index.html">API</a></div><nav id="api-nav" class="side-menu"><div class="ni n0 expanded"><span class="nh h100 expanded cs"><button class="ar icon-button expanded"></button><a href="../../majabigwaduce.html"><span class="micon pa"></span><span>com.phasmid.majabigwaduce</span></a></span><div class="ni n1"><span class="nh "><button class="ar icon-button "></button><a href="../cluster.html"><span class="micon pa"></span><span>cluster</span></a></span><div class="ni n2 "><span class="nh "><a href="../cluster/ClusterWorker$.html"><span class="micon ob"></span><span>ClusterWorker</span></a></span></div><div class="ni n2"><span class="nh "><button class="ar icon-button "></button><a href="../cluster/ClusterWorkerPool$.html"><span class="micon ob"></span><span>ClusterWorkerPool</span></a></span><div class="ni n3 "><span class="nh "><a href="../cluster/ClusterWorkerPool$$Settings.html"><span class="micon cl"></span><span>Settings</span></a></span></div><div class="ni n3 "><span class="nh "><a href="../cluster/ClusterWorkerPool$$Settings$.html"><span class="micon ob"></span><span>Settings</span></a></span></div></div><div class="ni n2 "><span class="nh "><a href="../cluster/ReducersSpawned.html"><span class="micon cl"></span><span>ReducersSpawned</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../cluster/SpawnReducers.html"><span class="micon cl"></span><span>SpawnReducers</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../cluster/WorkerCommand.html"><span class="micon tr"></span><span>WorkerCommand</span></a></span></div></div><div class="ni n1 expanded"><span class="nh h100 expanded cs"><button class="ar icon-button expanded"></button><a href="../core.html"><span class="micon pa"></span><span>core</span></a></span><div class="ni n2 "><span class="nh "><a href="Actors$.html"><span class="micon ob"></span><span>Actors</span></a></span></div><div class="ni n2 "><span class="nh "><a href="Actors.html"><span class="micon cl"></span><span>Actors</span></a></span></div><div class="ni n2 "><span class="nh "><a href="CleanerCollector$.html"><span class="micon ob"></span><span>CleanerCollector</span></a></span></div><div class="ni n2 "><span class="nh "><a href="CloseMapper.html"><span class="micon cl"></span><span>CloseMapper</span></a></span></div><div class="ni n2 "><span class="nh "><a href="CloseMaster.html"><span class="micon cl"></span><span>CloseMaster</span></a></span></div><div class="ni n2 "><span class="nh "><a href="CloseReducer.html"><span class="micon cl"></span><span>CloseReducer</span></a></span></div><div class="ni n2 "><span class="nh "><a href="ComputeMap.html"><span class="micon cl"></span><span>ComputeMap</span></a></span></div><div class="ni n2 "><span class="nh "><a href="ComputeSeq.html"><span class="micon cl"></span><span>ComputeSeq</span></a></span></div><div class="ni n2 "><span class="nh "><a href="DoMap.html"><span class="micon cl"></span><span>DoMap</span></a></span></div><div class="ni n2 "><span class="nh "><a href="DoReduce.html"><span class="micon cl"></span><span>DoReduce</span></a></span></div><div class="ni n2 "><span class="nh "><a href="FP$.html"><span class="micon ob"></span><span>FP</span></a></span></div><div class="ni n2 "><span class="nh "><a href="FoldDef.html"><span class="micon cl"></span><span>FoldDef</span></a></span></div><div class="ni n2 "><span class="nh "><a href="Intermediate.html"><span class="micon cl"></span><span>Intermediate</span></a></span></div><div class="ni n2 "><span class="nh "><a href="KeyValuePairs$.html"><span class="micon ob"></span><span>KeyValuePairs</span></a></span></div><div class="ni n2 "><span class="nh "><a href="KeyValuePairs.html"><span class="micon cl"></span><span>KeyValuePairs</span></a></span></div><div class="ni n2 "><span class="nh "><a href="LazyMonad.html"><span class="micon tr"></span><span>LazyMonad</span></a></span></div><div class="ni n2 "><span class="nh "><a href="LazyMonad$.html"><span class="micon ob"></span><span>LazyMonad</span></a></span></div><div class="ni n2 "><span class="nh "><a href="LazySequence.html"><span class="micon cl"></span><span>LazySequence</span></a></span></div><div class="ni n2 "><span class="nh "><a href="LocalWorkerPool$.html"><span class="micon ob"></span><span>LocalWorkerPool</span></a></span></div><div class="ni n2 "><span class="nh "><a href="MapReduce.html"><span class="micon tr"></span><span>MapReduce</span></a></span></div><div class="ni n2 "><span class="nh "><a href="MapReduceActor$.html"><span class="micon ob"></span><span>MapReduceActor</span></a></span></div><div class="ni n2 "><span class="nh "><a href="MapReduceComposed.html"><span class="micon cl"></span><span>MapReduceComposed</span></a></span></div><div class="ni n2 "><span class="nh "><a href="MapReduceException.html"><span class="micon cl"></span><span>MapReduceException</span></a></span></div><div class="ni n2 "><span class="nh "><a href="MapReduceException$.html"><span class="micon ob"></span><span>MapReduceException</span></a></span></div><div class="ni n2 "><span class="nh "><a href="MapReduceFirst.html"><span class="micon cl"></span><span>MapReduceFirst</span></a></span></div><div class="ni n2 "><span class="nh "><a href="MapReduceFirst$.html"><span class="micon ob"></span><span>MapReduceFirst</span></a></span></div><div class="ni n2 "><span class="nh "><a href="MapReduceFirstFold$.html"><span class="micon ob"></span><span>MapReduceFirstFold</span></a></span></div><div class="ni n2 expanded"><span class="nh h100 selected"><a href="#"><span class="micon cl"></span><span>MapReduceFirstFold</span></a></span></div><div class="ni n2 "><span class="nh "><a href="MapReducePipe.html"><span class="micon cl"></span><span>MapReducePipe</span></a></span></div><div class="ni n2 "><span class="nh "><a href="MapReducePipe$.html"><span class="micon ob"></span><span>MapReducePipe</span></a></span></div><div class="ni n2 "><span class="nh "><a href="MapReducePipeFold.html"><span class="micon cl"></span><span>MapReducePipeFold</span></a></span></div><div class="ni n2 "><span class="nh "><a href="MapReducePipeFold$.html"><span class="micon ob"></span><span>MapReducePipeFold</span></a></span></div><div class="ni n2 "><span class="nh "><a href="MapReduce_Base.html"><span class="micon cl"></span><span>MapReduce_Base</span></a></span></div><div class="ni n2 "><span class="nh "><a href="MapReduce_LoggingBase.html"><span class="micon cl"></span><span>MapReduce_LoggingBase</span></a></span></div><div class="ni n2 "><span class="nh "><a href="Mapper$.html"><span class="micon ob"></span><span>Mapper</span></a></span></div><div class="ni n2 "><span class="nh "><a href="MapperCommand.html"><span class="micon tr"></span><span>MapperCommand</span></a></span></div><div class="ni n2 "><span class="nh "><a href="MapperDef.html"><span class="micon cl"></span><span>MapperDef</span></a></span></div><div class="ni n2 "><span class="nh "><a href="MapperResponse.html"><span class="micon cl"></span><span>MapperResponse</span></a></span></div><div class="ni n2 "><span class="nh "><a href="Mapper_Forgiving$.html"><span class="micon ob"></span><span>Mapper_Forgiving</span></a></span></div><div class="ni n2 "><span class="nh "><a href="Master$.html"><span class="micon ob"></span><span>Master</span></a></span></div><div class="ni n2 "><span class="nh "><a href="MasterCommand.html"><span class="micon tr"></span><span>MasterCommand</span></a></span></div><div class="ni n2 "><span class="nh "><a href="Master_First$.html"><span class="micon ob"></span><span>Master_First</span></a></span></div><div class="ni n2 "><span class="nh "><a href="Master_First_Fold$.html"><span class="micon ob"></span><span>Master_First_Fold</span></a></span></div><div class="ni n2 "><span class="nh "><a href="Master_Fold$.html"><span class="micon ob"></span><span>Master_Fold</span></a></span></div><div class="ni n2"><span class="nh "><button class="ar icon-button "></button><a href="Monoid$.html"><span class="micon ob"></span><span>Monoid</span></a></span><div class="ni n3 "><span class="nh "><a href="Monoid$$MonoidDouble$.html"><span class="micon ob"></span><span>MonoidDouble</span></a></span></div><div class="ni n3 "><span class="nh "><a href="Monoid$$MonoidInt$.html"><span class="micon ob"></span><span>MonoidInt</span></a></span></div><div class="ni n3 "><span class="nh "><a href="Monoid$$MonoidString$.html"><span class="micon ob"></span><span>MonoidString</span></a></span></div></div><div class="ni n2 "><span class="nh "><a href="Monoid.html"><span class="micon tr"></span><span>Monoid</span></a></span></div><div class="ni n2 "><span class="nh "><a href="Reduce.html"><span class="micon cl"></span><span>Reduce</span></a></span></div><div class="ni n2 "><span class="nh "><a href="ReduceDef.html"><span class="micon cl"></span><span>ReduceDef</span></a></span></div><div class="ni n2 "><span class="nh "><a href="ReduceResult.html"><span class="micon cl"></span><span>ReduceResult</span></a></span></div><div class="ni n2 "><span class="nh "><a href="Reducer$.html"><span class="micon ob"></span><span>Reducer</span></a></span></div><div class="ni n2 "><span class="nh "><a href="ReducerCommand.html"><span class="micon tr"></span><span>ReducerCommand</span></a></span></div><div class="ni n2 "><span class="nh "><a href="ReducerDef.html"><span class="micon tr"></span><span>ReducerDef</span></a></span></div><div class="ni n2 "><span class="nh "><a href="Reducer_Fold$.html"><span class="micon ob"></span><span>Reducer_Fold</span></a></span></div><div class="ni n2 "><span class="nh "><a href="Response$.html"><span class="micon ob"></span><span>Response</span></a></span></div><div class="ni n2 "><span class="nh "><a href="Response.html"><span class="micon cl"></span><span>Response</span></a></span></div><div class="ni n2 "><span class="nh "><a href="TryUsing$.html"><span class="micon ob"></span><span>TryUsing</span></a></span></div><div class="ni n2 "><span class="nh "><a href="WorkerPool.html"><span class="micon tr"></span><span>WorkerPool</span></a></span></div><div class="ni n2 "><span class="nh "><a href="WorkerPool$.html"><span class="micon ob"></span><span>WorkerPool</span></a></span></div><div class="ni n2 "><span class="nh "><a href="Workers.html"><span class="micon cl"></span><span>Workers</span></a></span></div><div class="ni n2"><span class="nh "><button class="ar icon-button "></button><a href="Zero$.html"><span class="micon ob"></span><span>Zero</span></a></span><div class="ni n3 "><span class="nh "><a href="Zero$$DoubleZero$.html"><span class="micon ob"></span><span>DoubleZero</span></a></span></div><div class="ni n3 "><span class="nh "><a href="Zero$$DoubleZero.html"><span class="micon tr"></span><span>DoubleZero</span></a></span></div><div class="ni n3 "><span class="nh "><a href="Zero$$IntSeqZero$.html"><span class="micon ob"></span><span>IntSeqZero</span></a></span></div><div class="ni n3 "><span class="nh "><a href="Zero$$IntVectorZero$.html"><span class="micon ob"></span><span>IntVectorZero</span></a></span></div><div class="ni n3 "><span class="nh "><a href="Zero$$IntZero$.html"><span class="micon ob"></span><span>IntZero</span></a></span></div><div class="ni n3 "><span class="nh "><a href="Zero$$IntZero.html"><span class="micon tr"></span><span>IntZero</span></a></span></div><div class="ni n3 "><span class="nh "><a href="Zero$$SeqZero.html"><span class="micon tr"></span><span>SeqZero</span></a></span></div><div class="ni n3 "><span class="nh "><a href="Zero$$StringZero$.html"><span class="micon ob"></span><span>StringZero</span></a></span></div><div class="ni n3 "><span class="nh "><a href="Zero$$StringZero.html"><span class="micon tr"></span><span>StringZero</span></a></span></div><div class="ni n3 "><span class="nh "><a href="Zero$$VectorZero.html"><span class="micon tr"></span><span>VectorZero</span></a></span></div></div><div class="ni n2 "><span class="nh "><a href="Zero.html"><span class="micon tr"></span><span>Zero</span></a></span></div></div><div class="ni n1"><span class="nh "><button class="ar icon-button "></button><a href="../dd.html"><span class="micon pa"></span><span>dd</span></a></span><div class="ni n2 "><span class="nh "><a href="../dd/BaseDD.html"><span class="micon cl"></span><span>BaseDD</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../dd/DDContext.html"><span class="micon cl"></span><span>DDContext</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../dd/DDContext$.html"><span class="micon ob"></span><span>DDContext</span></a></span></div><div class="ni n2"><span class="nh "><button class="ar icon-button "></button><a href="../dd/DataDefinition$.html"><span class="micon ob"></span><span>DataDefinition</span></a></span><div class="ni n3 "><span class="nh "><a href="../dd/DataDefinition$$IterableMonoid.html"><span class="micon tr"></span><span>IterableMonoid</span></a></span></div></div><div class="ni n2 "><span class="nh "><a href="../dd/DataDefinition.html"><span class="micon tr"></span><span>DataDefinition</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../dd/DataDefinitionException.html"><span class="micon cl"></span><span>DataDefinitionException</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../dd/EagerDD.html"><span class="micon cl"></span><span>EagerDD</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../dd/EagerDD$.html"><span class="micon ob"></span><span>EagerDD</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../dd/HasEvaluatedMap.html"><span class="micon tr"></span><span>HasEvaluatedMap</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../dd/LazyDD$.html"><span class="micon ob"></span><span>LazyDD</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../dd/LazyDD.html"><span class="micon cl"></span><span>LazyDD</span></a></span></div></div><div class="ni n1"><span class="nh "><button class="ar icon-button "></button><a href="../matrix.html"><span class="micon pa"></span><span>matrix</span></a></span><div class="ni n2 "><span class="nh "><a href="../matrix/BaseMatrix.html"><span class="micon cl"></span><span>BaseMatrix</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../matrix/Dimensions$.html"><span class="micon ob"></span><span>Dimensions</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../matrix/Dimensions.html"><span class="micon cl"></span><span>Dimensions</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../matrix/IncompatibleDimensionsException.html"><span class="micon cl"></span><span>IncompatibleDimensionsException</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../matrix/IncompatibleLengthsException.html"><span class="micon cl"></span><span>IncompatibleLengthsException</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../matrix/Matrix.html"><span class="micon tr"></span><span>Matrix</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../matrix/Matrix$.html"><span class="micon ob"></span><span>Matrix</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../matrix/Matrix1.html"><span class="micon cl"></span><span>Matrix1</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../matrix/Matrix1$.html"><span class="micon ob"></span><span>Matrix1</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../matrix/Matrix2$.html"><span class="micon ob"></span><span>Matrix2</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../matrix/Matrix2.html"><span class="micon cl"></span><span>Matrix2</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../matrix/MatrixException.html"><span class="micon cl"></span><span>MatrixException</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../matrix/Product.html"><span class="micon tr"></span><span>Product</span></a></span></div></div></div></nav></div><div id="footer" class="body-small"><div class="left-container">Generated with</div><div class="right-container"><div class="text"></div></div><div class="text-mobile"></div></div><div id="scaladoc-searchBar"></div><div id="main"><div class="breadcrumbs container"><a href="../../../../index.html">Majabigwaduce</a>/<a href="../../majabigwaduce.html">com.phasmid.majabigwaduce</a>/<a href="../core.html">com.phasmid.majabigwaduce.core</a>/<a href="MapReduceFirstFold.html">MapReduceFirstFold</a></div><div id="content" class="body-medium"><div><div class="cover-header">
+ <a href="MapReduceFirstFold$.html"><span class="icon"><span class="micon cl"></span><span class="micon companion ob"></span></span></a>
+ <h1 class="h600 multi">MapReduceFirstFold</h1>
+</div>
+<div class="fqname body-large">
+ <span>com.phasmid.majabigwaduce.core.MapReduceFirstFold</span>
+</div>
+<div class="companion-badge body-small">
+ <span>See the<span class="micon ob"></span><a href="MapReduceFirstFold$.html">MapReduceFirstFold</a> companion object</span>
+</div>
+<div class="main-signature mono-small-block">
+ <div class="signature">
+  <span class="signature-short"><span class="modifiers"><span t="k">case </span></span><span class="kind"><span t="k">class </span></span><a href="MapReduceFirstFold.html" t="n" class="documentableName ">MapReduceFirstFold</a>[<span t="k"></span><span data-unresolved-link="" t="t">V0</span>, <span t="k"></span><span data-unresolved-link="" t="t">K1</span>, <span t="k"></span><span data-unresolved-link="" t="t">W</span>, <span t="k"></span><span data-unresolved-link="" t="t">V1</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">f</span>: <span data-unresolved-link="" t="t">V0</span> <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">Try</span>[(<span data-unresolved-link="" t="t">K1</span>, <span data-unresolved-link="" t="t">W</span>)], <span t="k"></span><span data-unresolved-link="" t="n">g</span>: (<span data-unresolved-link="" t="t">V1</span>, <span data-unresolved-link="" t="t">W</span>) <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">V1</span>)(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">actors</span>: <a href="Actors.html" t="t">Actors</a>, <span t="k"></span><span data-unresolved-link="" t="n">timeout</span>: <span data-unresolved-link="" t="t">Timeout</span>)(<span t="k">using </span><span t="k"></span><span data-unresolved-link="" t="n">evidence$1</span>: <a href="Zero.html" t="t">Zero</a>[<span data-unresolved-link="" t="t">V1</span>])<span t="k"> extends </span><a href="MapReduce_LoggingBase.html" t="t">MapReduce_LoggingBase</a>[<span t="t">V0</span>, <span data-unresolved-link="" t="t">Unit</span>, <span t="t">V0</span>, <span t="t">K1</span>, <span t="t">V1</span>]</span><span class="signature-long"></span>
+ </div>
+</div>
+<div class="cover">
+ <div class="doc">
+  <p>A first-stage MapReduce class</p>
+ </div>
+ <section id="attributes">
+  <h2 class="h500">Type parameters</h2>
+  <dl class="attributes">
+   <dt class="body-small">K1</dt>
+   <dd class="body-medium">
+    <p>output key type.</p>
+   </dd>
+   <dt class="body-small">V0</dt>
+   <dd class="body-medium">
+    <p>input value type.</p>
+   </dd>
+   <dt class="body-small">V1</dt>
+   <dd class="body-medium">
+    <p>output value type (must support type class Init).</p>
+   </dd>
+   <dt class="body-small">W</dt>
+   <dd class="body-medium">
+    <p>intermediate type.</p>
+   </dd>
+  </dl>
+  <h2 class="h500">Value parameters</h2>
+  <dl class="attributes">
+   <dt class="body-small">actors</dt>
+   <dd class="body-medium">
+    <p>an instance of Actors.</p>
+   </dd>
+   <dt class="body-small">f</dt>
+   <dd class="body-medium">
+    <p>the mapper function which takes a V0 instance and creates a key-value tuple of type (K1,W) (wrapped in Try, but see alternative constructor).</p>
+   </dd>
+   <dt class="body-small">g</dt>
+   <dd class="body-medium">
+    <p>the reducer function which combines two values (an V1 and a W) into one V1.</p>
+   </dd>
+   <dt class="body-small">timeout</dt>
+   <dd class="body-medium">
+    <p>the value of timeout to be used. CONSIDER why is config parameter set not implicit?</p>
+   </dd>
+  </dl>
+  <h2 class="h500">Attributes</h2>
+  <dl class="attributes">
+   <dt class="body-small">Companion</dt>
+   <dd class="body-medium">
+    <a href="MapReduceFirstFold$.html">object</a>
+   </dd>
+   <dt class="body-small">Graph</dt>
+   <dd class="body-medium">
+    <div id="inheritance-diagram" class="diagram-class showGraph">
+     <button type="button" class="label-only-button" onclick="zoomOut()">Reset zoom</button><button type="button" class="label-only-button" onclick="hideGraph()">Hide graph</button><button type="button" class="label-only-button" onclick="showGraph()">Show graph</button>
+     <svg id="graph"></svg>
+     <script type="text/dot" id="dot"> digraph g {
+ node0 [id=node0, label="<span style=\"color: #FFFFFF;\">class <a href=\"MapReduceFirstFold.html\" t=\"n\">MapReduceFirstFold</a>[<span t=\"t\">V0</span>, <span t=\"t\">K1</span>, <span t=\"t\">W</span>, <span t=\"t\">V1</span>]</span>", class="class vertex"];
+node1 [id=node1, label="<span style=\"color: #FFFFFF;\">class <a href=\"MapReduce_LoggingBase.html\" t=\"n\">MapReduce_LoggingBase</a>[<span t=\"t\">V0</span>, <span data-unresolved-link=\"\" t=\"t\">Unit</span>, <span t=\"t\">V0</span>, <span t=\"t\">K1</span>, <span t=\"t\">V1</span>]</span>", class="class vertex"];
+node2 [id=node2, label="<span style=\"color: #FFFFFF;\">class <a href=\"MapReduce_Base.html\" t=\"n\">MapReduce_Base</a>[<span t=\"t\">V0</span>, <span data-unresolved-link=\"\" t=\"t\">Unit</span>, <span t=\"t\">V0</span>, <span t=\"t\">K1</span>, <span t=\"t\">V1</span>]</span>", class="class vertex"];
+node3 [id=node3, label="<span style=\"color: #FFFFFF;\">class <span data-unresolved-link=\"\" t=\"n\">Object</span></span>", class="class vertex"];
+node4 [id=node4, label="<span style=\"color: #FFFFFF;\">class <span data-unresolved-link=\"\" t=\"n\">Any</span></span>", class="class vertex"];
+node5 [id=node5, label="<span style=\"color: #FFFFFF;\">trait <span data-unresolved-link=\"\" t=\"n\">Matchable</span></span>", class="trait vertex"];
+node6 [id=node6, label="<span style=\"color: #FFFFFF;\">trait <a href=\"MapReduce.html\" t=\"n\">MapReduce</a>[<span t=\"t\">V0</span>, <span t=\"t\">K1</span>, <span t=\"t\">V1</span>]</span>", class="trait vertex"];
+node7 [id=node7, label="<span style=\"color: #FFFFFF;\">class <span data-unresolved-link=\"\" t=\"n\">Seq</span>[<span t=\"t\">V0</span>] <span t=\"k\">=&gt;</span> <span data-unresolved-link=\"\" t=\"t\">Future</span>[<span data-unresolved-link=\"\" t=\"t\">Map</span>[<span t=\"t\">K1</span>, <span t=\"t\">V1</span>]]</span>", class="class vertex"];
+node8 [id=node8, label="<span style=\"color: #FFFFFF;\">class <span data-unresolved-link=\"\" t=\"n\">AnyRef</span></span>", class="class vertex"];
+node9 [id=node9, label="<span style=\"color: #FFFFFF;\">trait <span data-unresolved-link=\"\" t=\"n\">AutoCloseable</span></span>", class="trait vertex"];
+node10 [id=node10, label="<span style=\"color: #FFFFFF;\">trait <span data-unresolved-link=\"\" t=\"n\">Product</span></span>", class="trait vertex"];
+node11 [id=node11, label="<span style=\"color: #FFFFFF;\">trait <span data-unresolved-link=\"\" t=\"n\">Equals</span></span>", class="trait vertex"];
+node12 [id=node12, label="<span style=\"color: #FFFFFF;\">class <span data-unresolved-link=\"\" t=\"n\">Serializable</span></span>", class="class vertex"];
+
+
+ node0 -> node1;
+node1 -> node2;
+node2 -> node3;
+node3 -> node4;
+node3 -> node5;
+node5 -> node4;
+node2 -> node6;
+node6 -> node3;
+node6 -> node7;
+node7 -> node8;
+node8 -> node4;
+node8 -> node5;
+node6 -> node9;
+node9 -> node3;
+node0 -> node10;
+node10 -> node4;
+node10 -> node11;
+node11 -> node4;
+node0 -> node12;
+node12 -> node4;
+
+}
+</script>
+    </div>
+   </dd>
+   <dt class="body-small">Supertypes</dt>
+   <dd class="body-medium">
+    <div class="mono-small-block supertypes">
+     <div>
+      trait <span data-unresolved-link="" t="n">Serializable</span>
+     </div>
+     <div>
+      trait <span data-unresolved-link="" t="n">Product</span>
+     </div>
+     <div>
+      trait <span data-unresolved-link="" t="n">Equals</span>
+     </div>
+     <div>
+      class <a href="MapReduce_LoggingBase.html" t="n">MapReduce_LoggingBase</a>[<span t="t">V0</span>, <span data-unresolved-link="" t="t">Unit</span>, <span t="t">V0</span>, <span t="t">K1</span>, <span t="t">V1</span>]
+     </div>
+     <div>
+      class <a href="MapReduce_Base.html" t="n">MapReduce_Base</a>[<span t="t">V0</span>, <span data-unresolved-link="" t="t">Unit</span>, <span t="t">V0</span>, <span t="t">K1</span>, <span t="t">V1</span>]
+     </div>
+     <div>
+      trait <a href="MapReduce.html" t="n">MapReduce</a>[<span t="t">V0</span>, <span t="t">K1</span>, <span t="t">V1</span>]
+     </div>
+     <div>
+      trait <span data-unresolved-link="" t="n">AutoCloseable</span>
+     </div>
+     <div>
+      trait <span data-unresolved-link="" t="n">Seq</span>[<span t="t">V0</span>] <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">Future</span>[<span data-unresolved-link="" t="t">Map</span>[<span t="t">K1</span>, <span t="t">V1</span>]]
+     </div>
+     <div>
+      class <span data-unresolved-link="" t="n">Object</span>
+     </div>
+     <div>
+      trait <span data-unresolved-link="" t="n">Matchable</span>
+     </div>
+     <div>
+      class <span data-unresolved-link="" t="n">Any</span>
+     </div>
+     <span class="show-all-code show-content text-button h100">Show all</span>
+    </div>
+   </dd>
+  </dl>
+ </section>
+</div>
+<section id="members-list">
+ <h2 class="h500">Members list</h2>
+ <div class="documentableFilter">
+  <div class="filtersContainer"></div>
+  <input class="filterableInput" placeholder="Filter by any phrase" data-test-id="filterBarInput" type="search"><button class="clearButton label-only-button" data-test-id="filterBarClearButton">Clear all</button>
+ </div>
+ <div class="membersList expand">
+  <div class="tabs">
+   <div class="contents">
+    <section id="Value-members">
+     <div data-togglable="Value members" class="tab expand">
+      <div class="member-group-header">
+       <h3 data-togglable="Value members" class="h400">Value members</h3>
+      </div>
+      <section id="Concrete-methods">
+       <div class="documentableList expand">
+        <div class="documentableList-expander">
+         <button class="icon-button show-content expand"></button>
+         <h4 class="groupHeader h200">Concrete methods</h4>
+        </div>
+        <div class="documentableElement" id="createBehavior-0">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="MapReduceFirstFold.html#createBehavior-0" t="n" class="documentableName ">createBehavior</a>: <span data-unresolved-link="" t="t">Behavior</span>[<a href="MasterCommand.html" t="t">MasterCommand</a>[<span data-unresolved-link="" t="t">Unit</span>, <span t="t">V0</span>, <span t="t">K1</span>, <span t="t">V1</span>]]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Creates and returns the Behavior for the master actor.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Creates and returns the Behavior for the master actor.</p>
+             </div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>the Behavior used for actor creation</p>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="createName-0" data-f-keywords="override">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"><span t="k">override </span></span><span class="kind"><span t="k">def </span></span><a href="MapReduceFirstFold.html#createName-0" t="n" class="documentableName ">createName</a>: <span data-unresolved-link="" t="t">Option</span>[<span data-unresolved-link="" t="t">String</span>]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Provides the name of the MapReduce master actor used in the first-stage fold operation.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Provides the name of the MapReduce master actor used in the first-stage fold operation.</p>
+             </div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>An <code>Option[String]</code> containing the name of the MapReduce master actor, if defined.</p>
+              </dd>
+              <dt class="body-small">Definition Classes</dt>
+              <dd class="body-medium">
+               <div>
+                <a href="MapReduce_Base.html">MapReduce_Base</a>
+               </div>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="toMasterPair-fffff445">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="MapReduceFirstFold.html#toMasterPair-fffff445" t="n" class="documentableName ">toMasterPair</a>(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">t</span>: <span t="t">V0</span>): (<span data-unresolved-link="" t="t">Unit</span>, <span t="t">V0</span>)
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Converts an input item of type T into the (key, value) pair the master's own protocol expects. For a first-stage MapReduce, this pairs T with a Unit key; for a subsequent stage, T already is the (K,V) pair the master expects.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Converts an input item of type T into the (key, value) pair the master's own protocol expects. For a first-stage MapReduce, this pairs T with a Unit key; for a subsequent stage, T already is the (K,V) pair the master expects.</p>
+             </div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small"></dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+      </section>
+      <section id="Inherited-methods">
+       <div class="documentableList expand">
+        <div class="documentableList-expander">
+         <button class="icon-button show-content expand"></button>
+         <h4 class="groupHeader h200">Inherited methods</h4>
+        </div>
+        <div class="documentableElement" id="&amp;-80a" data-f-inherited="MapReduce">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="MapReduceFirstFold.html#&amp;-80a" t="n" class="documentableName ">&amp;</a>[<span t="k"></span><span data-unresolved-link="" t="t">K2</span>, <span t="k"></span><span data-unresolved-link="" t="t">V2</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">mr</span>: <a href="MapReduce.html" t="t">MapReduce</a>[(<span t="t">K1</span>, <span t="t">V1</span>), <span data-unresolved-link="" t="t">K2</span>, <span data-unresolved-link="" t="t">V2</span>]): <a href="MapReduce.html" t="t">MapReduce</a>[<span t="t">V0</span>, <span data-unresolved-link="" t="t">K2</span>, <span data-unresolved-link="" t="t">V2</span>]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Alternative formulation for compose method (:&amp;)</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Alternative formulation for compose method (:&amp;)</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">K2</dt>
+              <dd class="body-medium">
+               <p>the key type of the composed MapReduce object</p>
+              </dd>
+              <dt class="body-small">V2</dt>
+              <dd class="body-medium">
+               <p>the value type of the composed MapReduce object</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">mr</dt>
+              <dd class="body-medium">
+               <p>the other MapReduce object</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>a new MapReduceComposed object</p>
+              </dd>
+              <dt class="body-small">Inherited from:</dt>
+              <dd class="body-medium">
+               <a href="MapReduce.html#&amp;-80a">MapReduce</a>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id=":&amp;-fffffb0b" data-f-inherited="MapReduce">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="MapReduceFirstFold.html#:&amp;-fffffb0b" t="n" class="documentableName ">:&amp;</a>[<span t="k"></span><span data-unresolved-link="" t="t">K2</span>, <span t="k"></span><span data-unresolved-link="" t="t">V2</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">f</span>: <span data-unresolved-link="" t="t">Seq</span>[(<span t="t">K1</span>, <span t="t">V1</span>)] <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">Future</span>[<span data-unresolved-link="" t="t">Map</span>[<span data-unresolved-link="" t="t">K2</span>, <span data-unresolved-link="" t="t">V2</span>]]): <a href="MapReduce.html" t="t">MapReduce</a>[<span t="t">V0</span>, <span data-unresolved-link="" t="t">K2</span>, <span data-unresolved-link="" t="t">V2</span>]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Compose this MapReduce object with mr, yielding a new MapReduce object.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Compose this MapReduce object with mr, yielding a new MapReduce object.</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">K2</dt>
+              <dd class="body-medium">
+               <p>the key type of the composed MapReduce object</p>
+              </dd>
+              <dt class="body-small">V2</dt>
+              <dd class="body-medium">
+               <p>the value type of the composed MapReduce object</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">f</dt>
+              <dd class="body-medium">
+               <p>a function of type ASync[Seq[(K1, V1)], Map[K2, V2], i.e. Seq[(K1, V1)]=&gt;Future[Map[K2, V2]</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>a new MapReduceComposed object</p>
+              </dd>
+              <dt class="body-small">Inherited from:</dt>
+              <dd class="body-medium">
+               <a href="MapReduce.html#:&amp;-fffffb0b">MapReduce</a>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id=":|-5cb" data-f-inherited="MapReduce">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="MapReduceFirstFold.html#:|-5cb" t="n" class="documentableName ">:|</a>[<span t="k"></span><span data-unresolved-link="" t="t">S</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">r</span>: <span data-unresolved-link="" t="t">Map</span>[<span t="t">K1</span>, <span t="t">V1</span>] <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">S</span>)(<span t="k">implicit </span><span t="k"></span><span data-unresolved-link="" t="n">executionContext</span>: <span data-unresolved-link="" t="t">ExecutionContext</span>): <span data-unresolved-link="" t="t">Seq</span>[<span t="t">V0</span>] <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">Future</span>[<span data-unresolved-link="" t="t">S</span>]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>terminate this MapReduce object with r, a reducer which yields a simple value</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>terminate this MapReduce object with r, a reducer which yields a simple value</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">S</dt>
+              <dd class="body-medium">
+               <p>the return type, which is a super-class of V1 (for sum, or sigma)</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">executionContext</dt>
+              <dd class="body-medium">
+               <p>(implicit)</p>
+              </dd>
+              <dt class="body-small">r</dt>
+              <dd class="body-medium">
+               <p>the Reduce object</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>an Async function of Seq[T]=&gt;Future[S] type S.</p>
+              </dd>
+              <dt class="body-small">Inherited from:</dt>
+              <dd class="body-medium">
+               <a href="MapReduce.html#:|-5cb">MapReduce</a>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="andThen-51" data-f-inherited="Function1">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="MapReduceFirstFold.html#andThen-51" t="n" class="documentableName ">andThen</a>[<span t="k"></span><span data-unresolved-link="" t="t">A</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">g</span>: <span data-unresolved-link="" t="t">Future</span>[<span data-unresolved-link="" t="t">Map</span>[<span t="t">K1</span>, <span t="t">V1</span>]] <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">A</span>): <span data-unresolved-link="" t="t">Seq</span>[<span t="t">V0</span>] <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">A</span>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Composes two instances of <code>Function1</code> in a new <code>Function1</code>, with this function applied first.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Composes two instances of <code>Function1</code> in a new <code>Function1</code>, with this function applied first.</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">A</dt>
+              <dd class="body-medium">
+               <p>the result type of function <code>g</code></p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">g</dt>
+              <dd class="body-medium">
+               <p>a function R =&gt; A</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>a new function <code>f</code> such that <code>f(x) == g(apply(x))</code></p>
+              </dd>
+              <dt class="body-small">Inherited from:</dt>
+              <dd class="body-medium">
+               <span data-unresolved-link="">Function1</span>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="apply-8c7" data-f-inherited="MapReduce_Base">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="MapReduceFirstFold.html#apply-8c7" t="n" class="documentableName ">apply</a>(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">ts</span>: <span data-unresolved-link="" t="t">Seq</span>[<span t="t">V0</span>]): <span data-unresolved-link="" t="t">Future</span>[<span data-unresolved-link="" t="t">Map</span>[<span t="t">K1</span>, <span t="t">V1</span>]]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Processes a sequence of input items, communicates with the master actor to retrieve results, and optionally reports the response. NOTE: currently, we ignore the value of report, but we could pass back a tuple that includes ok and the resulting map</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Processes a sequence of input items, communicates with the master actor to retrieve results, and optionally reports the response. NOTE: currently, we ignore the value of report, but we could pass back a tuple that includes ok and the resulting map</p>
+             </div>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">ts</dt>
+              <dd class="body-medium">
+               <p>the sequence of input items to be processed</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>a Future containing a map of key-value pairs representing the computed results</p>
+              </dd>
+              <dt class="body-small">Inherited from:</dt>
+              <dd class="body-medium">
+               <a href="MapReduce_Base.html#apply-8c7">MapReduce_Base</a>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="close-94c" data-f-inherited="MapReduce_Base">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="MapReduceFirstFold.html#close-94c" t="n" class="documentableName ">close</a>(<span t="k"></span>): <span data-unresolved-link="" t="t">Unit</span>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Stops the master actor (and, transitively, its mapper and reducer children) to release resources and terminate associated processes.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Stops the master actor (and, transitively, its mapper and reducer children) to release resources and terminate associated processes.</p>
+             </div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>Unit, as the method performs an action and does not produce a value.</p>
+              </dd>
+              <dt class="body-small">Inherited from:</dt>
+              <dd class="body-medium">
+               <a href="MapReduce_Base.html#close-94c">MapReduce_Base</a>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="compose-51" data-f-inherited="Function1">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="MapReduceFirstFold.html#compose-51" t="n" class="documentableName ">compose</a>[<span t="k"></span><span data-unresolved-link="" t="t">A</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">g</span>: <span data-unresolved-link="" t="t">A</span> <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">Seq</span>[<span t="t">V0</span>]): <span data-unresolved-link="" t="t">A</span> <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">Future</span>[<span data-unresolved-link="" t="t">Map</span>[<span t="t">K1</span>, <span t="t">V1</span>]]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Composes two instances of <code>Function1</code> in a new <code>Function1</code>, with this function applied last.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Composes two instances of <code>Function1</code> in a new <code>Function1</code>, with this function applied last.</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">A</dt>
+              <dd class="body-medium">
+               <p>the type to which function <code>g</code> can be applied</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">g</dt>
+              <dd class="body-medium">
+               <p>a function A =&gt; T1</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>a new function <code>f</code> such that <code>f(x) == apply(g(x))</code></p>
+              </dd>
+              <dt class="body-small">Inherited from:</dt>
+              <dd class="body-medium">
+               <span data-unresolved-link="">Function1</span>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="logException-fffffa28" data-f-inherited="MapReduce_LoggingBase">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="MapReduceFirstFold.html#logException-fffffa28" t="n" class="documentableName ">logException</a>(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">m</span>: <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">String</span>, <span t="k"></span><span data-unresolved-link="" t="n">x</span>: <span data-unresolved-link="" t="t">Throwable</span>): <span data-unresolved-link="" t="t">Unit</span>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Logs an exception using the provided message and throwable.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Logs an exception using the provided message and throwable.</p>
+             </div>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">m</dt>
+              <dd class="body-medium">
+               <p>the message to be logged; this is a lazy parameter and will only be evaluated if needed</p>
+              </dd>
+              <dt class="body-small">x</dt>
+              <dd class="body-medium">
+               <p>the exception to be logged alongside the message</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>Unit, as this method performs a logging side effect and does not return a value</p>
+              </dd>
+              <dt class="body-small">Inherited from:</dt>
+              <dd class="body-medium">
+               <a href="MapReduce_LoggingBase.html#logException-fffffa28">MapReduce_LoggingBase</a>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="productElementNames-0" data-f-inherited="Product">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="MapReduceFirstFold.html#productElementNames-0" t="n" class="documentableName ">productElementNames</a>: <span data-unresolved-link="" t="t">Iterator</span>[<span data-unresolved-link="" t="t">String</span>]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>An iterator over the names of all the elements of this product.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>An iterator over the names of all the elements of this product.</p>
+             </div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Inherited from:</dt>
+              <dd class="body-medium">
+               <span data-unresolved-link="">Product</span>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="productIterator-0" data-f-inherited="Product">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="MapReduceFirstFold.html#productIterator-0" t="n" class="documentableName ">productIterator</a>: <span data-unresolved-link="" t="t">Iterator</span>[<span data-unresolved-link="" t="t">Any</span>]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>An iterator over all the elements of this product.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>An iterator over all the elements of this product.</p>
+             </div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>in the default implementation, an <code>Iterator[Any]</code></p>
+              </dd>
+              <dt class="body-small">Inherited from:</dt>
+              <dd class="body-medium">
+               <span data-unresolved-link="">Product</span>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="toString-665" data-f-keywords="override" data-f-inherited="Function1">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"><span t="k">override </span></span><span class="kind"><span t="k">def </span></span><a href="MapReduceFirstFold.html#toString-665" t="n" class="documentableName ">toString</a>(<span t="k"></span>): <span data-unresolved-link="" t="t">String</span>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Returns a string representation of the object.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Returns a string representation of the object.</p>
+              <p>The default representation is platform dependent.</p>
+             </div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>a string representation of the object.</p>
+              </dd>
+              <dt class="body-small">Definition Classes</dt>
+              <dd class="body-medium">
+               <div>
+                <span data-unresolved-link="">Function1</span> -&gt; <span data-unresolved-link="">Any</span>
+               </div>
+              </dd>
+              <dt class="body-small">Inherited from:</dt>
+              <dd class="body-medium">
+               <span data-unresolved-link="">Function1</span>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="|-5cb" data-f-inherited="MapReduce">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="MapReduceFirstFold.html#|-5cb" t="n" class="documentableName ">|</a>[<span t="k"></span><span data-unresolved-link="" t="t">S</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">r</span>: <span data-unresolved-link="" t="t">Map</span>[<span t="t">K1</span>, <span t="t">V1</span>] <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">S</span>)(<span t="k">implicit </span><span t="k"></span><span data-unresolved-link="" t="n">executionContext</span>: <span data-unresolved-link="" t="t">ExecutionContext</span>): <span data-unresolved-link="" t="t">Seq</span>[<span t="t">V0</span>] <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">Future</span>[<span data-unresolved-link="" t="t">S</span>]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>alternative name to terminate</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>alternative name to terminate</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">S</dt>
+              <dd class="body-medium">
+               <p>the return type, which is a super-class of V1 (for sum, or sigma)</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">executionContext</dt>
+              <dd class="body-medium">
+               <p>(implicit)</p>
+              </dd>
+              <dt class="body-small">r</dt>
+              <dd class="body-medium">
+               <p>the Reduce object</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>an Async function of Seq[T]=&gt;Future[S] type S.</p>
+              </dd>
+              <dt class="body-small">Inherited from:</dt>
+              <dd class="body-medium">
+               <a href="MapReduce.html#|-5cb">MapReduce</a>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+      </section>
+     </div>
+    </section>
+    <section id="Givens">
+     <div data-togglable="Givens" class="tab expand">
+      <div class="member-group-header">
+       <h3 data-togglable="Givens" class="h400">Givens</h3>
+      </div>
+      <section id="Inherited-givens">
+       <div class="documentableList expand">
+        <div class="documentableList-expander">
+         <button class="icon-button show-content expand"></button>
+         <h4 class="groupHeader h200">Inherited givens</h4>
+        </div>
+        <div class="documentableElement" id="ec-0" data-f-inherited="MapReduce_Base">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">given </span></span><a href="MapReduceFirstFold.html#ec-0" t="n" class="documentableName ">ec</a>: <span data-unresolved-link="" t="t">ExecutionContext</span>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="cover">
+             <div class="doc"></div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>a suitable execution context</p>
+              </dd>
+              <dt class="body-small">Inherited from:</dt>
+              <dd class="body-medium">
+               <a href="MapReduce_Base.html#ec-0">MapReduce_Base</a>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+      </section>
+     </div>
+    </section>
+   </div>
+  </div>
+ </div>
+</section></div><div id="toc" class="body-small"><div id="toc-container"><span class="toc-title h200">In this article</span><nav class="toc-nav"><ul class="toc-list"><li><a href="#attributes">Type parameters</a></li><li><a href="#members-list">Members list</a><ul><li><a href="#Value-members">Value members</a><ul><li><a href="#Concrete-methods">Concrete methods</a></li><li><a href="#Inherited-methods">Inherited methods</a></li></ul></li><li><a href="#Givens">Givens</a><ul><li><a href="#Inherited-givens">Inherited givens</a></li></ul></li></ul></li></ul></nav></div></div></div><div id="footer" class="body-small mobile-footer"><div class="left-container">Generated with</div><div class="right-container"><div class="text"></div></div><div class="text-mobile"></div></div></div></div></body></html>

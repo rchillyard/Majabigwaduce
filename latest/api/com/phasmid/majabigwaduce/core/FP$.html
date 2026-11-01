@@ -1,0 +1,1701 @@
+<!DOCTYPE html><html data-pathToRoot="../../../../" data-rawLocation="com/phasmid/majabigwaduce/core/FP$" data-dynamicSideMenu="false"><head><meta charset="utf-8"></meta><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"></meta><title>FP</title><link rel="shortcut icon" type="image/x-icon" href="../../../../favicon.ico"></link><script type="text/javascript" src="../../../../scripts/theme.js"></script><script type="text/javascript" src="../../../../scripts/searchData.js" defer="true"></script><script type="text/javascript" src="../../../../scripts/scastieConfiguration.js" defer="true"></script><link rel="stylesheet" href="../../../../styles/theme/bundle.css"></link><link rel="stylesheet" href="../../../../styles/theme/components/bundle.css"></link><link rel="stylesheet" href="../../../../styles/theme/components/button/bundle.css"></link><link rel="stylesheet" href="../../../../styles/theme/layout/bundle.css"></link><link rel="stylesheet" href="../../../../styles/dotty-icons.css"></link><link rel="stylesheet" href="../../../../styles/filter-bar.css"></link><link rel="stylesheet" href="../../../../styles/searchbar.css"></link><link rel="stylesheet" href="../../../../styles/social-links.css"></link><link rel="stylesheet" href="../../../../styles/versions-dropdown.css"></link><link rel="stylesheet" href="../../../../styles/content-contributors.css"></link><script type="text/javascript" src="../../../../hljs/highlight.pack.js" defer="true"></script><script type="text/javascript" src="../../../../scripts/hljs-scala3.js" defer="true"></script><script type="text/javascript" src="../../../../scripts/ux.js" defer="true"></script><script type="text/javascript" src="../../../../scripts/common/component.js" defer="true"></script><script type="text/javascript" src="../../../../scripts/common/utils.js" defer="true"></script><script type="text/javascript" src="../../../../scripts/components/FilterBar.js" defer="true"></script><script type="text/javascript" src="../../../../scripts/components/DocumentableList.js" defer="true"></script><script type="text/javascript" src="../../../../scripts/components/Input.js" defer="true"></script><script type="text/javascript" src="../../../../scripts/components/FilterGroup.js" defer="true"></script><script type="text/javascript" src="../../../../scripts/components/Filter.js" defer="true"></script><script type="text/javascript" src="../../../../scripts/scaladoc-scalajs.js" defer="true"></script><script type="text/javascript" src="../../../../scripts/contributors.js" defer="true"></script><script type="text/javascript" src="https://d3js.org/d3.v6.min.js" defer="true"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/graphlib-dot@0.6.2/dist/graphlib-dot.min.js" defer="true"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dagre-d3/0.6.1/dagre-d3.min.js" defer="true"></script><script type="text/javascript" src="https://scastie.scala-lang.org/embedded.js" defer="true"></script><script type="text/javascript" src="../../../../scripts/data.js" defer="true"></script><script>var pathToRoot = "../../../../";</script></head><body><div id=""><div id="header" class="body-small"><div class="header-container-left"><a href="../../../../" class="logo-container"><span class="project-name h300">Majabigwaduce</span></a><span onclick="dropdownHandler(event)" class="text-button with-arrow" id="dropdown-trigger"><a></a></span><div id="version-dropdown" class="dropdown-menu"></div></div><div class="header-container-right"><button id="search-toggle" class="icon-button"></button><span id="theme-toggle" class="icon-button"></span><span id="mobile-menu-toggle" class="icon-button hamburger"></span></div></div><div id="mobile-menu"><div class="mobile-menu-header body-small"><span class="mobile-menu-logo"><span class="project-name h300">Majabigwaduce</span></span><button id="mobile-menu-close" class="icon-button close"></button></div><div class="mobile-menu-container body-medium"><input id="mobile-scaladoc-searchbar-input" class="scaladoc-searchbar-input" type="search" placeholder="Find anything"></input><span id="mobile-theme-toggle" class="mobile-menu-item mode"></span></div></div><span id="mobile-sidebar-toggle" class="floating-button"></span><div id="leftColumn" class="body-small"><div class="switcher-container"><a id="api-nav-button" class="switcher h100 selected" href="../../../../index.html">API</a></div><nav id="api-nav" class="side-menu"><div class="ni n0 expanded"><span class="nh h100 expanded cs"><button class="ar icon-button expanded"></button><a href="../../majabigwaduce.html"><span class="micon pa"></span><span>com.phasmid.majabigwaduce</span></a></span><div class="ni n1"><span class="nh "><button class="ar icon-button "></button><a href="../cluster.html"><span class="micon pa"></span><span>cluster</span></a></span><div class="ni n2 "><span class="nh "><a href="../cluster/ClusterWorker$.html"><span class="micon ob"></span><span>ClusterWorker</span></a></span></div><div class="ni n2"><span class="nh "><button class="ar icon-button "></button><a href="../cluster/ClusterWorkerPool$.html"><span class="micon ob"></span><span>ClusterWorkerPool</span></a></span><div class="ni n3 "><span class="nh "><a href="../cluster/ClusterWorkerPool$$Settings.html"><span class="micon cl"></span><span>Settings</span></a></span></div><div class="ni n3 "><span class="nh "><a href="../cluster/ClusterWorkerPool$$Settings$.html"><span class="micon ob"></span><span>Settings</span></a></span></div></div><div class="ni n2 "><span class="nh "><a href="../cluster/ReducersSpawned.html"><span class="micon cl"></span><span>ReducersSpawned</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../cluster/SpawnReducers.html"><span class="micon cl"></span><span>SpawnReducers</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../cluster/WorkerCommand.html"><span class="micon tr"></span><span>WorkerCommand</span></a></span></div></div><div class="ni n1 expanded"><span class="nh h100 expanded cs"><button class="ar icon-button expanded"></button><a href="../core.html"><span class="micon pa"></span><span>core</span></a></span><div class="ni n2 "><span class="nh "><a href="Actors$.html"><span class="micon ob"></span><span>Actors</span></a></span></div><div class="ni n2 "><span class="nh "><a href="Actors.html"><span class="micon cl"></span><span>Actors</span></a></span></div><div class="ni n2 "><span class="nh "><a href="CleanerCollector$.html"><span class="micon ob"></span><span>CleanerCollector</span></a></span></div><div class="ni n2 "><span class="nh "><a href="CloseMapper.html"><span class="micon cl"></span><span>CloseMapper</span></a></span></div><div class="ni n2 "><span class="nh "><a href="CloseMaster.html"><span class="micon cl"></span><span>CloseMaster</span></a></span></div><div class="ni n2 "><span class="nh "><a href="CloseReducer.html"><span class="micon cl"></span><span>CloseReducer</span></a></span></div><div class="ni n2 "><span class="nh "><a href="ComputeMap.html"><span class="micon cl"></span><span>ComputeMap</span></a></span></div><div class="ni n2 "><span class="nh "><a href="ComputeSeq.html"><span class="micon cl"></span><span>ComputeSeq</span></a></span></div><div class="ni n2 "><span class="nh "><a href="DoMap.html"><span class="micon cl"></span><span>DoMap</span></a></span></div><div class="ni n2 "><span class="nh "><a href="DoReduce.html"><span class="micon cl"></span><span>DoReduce</span></a></span></div><div class="ni n2 expanded"><span class="nh h100 selected"><a href="#"><span class="micon ob"></span><span>FP</span></a></span></div><div class="ni n2 "><span class="nh "><a href="FoldDef.html"><span class="micon cl"></span><span>FoldDef</span></a></span></div><div class="ni n2 "><span class="nh "><a href="Intermediate.html"><span class="micon cl"></span><span>Intermediate</span></a></span></div><div class="ni n2 "><span class="nh "><a href="KeyValuePairs$.html"><span class="micon ob"></span><span>KeyValuePairs</span></a></span></div><div class="ni n2 "><span class="nh "><a href="KeyValuePairs.html"><span class="micon cl"></span><span>KeyValuePairs</span></a></span></div><div class="ni n2 "><span class="nh "><a href="LazyMonad.html"><span class="micon tr"></span><span>LazyMonad</span></a></span></div><div class="ni n2 "><span class="nh "><a href="LazyMonad$.html"><span class="micon ob"></span><span>LazyMonad</span></a></span></div><div class="ni n2 "><span class="nh "><a href="LazySequence.html"><span class="micon cl"></span><span>LazySequence</span></a></span></div><div class="ni n2 "><span class="nh "><a href="LocalWorkerPool$.html"><span class="micon ob"></span><span>LocalWorkerPool</span></a></span></div><div class="ni n2 "><span class="nh "><a href="MapReduce.html"><span class="micon tr"></span><span>MapReduce</span></a></span></div><div class="ni n2 "><span class="nh "><a href="MapReduceActor$.html"><span class="micon ob"></span><span>MapReduceActor</span></a></span></div><div class="ni n2 "><span class="nh "><a href="MapReduceComposed.html"><span class="micon cl"></span><span>MapReduceComposed</span></a></span></div><div class="ni n2 "><span class="nh "><a href="MapReduceException.html"><span class="micon cl"></span><span>MapReduceException</span></a></span></div><div class="ni n2 "><span class="nh "><a href="MapReduceException$.html"><span class="micon ob"></span><span>MapReduceException</span></a></span></div><div class="ni n2 "><span class="nh "><a href="MapReduceFirst.html"><span class="micon cl"></span><span>MapReduceFirst</span></a></span></div><div class="ni n2 "><span class="nh "><a href="MapReduceFirst$.html"><span class="micon ob"></span><span>MapReduceFirst</span></a></span></div><div class="ni n2 "><span class="nh "><a href="MapReduceFirstFold$.html"><span class="micon ob"></span><span>MapReduceFirstFold</span></a></span></div><div class="ni n2 "><span class="nh "><a href="MapReduceFirstFold.html"><span class="micon cl"></span><span>MapReduceFirstFold</span></a></span></div><div class="ni n2 "><span class="nh "><a href="MapReducePipe.html"><span class="micon cl"></span><span>MapReducePipe</span></a></span></div><div class="ni n2 "><span class="nh "><a href="MapReducePipe$.html"><span class="micon ob"></span><span>MapReducePipe</span></a></span></div><div class="ni n2 "><span class="nh "><a href="MapReducePipeFold.html"><span class="micon cl"></span><span>MapReducePipeFold</span></a></span></div><div class="ni n2 "><span class="nh "><a href="MapReducePipeFold$.html"><span class="micon ob"></span><span>MapReducePipeFold</span></a></span></div><div class="ni n2 "><span class="nh "><a href="MapReduce_Base.html"><span class="micon cl"></span><span>MapReduce_Base</span></a></span></div><div class="ni n2 "><span class="nh "><a href="MapReduce_LoggingBase.html"><span class="micon cl"></span><span>MapReduce_LoggingBase</span></a></span></div><div class="ni n2 "><span class="nh "><a href="Mapper$.html"><span class="micon ob"></span><span>Mapper</span></a></span></div><div class="ni n2 "><span class="nh "><a href="MapperCommand.html"><span class="micon tr"></span><span>MapperCommand</span></a></span></div><div class="ni n2 "><span class="nh "><a href="MapperDef.html"><span class="micon cl"></span><span>MapperDef</span></a></span></div><div class="ni n2 "><span class="nh "><a href="MapperResponse.html"><span class="micon cl"></span><span>MapperResponse</span></a></span></div><div class="ni n2 "><span class="nh "><a href="Mapper_Forgiving$.html"><span class="micon ob"></span><span>Mapper_Forgiving</span></a></span></div><div class="ni n2 "><span class="nh "><a href="Master$.html"><span class="micon ob"></span><span>Master</span></a></span></div><div class="ni n2 "><span class="nh "><a href="MasterCommand.html"><span class="micon tr"></span><span>MasterCommand</span></a></span></div><div class="ni n2 "><span class="nh "><a href="Master_First$.html"><span class="micon ob"></span><span>Master_First</span></a></span></div><div class="ni n2 "><span class="nh "><a href="Master_First_Fold$.html"><span class="micon ob"></span><span>Master_First_Fold</span></a></span></div><div class="ni n2 "><span class="nh "><a href="Master_Fold$.html"><span class="micon ob"></span><span>Master_Fold</span></a></span></div><div class="ni n2"><span class="nh "><button class="ar icon-button "></button><a href="Monoid$.html"><span class="micon ob"></span><span>Monoid</span></a></span><div class="ni n3 "><span class="nh "><a href="Monoid$$MonoidDouble$.html"><span class="micon ob"></span><span>MonoidDouble</span></a></span></div><div class="ni n3 "><span class="nh "><a href="Monoid$$MonoidInt$.html"><span class="micon ob"></span><span>MonoidInt</span></a></span></div><div class="ni n3 "><span class="nh "><a href="Monoid$$MonoidString$.html"><span class="micon ob"></span><span>MonoidString</span></a></span></div></div><div class="ni n2 "><span class="nh "><a href="Monoid.html"><span class="micon tr"></span><span>Monoid</span></a></span></div><div class="ni n2 "><span class="nh "><a href="Reduce.html"><span class="micon cl"></span><span>Reduce</span></a></span></div><div class="ni n2 "><span class="nh "><a href="ReduceDef.html"><span class="micon cl"></span><span>ReduceDef</span></a></span></div><div class="ni n2 "><span class="nh "><a href="ReduceResult.html"><span class="micon cl"></span><span>ReduceResult</span></a></span></div><div class="ni n2 "><span class="nh "><a href="Reducer$.html"><span class="micon ob"></span><span>Reducer</span></a></span></div><div class="ni n2 "><span class="nh "><a href="ReducerCommand.html"><span class="micon tr"></span><span>ReducerCommand</span></a></span></div><div class="ni n2 "><span class="nh "><a href="ReducerDef.html"><span class="micon tr"></span><span>ReducerDef</span></a></span></div><div class="ni n2 "><span class="nh "><a href="Reducer_Fold$.html"><span class="micon ob"></span><span>Reducer_Fold</span></a></span></div><div class="ni n2 "><span class="nh "><a href="Response$.html"><span class="micon ob"></span><span>Response</span></a></span></div><div class="ni n2 "><span class="nh "><a href="Response.html"><span class="micon cl"></span><span>Response</span></a></span></div><div class="ni n2 "><span class="nh "><a href="TryUsing$.html"><span class="micon ob"></span><span>TryUsing</span></a></span></div><div class="ni n2 "><span class="nh "><a href="WorkerPool.html"><span class="micon tr"></span><span>WorkerPool</span></a></span></div><div class="ni n2 "><span class="nh "><a href="WorkerPool$.html"><span class="micon ob"></span><span>WorkerPool</span></a></span></div><div class="ni n2 "><span class="nh "><a href="Workers.html"><span class="micon cl"></span><span>Workers</span></a></span></div><div class="ni n2"><span class="nh "><button class="ar icon-button "></button><a href="Zero$.html"><span class="micon ob"></span><span>Zero</span></a></span><div class="ni n3 "><span class="nh "><a href="Zero$$DoubleZero$.html"><span class="micon ob"></span><span>DoubleZero</span></a></span></div><div class="ni n3 "><span class="nh "><a href="Zero$$DoubleZero.html"><span class="micon tr"></span><span>DoubleZero</span></a></span></div><div class="ni n3 "><span class="nh "><a href="Zero$$IntSeqZero$.html"><span class="micon ob"></span><span>IntSeqZero</span></a></span></div><div class="ni n3 "><span class="nh "><a href="Zero$$IntVectorZero$.html"><span class="micon ob"></span><span>IntVectorZero</span></a></span></div><div class="ni n3 "><span class="nh "><a href="Zero$$IntZero$.html"><span class="micon ob"></span><span>IntZero</span></a></span></div><div class="ni n3 "><span class="nh "><a href="Zero$$IntZero.html"><span class="micon tr"></span><span>IntZero</span></a></span></div><div class="ni n3 "><span class="nh "><a href="Zero$$SeqZero.html"><span class="micon tr"></span><span>SeqZero</span></a></span></div><div class="ni n3 "><span class="nh "><a href="Zero$$StringZero$.html"><span class="micon ob"></span><span>StringZero</span></a></span></div><div class="ni n3 "><span class="nh "><a href="Zero$$StringZero.html"><span class="micon tr"></span><span>StringZero</span></a></span></div><div class="ni n3 "><span class="nh "><a href="Zero$$VectorZero.html"><span class="micon tr"></span><span>VectorZero</span></a></span></div></div><div class="ni n2 "><span class="nh "><a href="Zero.html"><span class="micon tr"></span><span>Zero</span></a></span></div></div><div class="ni n1"><span class="nh "><button class="ar icon-button "></button><a href="../dd.html"><span class="micon pa"></span><span>dd</span></a></span><div class="ni n2 "><span class="nh "><a href="../dd/BaseDD.html"><span class="micon cl"></span><span>BaseDD</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../dd/DDContext.html"><span class="micon cl"></span><span>DDContext</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../dd/DDContext$.html"><span class="micon ob"></span><span>DDContext</span></a></span></div><div class="ni n2"><span class="nh "><button class="ar icon-button "></button><a href="../dd/DataDefinition$.html"><span class="micon ob"></span><span>DataDefinition</span></a></span><div class="ni n3 "><span class="nh "><a href="../dd/DataDefinition$$IterableMonoid.html"><span class="micon tr"></span><span>IterableMonoid</span></a></span></div></div><div class="ni n2 "><span class="nh "><a href="../dd/DataDefinition.html"><span class="micon tr"></span><span>DataDefinition</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../dd/DataDefinitionException.html"><span class="micon cl"></span><span>DataDefinitionException</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../dd/EagerDD.html"><span class="micon cl"></span><span>EagerDD</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../dd/EagerDD$.html"><span class="micon ob"></span><span>EagerDD</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../dd/HasEvaluatedMap.html"><span class="micon tr"></span><span>HasEvaluatedMap</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../dd/LazyDD$.html"><span class="micon ob"></span><span>LazyDD</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../dd/LazyDD.html"><span class="micon cl"></span><span>LazyDD</span></a></span></div></div><div class="ni n1"><span class="nh "><button class="ar icon-button "></button><a href="../matrix.html"><span class="micon pa"></span><span>matrix</span></a></span><div class="ni n2 "><span class="nh "><a href="../matrix/BaseMatrix.html"><span class="micon cl"></span><span>BaseMatrix</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../matrix/Dimensions$.html"><span class="micon ob"></span><span>Dimensions</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../matrix/Dimensions.html"><span class="micon cl"></span><span>Dimensions</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../matrix/IncompatibleDimensionsException.html"><span class="micon cl"></span><span>IncompatibleDimensionsException</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../matrix/IncompatibleLengthsException.html"><span class="micon cl"></span><span>IncompatibleLengthsException</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../matrix/Matrix.html"><span class="micon tr"></span><span>Matrix</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../matrix/Matrix$.html"><span class="micon ob"></span><span>Matrix</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../matrix/Matrix1.html"><span class="micon cl"></span><span>Matrix1</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../matrix/Matrix1$.html"><span class="micon ob"></span><span>Matrix1</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../matrix/Matrix2$.html"><span class="micon ob"></span><span>Matrix2</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../matrix/Matrix2.html"><span class="micon cl"></span><span>Matrix2</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../matrix/MatrixException.html"><span class="micon cl"></span><span>MatrixException</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../matrix/Product.html"><span class="micon tr"></span><span>Product</span></a></span></div></div></div></nav></div><div id="footer" class="body-small"><div class="left-container">Generated with</div><div class="right-container"><div class="text"></div></div><div class="text-mobile"></div></div><div id="scaladoc-searchBar"></div><div id="main"><div class="breadcrumbs container"><a href="../../../../index.html">Majabigwaduce</a>/<a href="../../majabigwaduce.html">com.phasmid.majabigwaduce</a>/<a href="../core.html">com.phasmid.majabigwaduce.core</a>/<a href="FP$.html">FP</a></div><div id="content" class="body-medium"><div><div class="cover-header">
+ <span class="icon"><span class="micon ob"></span></span>
+ <h1 class="h600 single">FP</h1>
+</div>
+<div class="fqname body-large">
+ <span>com.phasmid.majabigwaduce.core.FP</span>
+</div>
+<div class="main-signature mono-small-block">
+ <div class="signature">
+  <span class="modifiers"></span><span class="kind"><span t="k">object </span></span><a href="FP$.html" t="n" class="documentableName ">FP</a>
+ </div>
+</div>
+<div class="cover">
+ <div class="doc">
+  <p>This module contains functional programming methods which can also be found in the FP module of LaScala</p>
+ </div>
+ <section id="attributes">
+  <h2 class="h500">Attributes</h2>
+  <dl class="attributes">
+   <dt class="body-small">Graph</dt>
+   <dd class="body-medium">
+    <div id="inheritance-diagram" class="diagram-class showGraph">
+     <button type="button" class="label-only-button" onclick="zoomOut()">Reset zoom</button><button type="button" class="label-only-button" onclick="hideGraph()">Hide graph</button><button type="button" class="label-only-button" onclick="showGraph()">Show graph</button>
+     <svg id="graph"></svg>
+     <script type="text/dot" id="dot"> digraph g {
+ node0 [id=node0, label="<span style=\"color: #FFFFFF;\">object <a href=\"FP$.html\" t=\"n\">FP</a></span>", class="object vertex"];
+node1 [id=node1, label="<span style=\"color: #FFFFFF;\">class <span data-unresolved-link=\"\" t=\"n\">Object</span></span>", class="class vertex"];
+node2 [id=node2, label="<span style=\"color: #FFFFFF;\">class <span data-unresolved-link=\"\" t=\"n\">Any</span></span>", class="class vertex"];
+node3 [id=node3, label="<span style=\"color: #FFFFFF;\">trait <span data-unresolved-link=\"\" t=\"n\">Matchable</span></span>", class="trait vertex"];
+
+
+ node0 -> node1;
+node1 -> node2;
+node1 -> node3;
+node3 -> node2;
+
+}
+</script>
+    </div>
+   </dd>
+   <dt class="body-small">Supertypes</dt>
+   <dd class="body-medium">
+    <div class="mono-small-block supertypes">
+     <div>
+      class <span data-unresolved-link="" t="n">Object</span>
+     </div>
+     <div>
+      trait <span data-unresolved-link="" t="n">Matchable</span>
+     </div>
+     <div>
+      class <span data-unresolved-link="" t="n">Any</span>
+     </div>
+     <span></span>
+    </div>
+   </dd>
+   <dt class="body-small">Self type</dt>
+   <dd class="body-medium">
+    <div class="mono-small-block supertypes">
+     <span></span>
+     <div>
+      <a href="FP$.html" t="n">FP</a>.<span t="k">type</span>
+     </div>
+    </div>
+   </dd>
+  </dl>
+ </section>
+</div>
+<section id="members-list">
+ <h2 class="h500">Members list</h2>
+ <div class="documentableFilter">
+  <div class="filtersContainer"></div>
+  <input class="filterableInput" placeholder="Filter by any phrase" data-test-id="filterBarInput" type="search"><button class="clearButton label-only-button" data-test-id="filterBarClearButton">Clear all</button>
+ </div>
+ <div class="membersList expand">
+  <div class="tabs">
+   <div class="contents">
+    <section id="Value-members">
+     <div data-togglable="Value members" class="tab expand">
+      <div class="member-group-header">
+       <h3 data-togglable="Value members" class="h400">Value members</h3>
+      </div>
+      <section id="Concrete-methods">
+       <div class="documentableList expand">
+        <div class="documentableList-expander">
+         <button class="icon-button show-content expand"></button>
+         <h4 class="groupHeader h200">Concrete methods</h4>
+        </div>
+        <div class="documentableElement" id="asFuture-33">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="FP$.html#asFuture-33" t="n" class="documentableName ">asFuture</a>[<span t="k"></span><span data-unresolved-link="" t="t">X</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">xy</span>: <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">Try</span>[<span data-unresolved-link="" t="t">X</span>]): <span data-unresolved-link="" t="t">Future</span>[<span data-unresolved-link="" t="t">X</span>]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Converts a lazy <code>Try[X]</code> into a <code>Future[X]</code>.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Converts a lazy <code>Try[X]</code> into a <code>Future[X]</code>.</p>
+              <p>If the <code>Try</code> is a <code>Success</code>, the resulting <code>Future</code> will be successfully completed with the same value. If the <code>Try</code> is a <code>Failure</code>, the resulting <code>Future</code> will be failed with the same exception.</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">X</dt>
+              <dd class="body-medium">
+               <p>the type of the value contained within the <code>Try</code>.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">xy</dt>
+              <dd class="body-medium">
+               <p>a lazy computation producing a <code>Try[X]</code> instance, which may either be <code>Success</code> containing a value or <code>Failure</code> containing an exception.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>a <code>Future[X]</code> that is completed based on the outcome of the provided <code>Try</code>.</p>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="checkCompatible-b9f">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="FP$.html#checkCompatible-b9f" t="n" class="documentableName ">checkCompatible</a>[<span t="k"></span><span data-unresolved-link="" t="t">A</span>, <span t="k"></span><span data-unresolved-link="" t="t">B</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">as</span>: <span data-unresolved-link="" t="t">Seq</span>[<span data-unresolved-link="" t="t">A</span>], <span t="k"></span><span data-unresolved-link="" t="n">bs</span>: <span data-unresolved-link="" t="t">Seq</span>[<span data-unresolved-link="" t="t">B</span>]): <span data-unresolved-link="" t="t">Try</span>[(<span data-unresolved-link="" t="t">Seq</span>[<span data-unresolved-link="" t="t">A</span>], <span data-unresolved-link="" t="t">Seq</span>[<span data-unresolved-link="" t="t">B</span>])]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Method to make a compatibility check on two vectors (not currently used). The result is successful if the vectors are of the same (non-zero) size.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Method to make a compatibility check on two vectors (not currently used). The result is successful if the vectors are of the same (non-zero) size.</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">A</dt>
+              <dd class="body-medium">
+               <p>the underlying type of as.</p>
+              </dd>
+              <dt class="body-small">B</dt>
+              <dd class="body-medium">
+               <p>the underlying type of bs.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">as</dt>
+              <dd class="body-medium">
+               <p>a vector of As.</p>
+              </dd>
+              <dt class="body-small">bs</dt>
+              <dd class="body-medium">
+               <p>a vector of Bs.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>a tuple of the two vectors, all wrapped in Try.</p>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="checkCompatibleX-b9f">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="FP$.html#checkCompatibleX-b9f" t="n" class="documentableName ">checkCompatibleX</a>[<span t="k"></span><span data-unresolved-link="" t="t">A</span>, <span t="k"></span><span data-unresolved-link="" t="t">B</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">as</span>: <span data-unresolved-link="" t="t">Seq</span>[<span data-unresolved-link="" t="t">A</span>], <span t="k"></span><span data-unresolved-link="" t="n">bss</span>: <span data-unresolved-link="" t="t">Seq</span>[<span data-unresolved-link="" t="t">Seq</span>[<span data-unresolved-link="" t="t">B</span>]]): <span data-unresolved-link="" t="t">Try</span>[(<span data-unresolved-link="" t="t">Seq</span>[<span data-unresolved-link="" t="t">A</span>], <span data-unresolved-link="" t="t">Seq</span>[<span data-unresolved-link="" t="t">Seq</span>[<span data-unresolved-link="" t="t">B</span>]])]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Method to make a compatibility check on a vector and a 2-matrix (not currently used). The result is successful if the vectors are of the same (non-zero) size.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Method to make a compatibility check on a vector and a 2-matrix (not currently used). The result is successful if the vectors are of the same (non-zero) size.</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">A</dt>
+              <dd class="body-medium">
+               <p>the underlying type of as.</p>
+              </dd>
+              <dt class="body-small">B</dt>
+              <dd class="body-medium">
+               <p>the underlying type of bss.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">as</dt>
+              <dd class="body-medium">
+               <p>a vector of As, represented as a Seq[A].</p>
+              </dd>
+              <dt class="body-small">bss</dt>
+              <dd class="body-medium">
+               <p>a 2-matrix of Bs, represented as a Seq[Seq[B]].</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>a tuple of the vector and the transpose of the 2-matrix, all wrapped in Try.</p>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="flatten-34d">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="FP$.html#flatten-34d" t="n" class="documentableName ">flatten</a>[<span t="k"></span><span data-unresolved-link="" t="t">X</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">xyf</span>: <span data-unresolved-link="" t="t">Future</span>[<span data-unresolved-link="" t="t">Try</span>[<span data-unresolved-link="" t="t">X</span>]])(<span t="k">implicit </span><span t="k"></span><span data-unresolved-link="" t="n">executor</span>: <span data-unresolved-link="" t="t">ExecutionContext</span>): <span data-unresolved-link="" t="t">Future</span>[<span data-unresolved-link="" t="t">X</span>]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Method flatten which takes a Future[Try[X]] and returns a Future[X].</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Method flatten which takes a Future[Try[X]] and returns a Future[X].</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">X</dt>
+              <dd class="body-medium">
+               <p>the underlying type.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">executor</dt>
+              <dd class="body-medium">
+               <p>(implicit) the ExecutionContext</p>
+              </dd>
+              <dt class="body-small">xyf</dt>
+              <dd class="body-medium">
+               <p>a Future of Try of X.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>a Future[X], which will be successful if the Try was a success, otherwise a failure.</p>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="flatten-fffff614">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="FP$.html#flatten-fffff614" t="n" class="documentableName ">flatten</a>[<span t="k"></span><span data-unresolved-link="" t="t">X</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">xfy</span>: <span data-unresolved-link="" t="t">Try</span>[<span data-unresolved-link="" t="t">Future</span>[<span data-unresolved-link="" t="t">X</span>]])(<span t="k">implicit </span><span t="k"></span><span data-unresolved-link="" t="n">executor</span>: <span data-unresolved-link="" t="t">ExecutionContext</span>): <span data-unresolved-link="" t="t">Future</span>[<span data-unresolved-link="" t="t">X</span>]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Method to flatten a Try[Future[X]] (not a common occurrence).</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Method to flatten a Try[Future[X]] (not a common occurrence).</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">X</dt>
+              <dd class="body-medium">
+               <p>the underlying type.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">executor</dt>
+              <dd class="body-medium">
+               <p>(implicit) the ExecutionContext</p>
+              </dd>
+              <dt class="body-small">xfy</dt>
+              <dd class="body-medium">
+               <p>a Try of Future of X.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>a Future[X], which will be successful if the Try was a success, otherwise a failure.</p>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="identityTry-fffffa1b">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="FP$.html#identityTry-fffffa1b" t="n" class="documentableName ">identityTry</a>[<span t="k"></span><span data-unresolved-link="" t="t">X</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">x</span>: <span data-unresolved-link="" t="t">X</span>): <span data-unresolved-link="" t="t">Try</span>[<span data-unresolved-link="" t="t">X</span>]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>This method is a substitute for <code>Try.apply</code> in the case that we want it as a function (otherwise, we run into a type inference problem).</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>This method is a substitute for <code>Try.apply</code> in the case that we want it as a function (otherwise, we run into a type inference problem).</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">X</dt>
+              <dd class="body-medium">
+               <p>the type of x.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">x</dt>
+              <dd class="body-medium">
+               <p>an X.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>Success(x)</p>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="invokeTupled-fffff2a0">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="FP$.html#invokeTupled-fffff2a0" t="n" class="documentableName ">invokeTupled</a>[<span t="k"></span><span data-unresolved-link="" t="t">T1</span>, <span t="k"></span><span data-unresolved-link="" t="t">T2</span>, <span t="k"></span><span data-unresolved-link="" t="t">R</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">t</span>: (<span data-unresolved-link="" t="t">T1</span>, <span data-unresolved-link="" t="t">T2</span>))(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">f</span>: (<span data-unresolved-link="" t="t">T1</span>, <span data-unresolved-link="" t="t">T2</span>) <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">R</span>): <span data-unresolved-link="" t="t">R</span>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Method to invoke a function (T1,T2)=&gt;R on a tuple (T1, T2).</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Method to invoke a function (T1,T2)=&gt;R on a tuple (T1, T2).</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">R</dt>
+              <dd class="body-medium">
+               <p>the type of the result.</p>
+              </dd>
+              <dt class="body-small">T1</dt>
+              <dd class="body-medium">
+               <p>the type of the first attribute of t.</p>
+              </dd>
+              <dt class="body-small">T2</dt>
+              <dd class="body-medium">
+               <p>the type of the second attribute of t.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">f</dt>
+              <dd class="body-medium">
+               <p>the function.</p>
+              </dd>
+              <dt class="body-small">t</dt>
+              <dd class="body-medium">
+               <p>the tuple.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>the result of invoking f on t.</p>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="lift-892">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="FP$.html#lift-892" t="n" class="documentableName ">lift</a>[<span t="k"></span><span data-unresolved-link="" t="t">T</span>, <span t="k"></span><span data-unresolved-link="" t="t">R</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">f</span>: <span data-unresolved-link="" t="t">T</span> <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">R</span>): <span data-unresolved-link="" t="t">T</span> <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">Try</span>[<span data-unresolved-link="" t="t">R</span>]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Lifts a function <code>f</code> of type <code>T =&gt; R</code> into a function of type <code>T =&gt; Try[R]</code>. This allows the application of <code>f</code> to a value of type <code>T</code> while capturing any exceptions that may be thrown during its execution as a <code>Failure</code>. If the function executes successfully, the result is wrapped in a <code>Success</code>.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Lifts a function <code>f</code> of type <code>T =&gt; R</code> into a function of type <code>T =&gt; Try[R]</code>. This allows the application of <code>f</code> to a value of type <code>T</code> while capturing any exceptions that may be thrown during its execution as a <code>Failure</code>. If the function executes successfully, the result is wrapped in a <code>Success</code>.</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">R</dt>
+              <dd class="body-medium">
+               <p>the output type of the function.</p>
+              </dd>
+              <dt class="body-small">T</dt>
+              <dd class="body-medium">
+               <p>the input type of the function.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">f</dt>
+              <dd class="body-medium">
+               <p>the function to be lifted, of type <code>T =&gt; R</code>.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>a new function of type <code>T =&gt; Try[R]</code> that applies the original function and wraps its result in a <code>Try</code>.</p>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="lift-eb3">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="FP$.html#lift-eb3" t="n" class="documentableName ">lift</a>[<span t="k"></span><span data-unresolved-link="" t="t">T1</span>, <span t="k"></span><span data-unresolved-link="" t="t">T2</span>, <span t="k"></span><span data-unresolved-link="" t="t">R</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">f</span>: (<span data-unresolved-link="" t="t">T1</span>, <span data-unresolved-link="" t="t">T2</span>) <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">R</span>): (<span data-unresolved-link="" t="t">T1</span>, <span data-unresolved-link="" t="t">T2</span>) <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">Try</span>[<span data-unresolved-link="" t="t">R</span>]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Lifts a binary function <code>(T1, T2) =&gt; R</code> into a function that returns a <code>Try[R]</code>, capturing any exceptions that might occur during its execution.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Lifts a binary function <code>(T1, T2) =&gt; R</code> into a function that returns a <code>Try[R]</code>, capturing any exceptions that might occur during its execution.</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">R</dt>
+              <dd class="body-medium">
+               <p>the return type of the function.</p>
+              </dd>
+              <dt class="body-small">T1</dt>
+              <dd class="body-medium">
+               <p>the type of the first input parameter of the function.</p>
+              </dd>
+              <dt class="body-small">T2</dt>
+              <dd class="body-medium">
+               <p>the type of the second input parameter of the function.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">f</dt>
+              <dd class="body-medium">
+               <p>the binary function to be lifted, of type <code>(T1, T2) =&gt; R</code>.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>a new function of type <code>(T1, T2) =&gt; Try[R]</code> that applies the original function and wraps its result in a <code>Try</code>.</p>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="optional-790">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="FP$.html#optional-790" t="n" class="documentableName ">optional</a>[<span t="k"></span><span data-unresolved-link="" t="t">T</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">p</span>: <span data-unresolved-link="" t="t">T</span> <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">Boolean</span>)(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">t</span>: <span data-unresolved-link="" t="t">T</span>): <span data-unresolved-link="" t="t">Option</span>[<span data-unresolved-link="" t="t">T</span>]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Method to yield an Option of T according to whether the predicate p yields true.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Method to yield an Option of T according to whether the predicate p yields true.</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">T</dt>
+              <dd class="body-medium">
+               <p>the type of t (and the underlying type of the result).</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">p</dt>
+              <dd class="body-medium">
+               <p>a predicate on T.</p>
+              </dd>
+              <dt class="body-small">t</dt>
+              <dd class="body-medium">
+               <p>an actual value of T.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>Some(t) if p(t) is true, otherwise None.</p>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="partition-6cd">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="FP$.html#partition-6cd" t="n" class="documentableName ">partition</a>[<span t="k"></span><span data-unresolved-link="" t="t">K</span>, <span t="k"></span><span data-unresolved-link="" t="t">V</span>, <span t="k"></span><span data-unresolved-link="" t="t">X</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">vXeKm</span>: <span data-unresolved-link="" t="t">Map</span>[<span data-unresolved-link="" t="t">K</span>, <span data-unresolved-link="" t="t">Either</span>[<span data-unresolved-link="" t="t">X</span>, <span data-unresolved-link="" t="t">V</span>]]): (<span data-unresolved-link="" t="t">Seq</span>[(<span data-unresolved-link="" t="t">K</span>, <span data-unresolved-link="" t="t">Either</span>[<span data-unresolved-link="" t="t">X</span>, <span data-unresolved-link="" t="t">V</span>])], <span data-unresolved-link="" t="t">Seq</span>[(<span data-unresolved-link="" t="t">K</span>, <span data-unresolved-link="" t="t">Either</span>[<span data-unresolved-link="" t="t">X</span>, <span data-unresolved-link="" t="t">V</span>])])
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Method to take a Map[K,Either[X,V]] and generated a tuple of two sequenced-maps, each of the same form as the input but containing only the left-values or right-values as appropriate. TESTME</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Method to take a Map[K,Either[X,V]] and generated a tuple of two sequenced-maps, each of the same form as the input but containing only the left-values or right-values as appropriate. TESTME</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">K</dt>
+              <dd class="body-medium">
+               <p>the key type</p>
+              </dd>
+              <dt class="body-small">V</dt>
+              <dd class="body-medium">
+               <p>the value type</p>
+              </dd>
+              <dt class="body-small">X</dt>
+              <dd class="body-medium">
+               <p>the partition type</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">vXeKm</dt>
+              <dd class="body-medium">
+               <p>the input map</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>a tuple of Map[K,Either[X,V]] maps in sequenced form.</p>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="recover-b75">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="FP$.html#recover-b75" t="n" class="documentableName ">recover</a>[<span t="k"></span><span data-unresolved-link="" t="t">T</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">to</span>: <span data-unresolved-link="" t="t">Option</span>[<span data-unresolved-link="" t="t">T</span>])(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">x</span>: <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">Throwable</span>): <span data-unresolved-link="" t="t">T</span>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Method to convert a None value to a given exception (rather than the NoSuchElement exception).</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Method to convert a None value to a given exception (rather than the NoSuchElement exception).</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">T</dt>
+              <dd class="body-medium">
+               <p>the underlying type of to.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">to</dt>
+              <dd class="body-medium">
+               <p>an Option[T].</p>
+              </dd>
+              <dt class="body-small">x</dt>
+              <dd class="body-medium">
+               <p>a Throwable to be thrown if to is None.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>t if to is Some(t); otherwise x will be thrown.</p>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="recoverAsTry-bb9">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="FP$.html#recoverAsTry-bb9" t="n" class="documentableName ">recoverAsTry</a>[<span t="k"></span><span data-unresolved-link="" t="t">T</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">to</span>: <span data-unresolved-link="" t="t">Option</span>[<span data-unresolved-link="" t="t">T</span>])(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">x</span>: <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">Throwable</span>): <span data-unresolved-link="" t="t">Try</span>[<span data-unresolved-link="" t="t">T</span>]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Converts an <code>Option</code> into a <code>Try</code>, providing a failure cause if the <code>Option</code> is <code>None</code>.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Converts an <code>Option</code> into a <code>Try</code>, providing a failure cause if the <code>Option</code> is <code>None</code>.</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">T</dt>
+              <dd class="body-medium">
+               <p>the underlying type of to.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">to</dt>
+              <dd class="body-medium">
+               <p>the optional value to convert into a <code>Try</code>.</p>
+              </dd>
+              <dt class="body-small">x</dt>
+              <dd class="body-medium">
+               <p>the throwable to use as the failure cause if the <code>Option</code> is <code>None</code>.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>a <code>Success</code> containing the value from the <code>Option</code> if it is <code>Some</code>, or a <code>Failure</code> if it is <code>None</code>.</p>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="recoverWithTry-bb9">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="FP$.html#recoverWithTry-bb9" t="n" class="documentableName ">recoverWithTry</a>[<span t="k"></span><span data-unresolved-link="" t="t">T</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">to</span>: <span data-unresolved-link="" t="t">Option</span>[<span data-unresolved-link="" t="t">T</span>])(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">x</span>: <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">Try</span>[<span data-unresolved-link="" t="t">T</span>]): <span data-unresolved-link="" t="t">Try</span>[<span data-unresolved-link="" t="t">T</span>]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Converts an <code>Option</code> into a <code>Try</code>, falling back to the given <code>Try</code> if the <code>Option</code> is <code>None</code>.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Converts an <code>Option</code> into a <code>Try</code>, falling back to the given <code>Try</code> if the <code>Option</code> is <code>None</code>.</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">T</dt>
+              <dd class="body-medium">
+               <p>the underlying type of to.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">to</dt>
+              <dd class="body-medium">
+               <p>the optional value to convert into a <code>Try</code>.</p>
+              </dd>
+              <dt class="body-small">x</dt>
+              <dd class="body-medium">
+               <p>the <code>Try</code> to fall back to if the <code>Option</code> is <code>None</code>.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>a <code>Success</code> containing the value from the <code>Option</code> if it is <code>Some</code>, or <code>x</code> if it is <code>None</code>.</p>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="sequence-6f3">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="FP$.html#sequence-6f3" t="n" class="documentableName ">sequence</a>[<span t="k"></span><span data-unresolved-link="" t="t">X</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">xts</span>: <span data-unresolved-link="" t="t">Seq</span>[<span data-unresolved-link="" t="t">Try</span>[<span data-unresolved-link="" t="t">X</span>]]): <span data-unresolved-link="" t="t">Try</span>[<span data-unresolved-link="" t="t">Seq</span>[<span data-unresolved-link="" t="t">X</span>]]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Method sequence which, applied to a Seq[Try[X]], returns a Try[Seq[X]]</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Method sequence which, applied to a Seq[Try[X]], returns a Try[Seq[X]]</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">X</dt>
+              <dd class="body-medium">
+               <p>the underlying type</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">xts</dt>
+              <dd class="body-medium">
+               <p>: Seq[Try[X]]</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>: Try[Seq[X]]</p>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="sequence-fffffebb">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="FP$.html#sequence-fffffebb" t="n" class="documentableName ">sequence</a>[<span t="k"></span><span data-unresolved-link="" t="t">A</span>, <span t="k"></span><span data-unresolved-link="" t="t">B</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">t</span>: (<span data-unresolved-link="" t="t">A</span>, <span data-unresolved-link="" t="t">Try</span>[<span data-unresolved-link="" t="t">B</span>])): <span data-unresolved-link="" t="t">Try</span>[(<span data-unresolved-link="" t="t">A</span>, <span data-unresolved-link="" t="t">B</span>)]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Method sequence to convert a tuple of A, Try[B] to a Try[(A, B)]</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Method sequence to convert a tuple of A, Try[B] to a Try[(A, B)]</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">A</dt>
+              <dd class="body-medium">
+               <p>the underlying type of the _1 element of t.</p>
+              </dd>
+              <dt class="body-small">B</dt>
+              <dd class="body-medium">
+               <p>the underlying type of the _2 element of t.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">t</dt>
+              <dd class="body-medium">
+               <p>the tuple.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>a Try of (A, B).</p>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="sequence-fffff5c5">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="FP$.html#sequence-fffff5c5" t="n" class="documentableName ">sequence</a>[<span t="k"></span><span data-unresolved-link="" t="t">X</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">xyo</span>: <span data-unresolved-link="" t="t">Option</span>[<span data-unresolved-link="" t="t">Try</span>[<span data-unresolved-link="" t="t">X</span>]]): <span data-unresolved-link="" t="t">Try</span>[<span data-unresolved-link="" t="t">Option</span>[<span data-unresolved-link="" t="t">X</span>]]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Sequence method to invert the order of types Option/Try.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Sequence method to invert the order of types Option/Try.</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">X</dt>
+              <dd class="body-medium">
+               <p>the underlying type.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">xyo</dt>
+              <dd class="body-medium">
+               <p>an Option of Try[X].</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>a Try of Option[X].</p>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="sequence-6e6">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="FP$.html#sequence-6e6" t="n" class="documentableName ">sequence</a>[<span t="k"></span><span data-unresolved-link="" t="t">X</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">xos</span>: <span data-unresolved-link="" t="t">Iterable</span>[<span data-unresolved-link="" t="t">Option</span>[<span data-unresolved-link="" t="t">X</span>]]): <span data-unresolved-link="" t="t">Option</span>[<span data-unresolved-link="" t="t">Seq</span>[<span data-unresolved-link="" t="t">X</span>]]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Sequence method to combine elements of type Option[X].</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Sequence method to combine elements of type Option[X].</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">X</dt>
+              <dd class="body-medium">
+               <p>the underlying type.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">xos</dt>
+              <dd class="body-medium">
+               <p>an Iterable of Option[X].</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>if <code>xos</code> contains any <code>None</code>s, the result will be <code>None</code>, otherwise <code>Some(...)</code>. NOTE: that the output collection type will be Seq, regardless of the input type.</p>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="sequence-e2">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="FP$.html#sequence-e2" t="n" class="documentableName ">sequence</a>[<span t="k"></span><span data-unresolved-link="" t="t">X</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">xos</span>: <span data-unresolved-link="" t="t">Iterator</span>[<span data-unresolved-link="" t="t">Option</span>[<span data-unresolved-link="" t="t">X</span>]]): <span data-unresolved-link="" t="t">Option</span>[<span data-unresolved-link="" t="t">Iterator</span>[<span data-unresolved-link="" t="t">X</span>]]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Sequence method to combine elements of type Option[X].</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Sequence method to combine elements of type Option[X].</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">X</dt>
+              <dd class="body-medium">
+               <p>the underlying type.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">xos</dt>
+              <dd class="body-medium">
+               <p>an Iterator of Option[X].</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>an Option of Iterator[X].</p>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="sequenceLeft-c9">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="FP$.html#sequenceLeft-c9" t="n" class="documentableName ">sequenceLeft</a>[<span t="k"></span><span data-unresolved-link="" t="t">K</span>, <span t="k"></span><span data-unresolved-link="" t="t">X</span>, <span t="k"></span><span data-unresolved-link="" t="t">V</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">xVeKs</span>: <span data-unresolved-link="" t="t">Seq</span>[(<span data-unresolved-link="" t="t">K</span>, <span data-unresolved-link="" t="t">Either</span>[<span data-unresolved-link="" t="t">X</span>, <span data-unresolved-link="" t="t">V</span>])]): <span data-unresolved-link="" t="t">Seq</span>[(<span data-unresolved-link="" t="t">K</span>, <span data-unresolved-link="" t="t">X</span>)]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Method sequenceLeft which, given a Map[K,Either[X,V]] (in sequential form), returns a Map[K,X] (also in sequential form) for those elements of the input map which are a (left) X (as opposed to a (right) V).</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Method sequenceLeft which, given a Map[K,Either[X,V]] (in sequential form), returns a Map[K,X] (also in sequential form) for those elements of the input map which are a (left) X (as opposed to a (right) V).</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">K</dt>
+              <dd class="body-medium">
+               <p>the key type</p>
+              </dd>
+              <dt class="body-small">V</dt>
+              <dd class="body-medium">
+               <p>the value type</p>
+              </dd>
+              <dt class="body-small">X</dt>
+              <dd class="body-medium">
+               <p>the partition type</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">xVeKs</dt>
+              <dd class="body-medium">
+               <p>a Map[K,Either[X,V]] (in sequential form)</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>a Map[K,X] (in sequential form)</p>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="sequenceLeftRight-6cd">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="FP$.html#sequenceLeftRight-6cd" t="n" class="documentableName ">sequenceLeftRight</a>[<span t="k"></span><span data-unresolved-link="" t="t">K</span>, <span t="k"></span><span data-unresolved-link="" t="t">V</span>, <span t="k"></span><span data-unresolved-link="" t="t">X</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">vXeKm</span>: <span data-unresolved-link="" t="t">Map</span>[<span data-unresolved-link="" t="t">K</span>, <span data-unresolved-link="" t="t">Either</span>[<span data-unresolved-link="" t="t">X</span>, <span data-unresolved-link="" t="t">V</span>]]): (<span data-unresolved-link="" t="t">Seq</span>[(<span data-unresolved-link="" t="t">K</span>, <span data-unresolved-link="" t="t">X</span>)], <span data-unresolved-link="" t="t">Seq</span>[(<span data-unresolved-link="" t="t">K</span>, <span data-unresolved-link="" t="t">V</span>)])
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Method sequenceLeftRight which, given a Map[K,Either[X,V]], returns a tuple of sequenced maps (each with the same key type), with the X values on the left and the V values on the right.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Method sequenceLeftRight which, given a Map[K,Either[X,V]], returns a tuple of sequenced maps (each with the same key type), with the X values on the left and the V values on the right.</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">K</dt>
+              <dd class="body-medium">
+               <p>the key type</p>
+              </dd>
+              <dt class="body-small">V</dt>
+              <dd class="body-medium">
+               <p>the value type</p>
+              </dd>
+              <dt class="body-small">X</dt>
+              <dd class="body-medium">
+               <p>the partition type</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">vXeKm</dt>
+              <dd class="body-medium">
+               <p>the map</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>the separated maps as a tuple of sequenced maps</p>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="sequenceRight-c9">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="FP$.html#sequenceRight-c9" t="n" class="documentableName ">sequenceRight</a>[<span t="k"></span><span data-unresolved-link="" t="t">K</span>, <span t="k"></span><span data-unresolved-link="" t="t">X</span>, <span t="k"></span><span data-unresolved-link="" t="t">V</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">xVeKs</span>: <span data-unresolved-link="" t="t">Seq</span>[(<span data-unresolved-link="" t="t">K</span>, <span data-unresolved-link="" t="t">Either</span>[<span data-unresolved-link="" t="t">X</span>, <span data-unresolved-link="" t="t">V</span>])]): <span data-unresolved-link="" t="t">Seq</span>[(<span data-unresolved-link="" t="t">K</span>, <span data-unresolved-link="" t="t">V</span>)]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Method sequenceRight which, given a Map[K,Either[X,V]] (in sequential form), returns a Map[K,V] (also in sequential form) for those elements of the input map which are a (right) V (as opposed to a (left) X).</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Method sequenceRight which, given a Map[K,Either[X,V]] (in sequential form), returns a Map[K,V] (also in sequential form) for those elements of the input map which are a (right) V (as opposed to a (left) X).</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">K</dt>
+              <dd class="body-medium">
+               <p>the key type</p>
+              </dd>
+              <dt class="body-small">V</dt>
+              <dd class="body-medium">
+               <p>the value type</p>
+              </dd>
+              <dt class="body-small">X</dt>
+              <dd class="body-medium">
+               <p>the partition type</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">xVeKs</dt>
+              <dd class="body-medium">
+               <p>a Map[K,Either[X,V]] (in sequential form)</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>a Map[K,V] (in sequential form)</p>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="toEither-4e1">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="FP$.html#toEither-4e1" t="n" class="documentableName ">toEither</a>[<span t="k"></span><span data-unresolved-link="" t="t">X</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">xt</span>: <span data-unresolved-link="" t="t">Try</span>[<span data-unresolved-link="" t="t">X</span>]): <span data-unresolved-link="" t="t">Either</span>[<span data-unresolved-link="" t="t">Throwable</span>, <span data-unresolved-link="" t="t">X</span>]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Method sequence which applied to a Try[X] returns an Either[Throwable,X].</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Method sequence which applied to a Try[X] returns an Either[Throwable,X].</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">X</dt>
+              <dd class="body-medium">
+               <p>the underlying type</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">xt</dt>
+              <dd class="body-medium">
+               <p>: Try[X]</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>: Either[Throwable,X]</p>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="toMap-a97">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="FP$.html#toMap-a97" t="n" class="documentableName ">toMap</a>[<span t="k"></span><span data-unresolved-link="" t="t">K</span>, <span t="k"></span><span data-unresolved-link="" t="t">V</span>, <span t="k"></span><span data-unresolved-link="" t="t">X</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">t</span>: (<span data-unresolved-link="" t="t">Seq</span>[(<span data-unresolved-link="" t="t">K</span>, <span data-unresolved-link="" t="t">X</span>)], <span data-unresolved-link="" t="t">Seq</span>[(<span data-unresolved-link="" t="t">K</span>, <span data-unresolved-link="" t="t">V</span>)])): (<span data-unresolved-link="" t="t">Map</span>[<span data-unresolved-link="" t="t">K</span>, <span data-unresolved-link="" t="t">X</span>], <span data-unresolved-link="" t="t">Map</span>[<span data-unresolved-link="" t="t">K</span>, <span data-unresolved-link="" t="t">V</span>])
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Method toMap which takes a tuple of sequenced maps and returns a tuple of actual maps (each map has the same key type but different value types)</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Method toMap which takes a tuple of sequenced maps and returns a tuple of actual maps (each map has the same key type but different value types)</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">K</dt>
+              <dd class="body-medium">
+               <p>the key type</p>
+              </dd>
+              <dt class="body-small">V</dt>
+              <dd class="body-medium">
+               <p>the value type</p>
+              </dd>
+              <dt class="body-small">X</dt>
+              <dd class="body-medium">
+               <p>the partition type</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">t</dt>
+              <dd class="body-medium">
+               <p>the input tuple</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>the output tuple</p>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="toOption-bfc">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="FP$.html#toOption-bfc" t="n" class="documentableName ">toOption</a>[<span t="k"></span><span data-unresolved-link="" t="t">X</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">xy</span>: <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">Try</span>[<span data-unresolved-link="" t="t">X</span>]): <span data-unresolved-link="" t="t">Option</span>[<span data-unresolved-link="" t="t">X</span>]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Converts a <code>Try</code> instance into an <code>Option</code>. Any exception in the input is, of course, lost.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Converts a <code>Try</code> instance into an <code>Option</code>. Any exception in the input is, of course, lost.</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">X</dt>
+              <dd class="body-medium">
+               <p>the underlying type.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">xy</dt>
+              <dd class="body-medium">
+               <p>the <code>Try</code> instance to be converted.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>an <code>Option</code> containing the value if the <code>Try</code> is a <code>Success</code>, or <code>None</code> if the <code>Try</code> is a <code>Failure</code>.</p>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="toOptionWithLog-e8d">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="FP$.html#toOptionWithLog-e8d" t="n" class="documentableName ">toOptionWithLog</a>[<span t="k"></span><span data-unresolved-link="" t="t">X</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">log</span>: <span data-unresolved-link="" t="t">Throwable</span> <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">Unit</span>)(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">xy</span>: <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">Try</span>[<span data-unresolved-link="" t="t">X</span>]): <span data-unresolved-link="" t="t">Option</span>[<span data-unresolved-link="" t="t">X</span>]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Converts a <code>Try</code> instance into an <code>Option</code>. Any exception in the input is logged according to the <code>log</code> function.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Converts a <code>Try</code> instance into an <code>Option</code>. Any exception in the input is logged according to the <code>log</code> function.</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">X</dt>
+              <dd class="body-medium">
+               <p>the underlying type.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">log</dt>
+              <dd class="body-medium">
+               <p>a function to log the exception, if any.</p>
+              </dd>
+              <dt class="body-small">xy</dt>
+              <dd class="body-medium">
+               <p>the <code>Try</code> instance to be converted.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>an <code>Option</code> containing the value if the <code>Try</code> is a <code>Success</code>, or <code>None</code> if the <code>Try</code> is a <code>Failure</code>.</p>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="toTry-bb9">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="FP$.html#toTry-bb9" t="n" class="documentableName ">toTry</a>[<span t="k"></span><span data-unresolved-link="" t="t">X</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">xo</span>: <span data-unresolved-link="" t="t">Option</span>[<span data-unresolved-link="" t="t">X</span>])(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">default</span>: <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">Try</span>[<span data-unresolved-link="" t="t">X</span>]): <span data-unresolved-link="" t="t">Try</span>[<span data-unresolved-link="" t="t">X</span>]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Method to convert an <code>Option</code> into a <code>Try</code>, given a default <code>Try</code> to use if the <code>Option</code> is <code>None</code>.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Method to convert an <code>Option</code> into a <code>Try</code>, given a default <code>Try</code> to use if the <code>Option</code> is <code>None</code>.</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">X</dt>
+              <dd class="body-medium">
+               <p>the underlying type of both input and output.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">default</dt>
+              <dd class="body-medium">
+               <p>a Try[X] to use if <code>xo</code> is <code>None</code>.</p>
+              </dd>
+              <dt class="body-small">xo</dt>
+              <dd class="body-medium">
+               <p>an Option[X].</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>if <code>xo</code> is <code>Some(x)</code> then <code>Success(x)</code> else <code>default</code>.</p>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="tupleMap-fffff078">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="FP$.html#tupleMap-fffff078" t="n" class="documentableName ">tupleMap</a>[<span t="k"></span><span data-unresolved-link="" t="t">L1</span>, <span t="k"></span><span data-unresolved-link="" t="t">L2</span>, <span t="k"></span><span data-unresolved-link="" t="t">R1</span>, <span t="k"></span><span data-unresolved-link="" t="t">R2</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">fl</span>: <span data-unresolved-link="" t="t">L1</span> <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">L2</span>, <span t="k"></span><span data-unresolved-link="" t="n">fr</span>: <span data-unresolved-link="" t="t">R1</span> <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">R2</span>)(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">t</span>: (<span data-unresolved-link="" t="t">L1</span>, <span data-unresolved-link="" t="t">R1</span>)): (<span data-unresolved-link="" t="t">L2</span>, <span data-unresolved-link="" t="t">R2</span>)
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Transforms each element of a tuple by applying the provided functions to its components.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Transforms each element of a tuple by applying the provided functions to its components.</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">L1</dt>
+              <dd class="body-medium">
+               <p>the type of the first element in the input tuple.</p>
+              </dd>
+              <dt class="body-small">L2</dt>
+              <dd class="body-medium">
+               <p>the type of the first element in the output tuple.</p>
+              </dd>
+              <dt class="body-small">R1</dt>
+              <dd class="body-medium">
+               <p>the type of the second element in the input tuple.</p>
+              </dd>
+              <dt class="body-small">R2</dt>
+              <dd class="body-medium">
+               <p>the type of the second element in the output tuple.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">fl</dt>
+              <dd class="body-medium">
+               <p>a function to transform the first element of the tuple.</p>
+              </dd>
+              <dt class="body-small">fr</dt>
+              <dd class="body-medium">
+               <p>a function to transform the second element of the tuple.</p>
+              </dd>
+              <dt class="body-small">t</dt>
+              <dd class="body-medium">
+               <p>a tuple containing two elements to be transformed.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>a new tuple where the first element is transformed by <code>fl</code>, and the second by <code>fr</code>.</p>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="whenTry-fffff978">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="FP$.html#whenTry-fffff978" t="n" class="documentableName ">whenTry</a>[<span t="k"></span><span data-unresolved-link="" t="t">X</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">p</span>: <span data-unresolved-link="" t="t">Boolean</span>)(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">x</span>: <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">X</span>): <span data-unresolved-link="" t="t">Try</span>[<span data-unresolved-link="" t="t">X</span>]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Executes the provided computation if the given condition is true; otherwise, returns a Failure.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Executes the provided computation if the given condition is true; otherwise, returns a Failure.</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">X</dt>
+              <dd class="body-medium">
+               <p>the underlying type.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">p</dt>
+              <dd class="body-medium">
+               <p>a Boolean condition that determines whether the computation should be executed.</p>
+              </dd>
+              <dt class="body-small">x</dt>
+              <dd class="body-medium">
+               <p>a computation represented as a call-by-name parameter, which returns an X when evaluated.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>a Try[X] representing the result of the computation if the condition is true, or a Failure if the condition is false.</p>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="whenever-a9e">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="FP$.html#whenever-a9e" t="n" class="documentableName ">whenever</a>[<span t="k"></span><span data-unresolved-link="" t="t">X</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">p</span>: <span data-unresolved-link="" t="t">Boolean</span>)(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">x</span>: <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">Option</span>[<span data-unresolved-link="" t="t">X</span>]): <span data-unresolved-link="" t="t">Option</span>[<span data-unresolved-link="" t="t">X</span>]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Executes the provided block of code conditionally based on the given boolean predicate. If the predicate is true, the block of code is executed and its result is returned. If the predicate is false, None is returned.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Executes the provided block of code conditionally based on the given boolean predicate. If the predicate is true, the block of code is executed and its result is returned. If the predicate is false, None is returned.</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">X</dt>
+              <dd class="body-medium">
+               <p>the underlying type.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">p</dt>
+              <dd class="body-medium">
+               <p>the boolean predicate that determines whether the block of code should be executed.</p>
+              </dd>
+              <dt class="body-small">x</dt>
+              <dd class="body-medium">
+               <p>a by-name parameter representing the block of code returning an Option of type X.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>an Option containing the result of the block of code if <code>p</code> is true, or None if <code>p</code> is false.</p>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="wheneverTry-fffff978">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="FP$.html#wheneverTry-fffff978" t="n" class="documentableName ">wheneverTry</a>[<span t="k"></span><span data-unresolved-link="" t="t">X</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">p</span>: <span data-unresolved-link="" t="t">Boolean</span>)(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">x</span>: <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">Try</span>[<span data-unresolved-link="" t="t">X</span>]): <span data-unresolved-link="" t="t">Try</span>[<span data-unresolved-link="" t="t">X</span>]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Executes the provided computation if the given condition is true; otherwise, returns a Failure. Unlike <code>whenTry</code>, the computation itself yields a <code>Try[X]</code>, so the result is flattened.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Executes the provided computation if the given condition is true; otherwise, returns a Failure. Unlike <code>whenTry</code>, the computation itself yields a <code>Try[X]</code>, so the result is flattened.</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">X</dt>
+              <dd class="body-medium">
+               <p>the underlying type.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">p</dt>
+              <dd class="body-medium">
+               <p>a Boolean condition that determines whether the computation should be executed.</p>
+              </dd>
+              <dt class="body-small">x</dt>
+              <dd class="body-medium">
+               <p>a computation represented as a call-by-name parameter, which returns a Try[X] when evaluated.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>a Try[X] representing the result of the computation if the condition is true, or a Failure if the condition is false.</p>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+      </section>
+     </div>
+    </section>
+   </div>
+  </div>
+ </div>
+</section></div><div id="toc" class="body-small"><div id="toc-container"><span class="toc-title h200">In this article</span><nav class="toc-nav"><ul class="toc-list"><li><a href="#attributes">Attributes</a></li><li><a href="#members-list">Members list</a><ul><li><a href="#Value-members">Value members</a><ul><li><a href="#Concrete-methods">Concrete methods</a></li></ul></li></ul></li></ul></nav></div></div></div><div id="footer" class="body-small mobile-footer"><div class="left-container">Generated with</div><div class="right-container"><div class="text"></div></div><div class="text-mobile"></div></div></div></div></body></html>

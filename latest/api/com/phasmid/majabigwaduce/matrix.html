@@ -1,0 +1,919 @@
+<!DOCTYPE html><html data-pathToRoot="../../../" data-rawLocation="com/phasmid/majabigwaduce/matrix" data-dynamicSideMenu="false"><head><meta charset="utf-8"></meta><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"></meta><title>com.phasmid.majabigwaduce.matrix</title><link rel="shortcut icon" type="image/x-icon" href="../../../favicon.ico"></link><script type="text/javascript" src="../../../scripts/theme.js"></script><script type="text/javascript" src="../../../scripts/searchData.js" defer="true"></script><script type="text/javascript" src="../../../scripts/scastieConfiguration.js" defer="true"></script><link rel="stylesheet" href="../../../styles/theme/bundle.css"></link><link rel="stylesheet" href="../../../styles/theme/components/bundle.css"></link><link rel="stylesheet" href="../../../styles/theme/components/button/bundle.css"></link><link rel="stylesheet" href="../../../styles/theme/layout/bundle.css"></link><link rel="stylesheet" href="../../../styles/dotty-icons.css"></link><link rel="stylesheet" href="../../../styles/filter-bar.css"></link><link rel="stylesheet" href="../../../styles/searchbar.css"></link><link rel="stylesheet" href="../../../styles/social-links.css"></link><link rel="stylesheet" href="../../../styles/versions-dropdown.css"></link><link rel="stylesheet" href="../../../styles/content-contributors.css"></link><script type="text/javascript" src="../../../hljs/highlight.pack.js" defer="true"></script><script type="text/javascript" src="../../../scripts/hljs-scala3.js" defer="true"></script><script type="text/javascript" src="../../../scripts/ux.js" defer="true"></script><script type="text/javascript" src="../../../scripts/common/component.js" defer="true"></script><script type="text/javascript" src="../../../scripts/common/utils.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/FilterBar.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/DocumentableList.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/Input.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/FilterGroup.js" defer="true"></script><script type="text/javascript" src="../../../scripts/components/Filter.js" defer="true"></script><script type="text/javascript" src="../../../scripts/scaladoc-scalajs.js" defer="true"></script><script type="text/javascript" src="../../../scripts/contributors.js" defer="true"></script><script type="text/javascript" src="https://d3js.org/d3.v6.min.js" defer="true"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/graphlib-dot@0.6.2/dist/graphlib-dot.min.js" defer="true"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dagre-d3/0.6.1/dagre-d3.min.js" defer="true"></script><script type="text/javascript" src="https://scastie.scala-lang.org/embedded.js" defer="true"></script><script type="text/javascript" src="../../../scripts/data.js" defer="true"></script><script>var pathToRoot = "../../../";</script></head><body><div id=""><div id="header" class="body-small"><div class="header-container-left"><a href="../../../" class="logo-container"><span class="project-name h300">Majabigwaduce</span></a><span onclick="dropdownHandler(event)" class="text-button with-arrow" id="dropdown-trigger"><a></a></span><div id="version-dropdown" class="dropdown-menu"></div></div><div class="header-container-right"><button id="search-toggle" class="icon-button"></button><span id="theme-toggle" class="icon-button"></span><span id="mobile-menu-toggle" class="icon-button hamburger"></span></div></div><div id="mobile-menu"><div class="mobile-menu-header body-small"><span class="mobile-menu-logo"><span class="project-name h300">Majabigwaduce</span></span><button id="mobile-menu-close" class="icon-button close"></button></div><div class="mobile-menu-container body-medium"><input id="mobile-scaladoc-searchbar-input" class="scaladoc-searchbar-input" type="search" placeholder="Find anything"></input><span id="mobile-theme-toggle" class="mobile-menu-item mode"></span></div></div><span id="mobile-sidebar-toggle" class="floating-button"></span><div id="leftColumn" class="body-small"><div class="switcher-container"><a id="api-nav-button" class="switcher h100 selected" href="../../../index.html">API</a></div><nav id="api-nav" class="side-menu"><div class="ni n0 expanded"><span class="nh h100 expanded cs"><button class="ar icon-button expanded"></button><a href="../majabigwaduce.html"><span class="micon pa"></span><span>com.phasmid.majabigwaduce</span></a></span><div class="ni n1"><span class="nh "><button class="ar icon-button "></button><a href="cluster.html"><span class="micon pa"></span><span>cluster</span></a></span><div class="ni n2 "><span class="nh "><a href="cluster/ClusterWorker$.html"><span class="micon ob"></span><span>ClusterWorker</span></a></span></div><div class="ni n2"><span class="nh "><button class="ar icon-button "></button><a href="cluster/ClusterWorkerPool$.html"><span class="micon ob"></span><span>ClusterWorkerPool</span></a></span><div class="ni n3 "><span class="nh "><a href="cluster/ClusterWorkerPool$$Settings.html"><span class="micon cl"></span><span>Settings</span></a></span></div><div class="ni n3 "><span class="nh "><a href="cluster/ClusterWorkerPool$$Settings$.html"><span class="micon ob"></span><span>Settings</span></a></span></div></div><div class="ni n2 "><span class="nh "><a href="cluster/ReducersSpawned.html"><span class="micon cl"></span><span>ReducersSpawned</span></a></span></div><div class="ni n2 "><span class="nh "><a href="cluster/SpawnReducers.html"><span class="micon cl"></span><span>SpawnReducers</span></a></span></div><div class="ni n2 "><span class="nh "><a href="cluster/WorkerCommand.html"><span class="micon tr"></span><span>WorkerCommand</span></a></span></div></div><div class="ni n1"><span class="nh "><button class="ar icon-button "></button><a href="core.html"><span class="micon pa"></span><span>core</span></a></span><div class="ni n2 "><span class="nh "><a href="core/Actors$.html"><span class="micon ob"></span><span>Actors</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/Actors.html"><span class="micon cl"></span><span>Actors</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/CleanerCollector$.html"><span class="micon ob"></span><span>CleanerCollector</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/CloseMapper.html"><span class="micon cl"></span><span>CloseMapper</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/CloseMaster.html"><span class="micon cl"></span><span>CloseMaster</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/CloseReducer.html"><span class="micon cl"></span><span>CloseReducer</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/ComputeMap.html"><span class="micon cl"></span><span>ComputeMap</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/ComputeSeq.html"><span class="micon cl"></span><span>ComputeSeq</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/DoMap.html"><span class="micon cl"></span><span>DoMap</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/DoReduce.html"><span class="micon cl"></span><span>DoReduce</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/FP$.html"><span class="micon ob"></span><span>FP</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/FoldDef.html"><span class="micon cl"></span><span>FoldDef</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/Intermediate.html"><span class="micon cl"></span><span>Intermediate</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/KeyValuePairs$.html"><span class="micon ob"></span><span>KeyValuePairs</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/KeyValuePairs.html"><span class="micon cl"></span><span>KeyValuePairs</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/LazyMonad.html"><span class="micon tr"></span><span>LazyMonad</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/LazyMonad$.html"><span class="micon ob"></span><span>LazyMonad</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/LazySequence.html"><span class="micon cl"></span><span>LazySequence</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/LocalWorkerPool$.html"><span class="micon ob"></span><span>LocalWorkerPool</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/MapReduce.html"><span class="micon tr"></span><span>MapReduce</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/MapReduceActor$.html"><span class="micon ob"></span><span>MapReduceActor</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/MapReduceComposed.html"><span class="micon cl"></span><span>MapReduceComposed</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/MapReduceException.html"><span class="micon cl"></span><span>MapReduceException</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/MapReduceException$.html"><span class="micon ob"></span><span>MapReduceException</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/MapReduceFirst.html"><span class="micon cl"></span><span>MapReduceFirst</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/MapReduceFirst$.html"><span class="micon ob"></span><span>MapReduceFirst</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/MapReduceFirstFold$.html"><span class="micon ob"></span><span>MapReduceFirstFold</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/MapReduceFirstFold.html"><span class="micon cl"></span><span>MapReduceFirstFold</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/MapReducePipe.html"><span class="micon cl"></span><span>MapReducePipe</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/MapReducePipe$.html"><span class="micon ob"></span><span>MapReducePipe</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/MapReducePipeFold.html"><span class="micon cl"></span><span>MapReducePipeFold</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/MapReducePipeFold$.html"><span class="micon ob"></span><span>MapReducePipeFold</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/MapReduce_Base.html"><span class="micon cl"></span><span>MapReduce_Base</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/MapReduce_LoggingBase.html"><span class="micon cl"></span><span>MapReduce_LoggingBase</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/Mapper$.html"><span class="micon ob"></span><span>Mapper</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/MapperCommand.html"><span class="micon tr"></span><span>MapperCommand</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/MapperDef.html"><span class="micon cl"></span><span>MapperDef</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/MapperResponse.html"><span class="micon cl"></span><span>MapperResponse</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/Mapper_Forgiving$.html"><span class="micon ob"></span><span>Mapper_Forgiving</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/Master$.html"><span class="micon ob"></span><span>Master</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/MasterCommand.html"><span class="micon tr"></span><span>MasterCommand</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/Master_First$.html"><span class="micon ob"></span><span>Master_First</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/Master_First_Fold$.html"><span class="micon ob"></span><span>Master_First_Fold</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/Master_Fold$.html"><span class="micon ob"></span><span>Master_Fold</span></a></span></div><div class="ni n2"><span class="nh "><button class="ar icon-button "></button><a href="core/Monoid$.html"><span class="micon ob"></span><span>Monoid</span></a></span><div class="ni n3 "><span class="nh "><a href="core/Monoid$$MonoidDouble$.html"><span class="micon ob"></span><span>MonoidDouble</span></a></span></div><div class="ni n3 "><span class="nh "><a href="core/Monoid$$MonoidInt$.html"><span class="micon ob"></span><span>MonoidInt</span></a></span></div><div class="ni n3 "><span class="nh "><a href="core/Monoid$$MonoidString$.html"><span class="micon ob"></span><span>MonoidString</span></a></span></div></div><div class="ni n2 "><span class="nh "><a href="core/Monoid.html"><span class="micon tr"></span><span>Monoid</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/Reduce.html"><span class="micon cl"></span><span>Reduce</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/ReduceDef.html"><span class="micon cl"></span><span>ReduceDef</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/ReduceResult.html"><span class="micon cl"></span><span>ReduceResult</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/Reducer$.html"><span class="micon ob"></span><span>Reducer</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/ReducerCommand.html"><span class="micon tr"></span><span>ReducerCommand</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/ReducerDef.html"><span class="micon tr"></span><span>ReducerDef</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/Reducer_Fold$.html"><span class="micon ob"></span><span>Reducer_Fold</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/Response$.html"><span class="micon ob"></span><span>Response</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/Response.html"><span class="micon cl"></span><span>Response</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/TryUsing$.html"><span class="micon ob"></span><span>TryUsing</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/WorkerPool.html"><span class="micon tr"></span><span>WorkerPool</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/WorkerPool$.html"><span class="micon ob"></span><span>WorkerPool</span></a></span></div><div class="ni n2 "><span class="nh "><a href="core/Workers.html"><span class="micon cl"></span><span>Workers</span></a></span></div><div class="ni n2"><span class="nh "><button class="ar icon-button "></button><a href="core/Zero$.html"><span class="micon ob"></span><span>Zero</span></a></span><div class="ni n3 "><span class="nh "><a href="core/Zero$$DoubleZero$.html"><span class="micon ob"></span><span>DoubleZero</span></a></span></div><div class="ni n3 "><span class="nh "><a href="core/Zero$$DoubleZero.html"><span class="micon tr"></span><span>DoubleZero</span></a></span></div><div class="ni n3 "><span class="nh "><a href="core/Zero$$IntSeqZero$.html"><span class="micon ob"></span><span>IntSeqZero</span></a></span></div><div class="ni n3 "><span class="nh "><a href="core/Zero$$IntVectorZero$.html"><span class="micon ob"></span><span>IntVectorZero</span></a></span></div><div class="ni n3 "><span class="nh "><a href="core/Zero$$IntZero$.html"><span class="micon ob"></span><span>IntZero</span></a></span></div><div class="ni n3 "><span class="nh "><a href="core/Zero$$IntZero.html"><span class="micon tr"></span><span>IntZero</span></a></span></div><div class="ni n3 "><span class="nh "><a href="core/Zero$$SeqZero.html"><span class="micon tr"></span><span>SeqZero</span></a></span></div><div class="ni n3 "><span class="nh "><a href="core/Zero$$StringZero$.html"><span class="micon ob"></span><span>StringZero</span></a></span></div><div class="ni n3 "><span class="nh "><a href="core/Zero$$StringZero.html"><span class="micon tr"></span><span>StringZero</span></a></span></div><div class="ni n3 "><span class="nh "><a href="core/Zero$$VectorZero.html"><span class="micon tr"></span><span>VectorZero</span></a></span></div></div><div class="ni n2 "><span class="nh "><a href="core/Zero.html"><span class="micon tr"></span><span>Zero</span></a></span></div></div><div class="ni n1"><span class="nh "><button class="ar icon-button "></button><a href="dd.html"><span class="micon pa"></span><span>dd</span></a></span><div class="ni n2 "><span class="nh "><a href="dd/BaseDD.html"><span class="micon cl"></span><span>BaseDD</span></a></span></div><div class="ni n2 "><span class="nh "><a href="dd/DDContext.html"><span class="micon cl"></span><span>DDContext</span></a></span></div><div class="ni n2 "><span class="nh "><a href="dd/DDContext$.html"><span class="micon ob"></span><span>DDContext</span></a></span></div><div class="ni n2"><span class="nh "><button class="ar icon-button "></button><a href="dd/DataDefinition$.html"><span class="micon ob"></span><span>DataDefinition</span></a></span><div class="ni n3 "><span class="nh "><a href="dd/DataDefinition$$IterableMonoid.html"><span class="micon tr"></span><span>IterableMonoid</span></a></span></div></div><div class="ni n2 "><span class="nh "><a href="dd/DataDefinition.html"><span class="micon tr"></span><span>DataDefinition</span></a></span></div><div class="ni n2 "><span class="nh "><a href="dd/DataDefinitionException.html"><span class="micon cl"></span><span>DataDefinitionException</span></a></span></div><div class="ni n2 "><span class="nh "><a href="dd/EagerDD.html"><span class="micon cl"></span><span>EagerDD</span></a></span></div><div class="ni n2 "><span class="nh "><a href="dd/EagerDD$.html"><span class="micon ob"></span><span>EagerDD</span></a></span></div><div class="ni n2 "><span class="nh "><a href="dd/HasEvaluatedMap.html"><span class="micon tr"></span><span>HasEvaluatedMap</span></a></span></div><div class="ni n2 "><span class="nh "><a href="dd/LazyDD$.html"><span class="micon ob"></span><span>LazyDD</span></a></span></div><div class="ni n2 "><span class="nh "><a href="dd/LazyDD.html"><span class="micon cl"></span><span>LazyDD</span></a></span></div></div><div class="ni n1 expanded"><span class="nh h100 selected"><button class="ar icon-button expanded"></button><a href="#"><span class="micon pa"></span><span>matrix</span></a></span><div class="ni n2 "><span class="nh "><a href="matrix/BaseMatrix.html"><span class="micon cl"></span><span>BaseMatrix</span></a></span></div><div class="ni n2 "><span class="nh "><a href="matrix/Dimensions$.html"><span class="micon ob"></span><span>Dimensions</span></a></span></div><div class="ni n2 "><span class="nh "><a href="matrix/Dimensions.html"><span class="micon cl"></span><span>Dimensions</span></a></span></div><div class="ni n2 "><span class="nh "><a href="matrix/IncompatibleDimensionsException.html"><span class="micon cl"></span><span>IncompatibleDimensionsException</span></a></span></div><div class="ni n2 "><span class="nh "><a href="matrix/IncompatibleLengthsException.html"><span class="micon cl"></span><span>IncompatibleLengthsException</span></a></span></div><div class="ni n2 "><span class="nh "><a href="matrix/Matrix.html"><span class="micon tr"></span><span>Matrix</span></a></span></div><div class="ni n2 "><span class="nh "><a href="matrix/Matrix$.html"><span class="micon ob"></span><span>Matrix</span></a></span></div><div class="ni n2 "><span class="nh "><a href="matrix/Matrix1.html"><span class="micon cl"></span><span>Matrix1</span></a></span></div><div class="ni n2 "><span class="nh "><a href="matrix/Matrix1$.html"><span class="micon ob"></span><span>Matrix1</span></a></span></div><div class="ni n2 "><span class="nh "><a href="matrix/Matrix2$.html"><span class="micon ob"></span><span>Matrix2</span></a></span></div><div class="ni n2 "><span class="nh "><a href="matrix/Matrix2.html"><span class="micon cl"></span><span>Matrix2</span></a></span></div><div class="ni n2 "><span class="nh "><a href="matrix/MatrixException.html"><span class="micon cl"></span><span>MatrixException</span></a></span></div><div class="ni n2 "><span class="nh "><a href="matrix/Product.html"><span class="micon tr"></span><span>Product</span></a></span></div></div></div></nav></div><div id="footer" class="body-small"><div class="left-container">Generated with</div><div class="right-container"><div class="text"></div></div><div class="text-mobile"></div></div><div id="scaladoc-searchBar"></div><div id="main"><div class="breadcrumbs container"><a href="../../../index.html">Majabigwaduce</a>/<a href="../majabigwaduce.html">com.phasmid.majabigwaduce</a>/<a href="matrix.html">com.phasmid.majabigwaduce.matrix</a></div><div id="content" class="body-medium"><div><div class="cover-header">
+ <span class="icon"><span class="micon pa"></span></span>
+ <h1 class="h600 single">com.phasmid.majabigwaduce.matrix</h1>
+</div>
+<div class="fqname body-large">
+ <span></span>
+</div>
+<div class="main-signature mono-small-block">
+ <div class="signature">
+  <span class="modifiers"></span><span class="kind"><span t="k">package </span></span><a href="matrix.html" t="n" class="documentableName ">com.phasmid.majabigwaduce.matrix</a>
+ </div>
+</div>
+<section id="members-list">
+ <h2 class="h500">Members list</h2>
+ <div class="documentableFilter">
+  <div class="filtersContainer"></div>
+  <input class="filterableInput" placeholder="Filter by any phrase" data-test-id="filterBarInput" type="search"><button class="clearButton label-only-button" data-test-id="filterBarClearButton">Clear all</button>
+ </div>
+ <div class="membersList expand">
+  <div class="tabs">
+   <div class="contents">
+    <section id="Type-members">
+     <div data-togglable="Type members" class="tab expand">
+      <div class="member-group-header">
+       <h3 data-togglable="Type members" class="h400">Type members</h3>
+      </div>
+      <section id="Classlikes">
+       <div class="documentableList expand">
+        <div class="documentableList-expander">
+         <button class="icon-button show-content expand"></button>
+         <h4 class="groupHeader h200">Classlikes</h4>
+        </div>
+        <div class="documentableElement" data-f-keywords="abstract">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="signature-short"><span class="modifiers"><span t="k">abstract </span></span><span class="kind"><span t="k">class </span></span><a href="matrix/BaseMatrix.html" t="n" class="documentableName ">BaseMatrix</a>[<span t="k"></span><span data-unresolved-link="" t="t">X</span>]<span t="k"> extends </span><a href="matrix/Matrix.html" t="t">Matrix</a>[<span t="t">X</span>]</span><span class="signature-long"></span>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Abstract class to implement some common methods of Matrix</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Abstract class to implement some common methods of Matrix</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">X</dt>
+              <dd class="body-medium">
+               <p>the underlying type of each row of the matrix (may itself be a sequence).</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Supertypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <div>
+                 trait <a href="matrix/Matrix.html" t="n">Matrix</a>[<span t="t">X</span>]
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Object</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Matchable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Any</span>
+                </div>
+                <span></span>
+               </div>
+              </dd>
+              <dt class="body-small">Known subtypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block subtypes">
+                <div>
+                 class <a href="matrix/Matrix1.html" t="n">Matrix1</a>[<span t="t">T</span>]
+                </div>
+                <div>
+                 class <a href="matrix/Matrix2.html" t="n">Matrix2</a>[<span t="t">T</span>]
+                </div>
+                <span></span>
+               </div>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">object </span></span><a href="matrix/Dimensions$.html" t="n" class="documentableName ">Dimensions</a>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Companion object for the <code>Dimensions</code> class, providing utility methods and predefined instances for working with matrix dimensions.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Companion object for the <code>Dimensions</code> class, providing utility methods and predefined instances for working with matrix dimensions.</p>
+             </div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Companion</dt>
+              <dd class="body-medium">
+               <a href="matrix/Dimensions.html">class</a>
+              </dd>
+              <dt class="body-small">Supertypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <div>
+                 trait <span data-unresolved-link="" t="n">Product</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Mirror</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Object</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Matchable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Any</span>
+                </div>
+                <span></span>
+               </div>
+              </dd>
+              <dt class="body-small">Self type</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <span></span>
+                <div>
+                 <a href="matrix/Dimensions$.html" t="n">Dimensions</a>.<span t="k">type</span>
+                </div>
+               </div>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" data-f-keywords="case">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="signature-short"><span class="modifiers"><span t="k">case </span></span><span class="kind"><span t="k">class </span></span><a href="matrix/Dimensions.html" t="n" class="documentableName ">Dimensions</a>(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">xs</span>: <span data-unresolved-link="" t="t">Seq</span>[<span data-unresolved-link="" t="t">Int</span>])<span t="k"> extends </span><span data-unresolved-link="" t="t">Ordered</span>[<a href="matrix/Dimensions.html" t="t">Dimensions</a>]</span><span class="signature-long"></span>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Case class to represent the dimensions of a matrix. Currently, area works only for one- or two-dimensional matrices</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Case class to represent the dimensions of a matrix. Currently, area works only for one- or two-dimensional matrices</p>
+             </div>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">xs</dt>
+              <dd class="body-medium">
+               <p>a sequence of integers defining the numbers of rows, columns, etc.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Companion</dt>
+              <dd class="body-medium">
+               <a href="matrix/Dimensions$.html">object</a>
+              </dd>
+              <dt class="body-small">Supertypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <div>
+                 trait <span data-unresolved-link="" t="n">Serializable</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Product</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Equals</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Ordered</span>[<a href="matrix/Dimensions.html" t="t">Dimensions</a>]
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Comparable</span>[<a href="matrix/Dimensions.html" t="t">Dimensions</a>]
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Object</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Matchable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Any</span>
+                </div>
+                <span class="show-all-code show-content text-button h100">Show all</span>
+               </div>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" data-f-keywords="case">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="signature-short"><span class="modifiers"><span t="k">case </span></span><span class="kind"><span t="k">class </span></span><a href="matrix/IncompatibleDimensionsException.html" t="n" class="documentableName ">IncompatibleDimensionsException</a>(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">cols</span>: <span data-unresolved-link="" t="t">Int</span>, <span t="k"></span><span data-unresolved-link="" t="n">rows</span>: <span data-unresolved-link="" t="t">Int</span>)<span t="k"> extends </span><a href="matrix/MatrixException.html" t="t">MatrixException</a></span><span class="signature-long"></span>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Exception thrown to indicate that two matrices have incompatible dimensions for the operation being performed.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Exception thrown to indicate that two matrices have incompatible dimensions for the operation being performed.</p>
+              <p>This exception generally occurs when the number of columns in the left-hand side (LHS) matrix does not match the number of rows in the right-hand side (RHS) matrix, a requirement for operations like matrix multiplication.</p>
+             </div>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">cols</dt>
+              <dd class="body-medium">
+               <p>The number of columns in the LHS matrix.</p>
+              </dd>
+              <dt class="body-small">rows</dt>
+              <dd class="body-medium">
+               <p>The number of rows in the RHS matrix.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Throws</dt>
+              <dd class="body-medium">
+               <div>
+                <div>
+                 <a href="matrix/IncompatibleDimensionsException.html">IncompatibleDimensionsException</a>
+                 <p>when matrix dimensions are not suitable for the intended operation.</p>
+                </div>
+               </div>
+              </dd>
+              <dt class="body-small">Supertypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <div>
+                 trait <span data-unresolved-link="" t="n">Product</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Equals</span>
+                </div>
+                <div>
+                 class <a href="matrix/MatrixException.html" t="n">MatrixException</a>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Exception</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Throwable</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Serializable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Object</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Matchable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Any</span>
+                </div>
+                <span class="show-all-code show-content text-button h100">Show all</span>
+               </div>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" data-f-keywords="case">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="signature-short"><span class="modifiers"><span t="k">case </span></span><span class="kind"><span t="k">class </span></span><a href="matrix/IncompatibleLengthsException.html" t="n" class="documentableName ">IncompatibleLengthsException</a>(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">l1</span>: <span data-unresolved-link="" t="t">Int</span>, <span t="k"></span><span data-unresolved-link="" t="n">l2</span>: <span data-unresolved-link="" t="t">Int</span>)<span t="k"> extends </span><a href="matrix/MatrixException.html" t="t">MatrixException</a></span><span class="signature-long"></span>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Exception that indicates a mismatch between two lengths during matrix operations.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Exception that indicates a mismatch between two lengths during matrix operations.</p>
+              <p>This exception is typically thrown when two sequences or matrices, each with a specific length, are expected to align but do not. For example, when performing element-wise operations on two vectors, their lengths must match; otherwise, this exception is raised.</p>
+             </div>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">l1</dt>
+              <dd class="body-medium">
+               <p>The first length involved in the operation.</p>
+              </dd>
+              <dt class="body-small">l2</dt>
+              <dd class="body-medium">
+               <p>The second length involved in the operation.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Supertypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <div>
+                 trait <span data-unresolved-link="" t="n">Product</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Equals</span>
+                </div>
+                <div>
+                 class <a href="matrix/MatrixException.html" t="n">MatrixException</a>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Exception</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Throwable</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Serializable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Object</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Matchable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Any</span>
+                </div>
+                <span class="show-all-code show-content text-button h100">Show all</span>
+               </div>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">trait </span></span><a href="matrix/Matrix.html" t="n" class="documentableName ">Matrix</a>[<span t="k"></span><span data-unresolved-link="" t="t">X</span>]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>The Matrix[X] trait represents a sequence of X.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>The Matrix[X] trait represents a sequence of X.</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">X</dt>
+              <dd class="body-medium">
+               <p>the underlying type of each row of the matrix (may itself be a sequence).</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Companion</dt>
+              <dd class="body-medium">
+               <a href="matrix/Matrix$.html">object</a>
+              </dd>
+              <dt class="body-small">Supertypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <div>
+                 class <span data-unresolved-link="" t="n">Object</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Matchable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Any</span>
+                </div>
+                <span></span>
+               </div>
+              </dd>
+              <dt class="body-small">Known subtypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block subtypes">
+                <div>
+                 class <a href="matrix/BaseMatrix.html" t="n">BaseMatrix</a>[<span t="t">X</span>]
+                </div>
+                <div>
+                 class <a href="matrix/Matrix1.html" t="n">Matrix1</a>[<span t="t">T</span>]
+                </div>
+                <div>
+                 class <a href="matrix/Matrix2.html" t="n">Matrix2</a>[<span t="t">T</span>]
+                </div>
+                <span></span>
+               </div>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">object </span></span><a href="matrix/Matrix$.html" t="n" class="documentableName ">Matrix</a>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Object Matrix serves as a utility and companion object for operations related to matrices. It provides various matrix-specific methods such as Kronecker Delta and utility definitions including logging.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Object Matrix serves as a utility and companion object for operations related to matrices. It provides various matrix-specific methods such as Kronecker Delta and utility definitions including logging.</p>
+             </div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Companion</dt>
+              <dd class="body-medium">
+               <a href="matrix/Matrix.html">trait</a>
+              </dd>
+              <dt class="body-small">Supertypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <div>
+                 class <span data-unresolved-link="" t="n">Object</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Matchable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Any</span>
+                </div>
+                <span></span>
+               </div>
+              </dd>
+              <dt class="body-small">Self type</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <span></span>
+                <div>
+                 <a href="matrix/Matrix$.html" t="n">Matrix</a>.<span t="k">type</span>
+                </div>
+               </div>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" data-f-keywords="case">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="signature-short"><span class="modifiers"><span t="k">case </span></span><span class="kind"><span t="k">class </span></span><a href="matrix/Matrix1.html" t="n" class="documentableName ">Matrix1</a>[<span t="k"></span><span data-unresolved-link="" t="t">T</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">rows</span>: <span data-unresolved-link="" t="t">Seq</span>[<span data-unresolved-link="" t="t">T</span>])(<span t="k">implicit </span><span t="k"></span><span data-unresolved-link="" t="n">evidence$1</span>: <span data-unresolved-link="" t="t">Numeric</span>[<span data-unresolved-link="" t="t">T</span>], <span t="k"></span><span data-unresolved-link="" t="n">atMost</span>: <span data-unresolved-link="" t="t">Duration</span>)<span t="k"> extends </span><a href="matrix/BaseMatrix.html" t="t">BaseMatrix</a>[<span t="t">T</span>]</span><span class="signature-long"></span>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Case class to represent a one-dimensional matrix.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Case class to represent a one-dimensional matrix.</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">T</dt>
+              <dd class="body-medium">
+               <p>the underlying type of this matrix</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">atMost</dt>
+              <dd class="body-medium">
+               <p>duration of total MapReduce time</p>
+              </dd>
+              <dt class="body-small">rows</dt>
+              <dd class="body-medium">
+               <p>the elements of type T</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Companion</dt>
+              <dd class="body-medium">
+               <a href="matrix/Matrix1$.html">object</a>
+              </dd>
+              <dt class="body-small">Supertypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <div>
+                 trait <span data-unresolved-link="" t="n">Serializable</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Product</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Equals</span>
+                </div>
+                <div>
+                 class <a href="matrix/BaseMatrix.html" t="n">BaseMatrix</a>[<span t="t">T</span>]
+                </div>
+                <div>
+                 trait <a href="matrix/Matrix.html" t="n">Matrix</a>[<span t="t">T</span>]
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Object</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Matchable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Any</span>
+                </div>
+                <span class="show-all-code show-content text-button h100">Show all</span>
+               </div>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">object </span></span><a href="matrix/Matrix1$.html" t="n" class="documentableName ">Matrix1</a>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Object Matrix1 provides an implicit duration parameter <code>atMost</code>. The <code>atMost</code> parameter defines a finite timeout duration of 1 second.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Object Matrix1 provides an implicit duration parameter <code>atMost</code>. The <code>atMost</code> parameter defines a finite timeout duration of 1 second.</p>
+             </div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Companion</dt>
+              <dd class="body-medium">
+               <a href="matrix/Matrix1.html">class</a>
+              </dd>
+              <dt class="body-small">Supertypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <div>
+                 class <span data-unresolved-link="" t="n">Object</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Matchable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Any</span>
+                </div>
+                <span></span>
+               </div>
+              </dd>
+              <dt class="body-small">Self type</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <span></span>
+                <div>
+                 <a href="matrix/Matrix1$.html" t="n">Matrix1</a>.<span t="k">type</span>
+                </div>
+               </div>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">object </span></span><a href="matrix/Matrix2$.html" t="n" class="documentableName ">Matrix2</a>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Companion object for the <code>Matrix2</code> class, offering utility methods and definitions related to matrix creation and operations, as well as given values for configuration purposes.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Companion object for the <code>Matrix2</code> class, offering utility methods and definitions related to matrix creation and operations, as well as given values for configuration purposes.</p>
+             </div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Companion</dt>
+              <dd class="body-medium">
+               <a href="matrix/Matrix2.html">class</a>
+              </dd>
+              <dt class="body-small">Supertypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <div>
+                 class <span data-unresolved-link="" t="n">Object</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Matchable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Any</span>
+                </div>
+                <span></span>
+               </div>
+              </dd>
+              <dt class="body-small">Self type</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <span></span>
+                <div>
+                 <a href="matrix/Matrix2$.html" t="n">Matrix2</a>.<span t="k">type</span>
+                </div>
+               </div>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" data-f-keywords="case">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="signature-short"><span class="modifiers"><span t="k">case </span></span><span class="kind"><span t="k">class </span></span><a href="matrix/Matrix2.html" t="n" class="documentableName ">Matrix2</a>[<span t="k"></span><span data-unresolved-link="" t="t">T</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">rows</span>: <span data-unresolved-link="" t="t">Seq</span>[<span data-unresolved-link="" t="t">Seq</span>[<span data-unresolved-link="" t="t">T</span>]])(<span t="k">using </span><span t="k"></span><span data-unresolved-link="" t="n">evidence$1</span>: <span data-unresolved-link="" t="t">Numeric</span>[<span data-unresolved-link="" t="t">T</span>])<span t="k"> extends </span><a href="matrix/BaseMatrix.html" t="t">BaseMatrix</a>[<span data-unresolved-link="" t="t">Seq</span>[<span t="t">T</span>]]</span><span class="signature-long"></span>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Case class to represent a two-dimensional matrix.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Case class to represent a two-dimensional matrix.</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">T</dt>
+              <dd class="body-medium">
+               <p>the underlying type of this matrix</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">rows</dt>
+              <dd class="body-medium">
+               <p>the rows</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Companion</dt>
+              <dd class="body-medium">
+               <a href="matrix/Matrix2$.html">object</a>
+              </dd>
+              <dt class="body-small">Supertypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <div>
+                 trait <span data-unresolved-link="" t="n">Serializable</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Product</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Equals</span>
+                </div>
+                <div>
+                 class <a href="matrix/BaseMatrix.html" t="n">BaseMatrix</a>[<span data-unresolved-link="" t="t">Seq</span>[<span t="t">T</span>]]
+                </div>
+                <div>
+                 trait <a href="matrix/Matrix.html" t="n">Matrix</a>[<span data-unresolved-link="" t="t">Seq</span>[<span t="t">T</span>]]
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Object</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Matchable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Any</span>
+                </div>
+                <span class="show-all-code show-content text-button h100">Show all</span>
+               </div>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" data-f-keywords="abstract">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="signature-short"><span class="modifiers"><span t="k">abstract </span></span><span class="kind"><span t="k">class </span></span><a href="matrix/MatrixException.html" t="n" class="documentableName ">MatrixException</a>(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">str</span>: <span data-unresolved-link="" t="t">String</span>)<span t="k"> extends </span><span data-unresolved-link="" t="t">Exception</span></span><span class="signature-long"></span>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Base class for exceptions that can occur during matrix operations.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Base class for exceptions that can occur during matrix operations.</p>
+              <p>This exception serves as a parent class for more specific exceptions related to matrix computations, such as dimension or length mismatches.</p>
+             </div>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">str</dt>
+              <dd class="body-medium">
+               <p>The detailed error message providing contextual information about the nature of the exception.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Supertypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <div>
+                 class <span data-unresolved-link="" t="n">Exception</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Throwable</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Serializable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Object</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Matchable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Any</span>
+                </div>
+                <span class="show-all-code show-content text-button h100">Show all</span>
+               </div>
+              </dd>
+              <dt class="body-small">Known subtypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block subtypes">
+                <div>
+                 class <a href="matrix/IncompatibleDimensionsException.html" t="n">IncompatibleDimensionsException</a>
+                </div>
+                <div>
+                 class <a href="matrix/IncompatibleLengthsException.html" t="n">IncompatibleLengthsException</a>
+                </div>
+                <span></span>
+               </div>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">trait </span></span><a href="matrix/Product.html" t="n" class="documentableName ">Product</a>[<span t="k"></span><span data-unresolved-link="" t="t">Z</span>]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Type-class trait which knows how to multiply an X and a Y to yield a Z</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Type-class trait which knows how to multiply an X and a Y to yield a Z</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Z</dt>
+              <dd class="body-medium">
+               <p>the result type</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Supertypes</dt>
+              <dd class="body-medium">
+               <div class="mono-small-block supertypes">
+                <div>
+                 class <span data-unresolved-link="" t="n">Object</span>
+                </div>
+                <div>
+                 trait <span data-unresolved-link="" t="n">Matchable</span>
+                </div>
+                <div>
+                 class <span data-unresolved-link="" t="n">Any</span>
+                </div>
+                <span></span>
+               </div>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+      </section>
+     </div>
+    </section>
+   </div>
+  </div>
+ </div>
+</section></div><div id="toc" class="body-small"><div id="toc-container"><span class="toc-title h200">In this article</span><nav class="toc-nav"><ul class="toc-list"><li><a href="#members-list">Members list</a><ul><li><a href="#Type-members">Type members</a><ul><li><a href="#Classlikes">Classlikes</a></li></ul></li></ul></li></ul></nav></div></div></div><div id="footer" class="body-small mobile-footer"><div class="left-container">Generated with</div><div class="right-container"><div class="text"></div></div><div class="text-mobile"></div></div></div></div></body></html>

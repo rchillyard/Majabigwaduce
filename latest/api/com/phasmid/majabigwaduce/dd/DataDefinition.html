@@ -1,0 +1,522 @@
+<!DOCTYPE html><html data-pathToRoot="../../../../" data-rawLocation="com/phasmid/majabigwaduce/dd/DataDefinition" data-dynamicSideMenu="false"><head><meta charset="utf-8"></meta><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"></meta><title>DataDefinition</title><link rel="shortcut icon" type="image/x-icon" href="../../../../favicon.ico"></link><script type="text/javascript" src="../../../../scripts/theme.js"></script><script type="text/javascript" src="../../../../scripts/searchData.js" defer="true"></script><script type="text/javascript" src="../../../../scripts/scastieConfiguration.js" defer="true"></script><link rel="stylesheet" href="../../../../styles/theme/bundle.css"></link><link rel="stylesheet" href="../../../../styles/theme/components/bundle.css"></link><link rel="stylesheet" href="../../../../styles/theme/components/button/bundle.css"></link><link rel="stylesheet" href="../../../../styles/theme/layout/bundle.css"></link><link rel="stylesheet" href="../../../../styles/dotty-icons.css"></link><link rel="stylesheet" href="../../../../styles/filter-bar.css"></link><link rel="stylesheet" href="../../../../styles/searchbar.css"></link><link rel="stylesheet" href="../../../../styles/social-links.css"></link><link rel="stylesheet" href="../../../../styles/versions-dropdown.css"></link><link rel="stylesheet" href="../../../../styles/content-contributors.css"></link><script type="text/javascript" src="../../../../hljs/highlight.pack.js" defer="true"></script><script type="text/javascript" src="../../../../scripts/hljs-scala3.js" defer="true"></script><script type="text/javascript" src="../../../../scripts/ux.js" defer="true"></script><script type="text/javascript" src="../../../../scripts/common/component.js" defer="true"></script><script type="text/javascript" src="../../../../scripts/common/utils.js" defer="true"></script><script type="text/javascript" src="../../../../scripts/components/FilterBar.js" defer="true"></script><script type="text/javascript" src="../../../../scripts/components/DocumentableList.js" defer="true"></script><script type="text/javascript" src="../../../../scripts/components/Input.js" defer="true"></script><script type="text/javascript" src="../../../../scripts/components/FilterGroup.js" defer="true"></script><script type="text/javascript" src="../../../../scripts/components/Filter.js" defer="true"></script><script type="text/javascript" src="../../../../scripts/scaladoc-scalajs.js" defer="true"></script><script type="text/javascript" src="../../../../scripts/contributors.js" defer="true"></script><script type="text/javascript" src="https://d3js.org/d3.v6.min.js" defer="true"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/graphlib-dot@0.6.2/dist/graphlib-dot.min.js" defer="true"></script><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/dagre-d3/0.6.1/dagre-d3.min.js" defer="true"></script><script type="text/javascript" src="https://scastie.scala-lang.org/embedded.js" defer="true"></script><script type="text/javascript" src="../../../../scripts/data.js" defer="true"></script><script>var pathToRoot = "../../../../";</script></head><body><div id=""><div id="header" class="body-small"><div class="header-container-left"><a href="../../../../" class="logo-container"><span class="project-name h300">Majabigwaduce</span></a><span onclick="dropdownHandler(event)" class="text-button with-arrow" id="dropdown-trigger"><a></a></span><div id="version-dropdown" class="dropdown-menu"></div></div><div class="header-container-right"><button id="search-toggle" class="icon-button"></button><span id="theme-toggle" class="icon-button"></span><span id="mobile-menu-toggle" class="icon-button hamburger"></span></div></div><div id="mobile-menu"><div class="mobile-menu-header body-small"><span class="mobile-menu-logo"><span class="project-name h300">Majabigwaduce</span></span><button id="mobile-menu-close" class="icon-button close"></button></div><div class="mobile-menu-container body-medium"><input id="mobile-scaladoc-searchbar-input" class="scaladoc-searchbar-input" type="search" placeholder="Find anything"></input><span id="mobile-theme-toggle" class="mobile-menu-item mode"></span></div></div><span id="mobile-sidebar-toggle" class="floating-button"></span><div id="leftColumn" class="body-small"><div class="switcher-container"><a id="api-nav-button" class="switcher h100 selected" href="../../../../index.html">API</a></div><nav id="api-nav" class="side-menu"><div class="ni n0 expanded"><span class="nh h100 expanded cs"><button class="ar icon-button expanded"></button><a href="../../majabigwaduce.html"><span class="micon pa"></span><span>com.phasmid.majabigwaduce</span></a></span><div class="ni n1"><span class="nh "><button class="ar icon-button "></button><a href="../cluster.html"><span class="micon pa"></span><span>cluster</span></a></span><div class="ni n2 "><span class="nh "><a href="../cluster/ClusterWorker$.html"><span class="micon ob"></span><span>ClusterWorker</span></a></span></div><div class="ni n2"><span class="nh "><button class="ar icon-button "></button><a href="../cluster/ClusterWorkerPool$.html"><span class="micon ob"></span><span>ClusterWorkerPool</span></a></span><div class="ni n3 "><span class="nh "><a href="../cluster/ClusterWorkerPool$$Settings.html"><span class="micon cl"></span><span>Settings</span></a></span></div><div class="ni n3 "><span class="nh "><a href="../cluster/ClusterWorkerPool$$Settings$.html"><span class="micon ob"></span><span>Settings</span></a></span></div></div><div class="ni n2 "><span class="nh "><a href="../cluster/ReducersSpawned.html"><span class="micon cl"></span><span>ReducersSpawned</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../cluster/SpawnReducers.html"><span class="micon cl"></span><span>SpawnReducers</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../cluster/WorkerCommand.html"><span class="micon tr"></span><span>WorkerCommand</span></a></span></div></div><div class="ni n1"><span class="nh "><button class="ar icon-button "></button><a href="../core.html"><span class="micon pa"></span><span>core</span></a></span><div class="ni n2 "><span class="nh "><a href="../core/Actors$.html"><span class="micon ob"></span><span>Actors</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/Actors.html"><span class="micon cl"></span><span>Actors</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/CleanerCollector$.html"><span class="micon ob"></span><span>CleanerCollector</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/CloseMapper.html"><span class="micon cl"></span><span>CloseMapper</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/CloseMaster.html"><span class="micon cl"></span><span>CloseMaster</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/CloseReducer.html"><span class="micon cl"></span><span>CloseReducer</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/ComputeMap.html"><span class="micon cl"></span><span>ComputeMap</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/ComputeSeq.html"><span class="micon cl"></span><span>ComputeSeq</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/DoMap.html"><span class="micon cl"></span><span>DoMap</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/DoReduce.html"><span class="micon cl"></span><span>DoReduce</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/FP$.html"><span class="micon ob"></span><span>FP</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/FoldDef.html"><span class="micon cl"></span><span>FoldDef</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/Intermediate.html"><span class="micon cl"></span><span>Intermediate</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/KeyValuePairs$.html"><span class="micon ob"></span><span>KeyValuePairs</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/KeyValuePairs.html"><span class="micon cl"></span><span>KeyValuePairs</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/LazyMonad.html"><span class="micon tr"></span><span>LazyMonad</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/LazyMonad$.html"><span class="micon ob"></span><span>LazyMonad</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/LazySequence.html"><span class="micon cl"></span><span>LazySequence</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/LocalWorkerPool$.html"><span class="micon ob"></span><span>LocalWorkerPool</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/MapReduce.html"><span class="micon tr"></span><span>MapReduce</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/MapReduceActor$.html"><span class="micon ob"></span><span>MapReduceActor</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/MapReduceComposed.html"><span class="micon cl"></span><span>MapReduceComposed</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/MapReduceException.html"><span class="micon cl"></span><span>MapReduceException</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/MapReduceException$.html"><span class="micon ob"></span><span>MapReduceException</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/MapReduceFirst.html"><span class="micon cl"></span><span>MapReduceFirst</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/MapReduceFirst$.html"><span class="micon ob"></span><span>MapReduceFirst</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/MapReduceFirstFold$.html"><span class="micon ob"></span><span>MapReduceFirstFold</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/MapReduceFirstFold.html"><span class="micon cl"></span><span>MapReduceFirstFold</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/MapReducePipe.html"><span class="micon cl"></span><span>MapReducePipe</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/MapReducePipe$.html"><span class="micon ob"></span><span>MapReducePipe</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/MapReducePipeFold.html"><span class="micon cl"></span><span>MapReducePipeFold</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/MapReducePipeFold$.html"><span class="micon ob"></span><span>MapReducePipeFold</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/MapReduce_Base.html"><span class="micon cl"></span><span>MapReduce_Base</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/MapReduce_LoggingBase.html"><span class="micon cl"></span><span>MapReduce_LoggingBase</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/Mapper$.html"><span class="micon ob"></span><span>Mapper</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/MapperCommand.html"><span class="micon tr"></span><span>MapperCommand</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/MapperDef.html"><span class="micon cl"></span><span>MapperDef</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/MapperResponse.html"><span class="micon cl"></span><span>MapperResponse</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/Mapper_Forgiving$.html"><span class="micon ob"></span><span>Mapper_Forgiving</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/Master$.html"><span class="micon ob"></span><span>Master</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/MasterCommand.html"><span class="micon tr"></span><span>MasterCommand</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/Master_First$.html"><span class="micon ob"></span><span>Master_First</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/Master_First_Fold$.html"><span class="micon ob"></span><span>Master_First_Fold</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/Master_Fold$.html"><span class="micon ob"></span><span>Master_Fold</span></a></span></div><div class="ni n2"><span class="nh "><button class="ar icon-button "></button><a href="../core/Monoid$.html"><span class="micon ob"></span><span>Monoid</span></a></span><div class="ni n3 "><span class="nh "><a href="../core/Monoid$$MonoidDouble$.html"><span class="micon ob"></span><span>MonoidDouble</span></a></span></div><div class="ni n3 "><span class="nh "><a href="../core/Monoid$$MonoidInt$.html"><span class="micon ob"></span><span>MonoidInt</span></a></span></div><div class="ni n3 "><span class="nh "><a href="../core/Monoid$$MonoidString$.html"><span class="micon ob"></span><span>MonoidString</span></a></span></div></div><div class="ni n2 "><span class="nh "><a href="../core/Monoid.html"><span class="micon tr"></span><span>Monoid</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/Reduce.html"><span class="micon cl"></span><span>Reduce</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/ReduceDef.html"><span class="micon cl"></span><span>ReduceDef</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/ReduceResult.html"><span class="micon cl"></span><span>ReduceResult</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/Reducer$.html"><span class="micon ob"></span><span>Reducer</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/ReducerCommand.html"><span class="micon tr"></span><span>ReducerCommand</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/ReducerDef.html"><span class="micon tr"></span><span>ReducerDef</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/Reducer_Fold$.html"><span class="micon ob"></span><span>Reducer_Fold</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/Response$.html"><span class="micon ob"></span><span>Response</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/Response.html"><span class="micon cl"></span><span>Response</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/TryUsing$.html"><span class="micon ob"></span><span>TryUsing</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/WorkerPool.html"><span class="micon tr"></span><span>WorkerPool</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/WorkerPool$.html"><span class="micon ob"></span><span>WorkerPool</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../core/Workers.html"><span class="micon cl"></span><span>Workers</span></a></span></div><div class="ni n2"><span class="nh "><button class="ar icon-button "></button><a href="../core/Zero$.html"><span class="micon ob"></span><span>Zero</span></a></span><div class="ni n3 "><span class="nh "><a href="../core/Zero$$DoubleZero$.html"><span class="micon ob"></span><span>DoubleZero</span></a></span></div><div class="ni n3 "><span class="nh "><a href="../core/Zero$$DoubleZero.html"><span class="micon tr"></span><span>DoubleZero</span></a></span></div><div class="ni n3 "><span class="nh "><a href="../core/Zero$$IntSeqZero$.html"><span class="micon ob"></span><span>IntSeqZero</span></a></span></div><div class="ni n3 "><span class="nh "><a href="../core/Zero$$IntVectorZero$.html"><span class="micon ob"></span><span>IntVectorZero</span></a></span></div><div class="ni n3 "><span class="nh "><a href="../core/Zero$$IntZero$.html"><span class="micon ob"></span><span>IntZero</span></a></span></div><div class="ni n3 "><span class="nh "><a href="../core/Zero$$IntZero.html"><span class="micon tr"></span><span>IntZero</span></a></span></div><div class="ni n3 "><span class="nh "><a href="../core/Zero$$SeqZero.html"><span class="micon tr"></span><span>SeqZero</span></a></span></div><div class="ni n3 "><span class="nh "><a href="../core/Zero$$StringZero$.html"><span class="micon ob"></span><span>StringZero</span></a></span></div><div class="ni n3 "><span class="nh "><a href="../core/Zero$$StringZero.html"><span class="micon tr"></span><span>StringZero</span></a></span></div><div class="ni n3 "><span class="nh "><a href="../core/Zero$$VectorZero.html"><span class="micon tr"></span><span>VectorZero</span></a></span></div></div><div class="ni n2 "><span class="nh "><a href="../core/Zero.html"><span class="micon tr"></span><span>Zero</span></a></span></div></div><div class="ni n1 expanded"><span class="nh h100 expanded cs"><button class="ar icon-button expanded"></button><a href="../dd.html"><span class="micon pa"></span><span>dd</span></a></span><div class="ni n2 "><span class="nh "><a href="BaseDD.html"><span class="micon cl"></span><span>BaseDD</span></a></span></div><div class="ni n2 "><span class="nh "><a href="DDContext.html"><span class="micon cl"></span><span>DDContext</span></a></span></div><div class="ni n2 "><span class="nh "><a href="DDContext$.html"><span class="micon ob"></span><span>DDContext</span></a></span></div><div class="ni n2"><span class="nh "><button class="ar icon-button "></button><a href="DataDefinition$.html"><span class="micon ob"></span><span>DataDefinition</span></a></span><div class="ni n3 "><span class="nh "><a href="DataDefinition$$IterableMonoid.html"><span class="micon tr"></span><span>IterableMonoid</span></a></span></div></div><div class="ni n2 expanded"><span class="nh h100 selected"><a href="#"><span class="micon tr"></span><span>DataDefinition</span></a></span></div><div class="ni n2 "><span class="nh "><a href="DataDefinitionException.html"><span class="micon cl"></span><span>DataDefinitionException</span></a></span></div><div class="ni n2 "><span class="nh "><a href="EagerDD.html"><span class="micon cl"></span><span>EagerDD</span></a></span></div><div class="ni n2 "><span class="nh "><a href="EagerDD$.html"><span class="micon ob"></span><span>EagerDD</span></a></span></div><div class="ni n2 "><span class="nh "><a href="HasEvaluatedMap.html"><span class="micon tr"></span><span>HasEvaluatedMap</span></a></span></div><div class="ni n2 "><span class="nh "><a href="LazyDD$.html"><span class="micon ob"></span><span>LazyDD</span></a></span></div><div class="ni n2 "><span class="nh "><a href="LazyDD.html"><span class="micon cl"></span><span>LazyDD</span></a></span></div></div><div class="ni n1"><span class="nh "><button class="ar icon-button "></button><a href="../matrix.html"><span class="micon pa"></span><span>matrix</span></a></span><div class="ni n2 "><span class="nh "><a href="../matrix/BaseMatrix.html"><span class="micon cl"></span><span>BaseMatrix</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../matrix/Dimensions$.html"><span class="micon ob"></span><span>Dimensions</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../matrix/Dimensions.html"><span class="micon cl"></span><span>Dimensions</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../matrix/IncompatibleDimensionsException.html"><span class="micon cl"></span><span>IncompatibleDimensionsException</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../matrix/IncompatibleLengthsException.html"><span class="micon cl"></span><span>IncompatibleLengthsException</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../matrix/Matrix.html"><span class="micon tr"></span><span>Matrix</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../matrix/Matrix$.html"><span class="micon ob"></span><span>Matrix</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../matrix/Matrix1.html"><span class="micon cl"></span><span>Matrix1</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../matrix/Matrix1$.html"><span class="micon ob"></span><span>Matrix1</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../matrix/Matrix2$.html"><span class="micon ob"></span><span>Matrix2</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../matrix/Matrix2.html"><span class="micon cl"></span><span>Matrix2</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../matrix/MatrixException.html"><span class="micon cl"></span><span>MatrixException</span></a></span></div><div class="ni n2 "><span class="nh "><a href="../matrix/Product.html"><span class="micon tr"></span><span>Product</span></a></span></div></div></div></nav></div><div id="footer" class="body-small"><div class="left-container">Generated with</div><div class="right-container"><div class="text"></div></div><div class="text-mobile"></div></div><div id="scaladoc-searchBar"></div><div id="main"><div class="breadcrumbs container"><a href="../../../../index.html">Majabigwaduce</a>/<a href="../../majabigwaduce.html">com.phasmid.majabigwaduce</a>/<a href="../dd.html">com.phasmid.majabigwaduce.dd</a>/<a href="DataDefinition.html">DataDefinition</a></div><div id="content" class="body-medium"><div><div class="cover-header">
+ <a href="DataDefinition$.html"><span class="icon"><span class="micon tr"></span><span class="micon companion ob"></span></span></a>
+ <h1 class="h600 multi">DataDefinition</h1>
+</div>
+<div class="fqname body-large">
+ <span>com.phasmid.majabigwaduce.dd.DataDefinition</span>
+</div>
+<div class="companion-badge body-small">
+ <span>See the<span class="micon ob"></span><a href="DataDefinition$.html">DataDefinition</a> companion object</span>
+</div>
+<div class="main-signature mono-small-block">
+ <div class="signature">
+  <span class="signature-short"><span class="modifiers"><span t="k">sealed </span></span><span class="kind"><span t="k">trait </span></span><a href="DataDefinition.html" t="n" class="documentableName ">DataDefinition</a>[<span t="k"></span><span data-unresolved-link="" t="t">K</span>, <span t="k"></span><span data-unresolved-link="" t="t">V</span>]<span t="k"> extends </span>() <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">Future</span>[<span data-unresolved-link="" t="t">Map</span>[<span t="t">K</span>, <span t="t">V</span>]]</span><span class="signature-long"></span>
+ </div>
+</div>
+<div class="cover">
+ <div class="doc">
+  <p>Trait to represent a "data definition" (similar to RDD in Spark). Essentially, a DataDefinition[K, V] is a function which transforms Unit into a Future[Map[K,V]. Like RDD, it is lazy and can be partitioned. In order to yield a concrete value, i.e. an "action", there are three methods which may be called: apply, reduce(f), and count.</p>
+  <p>Created by scalaprof on 10/31/16.</p>
+ </div>
+ <section id="attributes">
+  <h2 class="h500">Type parameters</h2>
+  <dl class="attributes">
+   <dt class="body-small">K</dt>
+   <dd class="body-medium">
+    <p>the key type</p>
+   </dd>
+   <dt class="body-small">V</dt>
+   <dd class="body-medium">
+    <p>the value type</p>
+   </dd>
+  </dl>
+  <h2 class="h500">Attributes</h2>
+  <dl class="attributes">
+   <dt class="body-small">Companion</dt>
+   <dd class="body-medium">
+    <a href="DataDefinition$.html">object</a>
+   </dd>
+   <dt class="body-small">Graph</dt>
+   <dd class="body-medium">
+    <div id="inheritance-diagram" class="diagram-class showGraph">
+     <button type="button" class="label-only-button" onclick="zoomOut()">Reset zoom</button><button type="button" class="label-only-button" onclick="hideGraph()">Hide graph</button><button type="button" class="label-only-button" onclick="showGraph()">Show graph</button>
+     <svg id="graph"></svg>
+     <script type="text/dot" id="dot"> digraph g {
+ node0 [id=node0, label="<span style=\"color: #FFFFFF;\">sealed trait <a href=\"DataDefinition.html\" t=\"n\">DataDefinition</a>[<span t=\"t\">K</span>, <span t=\"t\">V</span>]</span>", class="trait vertex"];
+node1 [id=node1, label="<span style=\"color: #FFFFFF;\">class <span data-unresolved-link=\"\" t=\"n\">Object</span></span>", class="class vertex"];
+node2 [id=node2, label="<span style=\"color: #FFFFFF;\">class <span data-unresolved-link=\"\" t=\"n\">Any</span></span>", class="class vertex"];
+node3 [id=node3, label="<span style=\"color: #FFFFFF;\">trait <span data-unresolved-link=\"\" t=\"n\">Matchable</span></span>", class="trait vertex"];
+node4 [id=node4, label="<span style=\"color: #FFFFFF;\">trait () <span t=\"k\">=&gt;</span> <span data-unresolved-link=\"\" t=\"t\">Future</span>[<span data-unresolved-link=\"\" t=\"t\">Map</span>[<span t=\"t\">K</span>, <span t=\"t\">V</span>]]</span>", class="trait vertex"];
+node5 [id=node5, label="<span style=\"color: #FFFFFF;\">class <span data-unresolved-link=\"\" t=\"n\">AnyRef</span></span>", class="class vertex"];
+node6 [id=node6, label="<span style=\"color: #FFFFFF;\">class <a href=\"BaseDD.html\" t=\"n\">BaseDD</a>[<span t=\"t\">K</span>, <span t=\"t\">V</span>]</span>", class="class vertex"];
+node7 [id=node7, label="<span style=\"color: #FFFFFF;\">class <a href=\"EagerDD.html\" t=\"n\">EagerDD</a>[<span t=\"t\">K</span>, <span t=\"t\">V</span>]</span>", class="class vertex"];
+node8 [id=node8, label="<span style=\"color: #FFFFFF;\">class <a href=\"LazyDD.html\" t=\"n\">LazyDD</a>[<span t=\"t\">K</span>, <span t=\"t\">V</span>, <span t=\"t\">L</span>, <span t=\"t\">W</span>]</span>", class="class vertex"];
+
+
+ node0 -> node1;
+node1 -> node2;
+node1 -> node3;
+node3 -> node2;
+node0 -> node4;
+node4 -> node5;
+node5 -> node2;
+node5 -> node3;
+node6 -> node0;
+node7 -> node6;
+node8 -> node6;
+
+}
+</script>
+    </div>
+   </dd>
+   <dt class="body-small">Supertypes</dt>
+   <dd class="body-medium">
+    <div class="mono-small-block supertypes">
+     <div>
+      trait () <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">Future</span>[<span data-unresolved-link="" t="t">Map</span>[<span t="t">K</span>, <span t="t">V</span>]]
+     </div>
+     <div>
+      class <span data-unresolved-link="" t="n">Object</span>
+     </div>
+     <div>
+      trait <span data-unresolved-link="" t="n">Matchable</span>
+     </div>
+     <div>
+      class <span data-unresolved-link="" t="n">Any</span>
+     </div>
+     <span></span>
+    </div>
+   </dd>
+   <dt class="body-small">Known subtypes</dt>
+   <dd class="body-medium">
+    <div class="mono-small-block subtypes">
+     <div>
+      class <a href="BaseDD.html" t="n">BaseDD</a>[<span t="t">K</span>, <span t="t">V</span>]
+     </div>
+     <div>
+      class <a href="EagerDD.html" t="n">EagerDD</a>[<span t="t">K</span>, <span t="t">V</span>]
+     </div>
+     <div>
+      class <a href="LazyDD.html" t="n">LazyDD</a>[<span t="t">K</span>, <span t="t">V</span>, <span t="t">L</span>, <span t="t">W</span>]
+     </div>
+     <span></span>
+    </div>
+   </dd>
+  </dl>
+ </section>
+</div>
+<section id="members-list">
+ <h2 class="h500">Members list</h2>
+ <div class="documentableFilter">
+  <div class="filtersContainer"></div>
+  <input class="filterableInput" placeholder="Filter by any phrase" data-test-id="filterBarInput" type="search"><button class="clearButton label-only-button" data-test-id="filterBarClearButton">Clear all</button>
+ </div>
+ <div class="membersList expand">
+  <div class="tabs">
+   <div class="contents">
+    <section id="Value-members">
+     <div data-togglable="Value members" class="tab expand">
+      <div class="member-group-header">
+       <h3 data-togglable="Value members" class="h400">Value members</h3>
+      </div>
+      <section id="Abstract-methods">
+       <div class="documentableList expand">
+        <div class="documentableList-expander">
+         <button class="icon-button show-content expand"></button>
+         <h4 class="groupHeader h200">Abstract methods</h4>
+        </div>
+        <div class="documentableElement" id="clean-94c">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="DataDefinition.html#clean-94c" t="n" class="documentableName ">clean</a>(<span t="k"></span>): <span data-unresolved-link="" t="t">Unit</span>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Clean up any residual resources from this DataDefinition</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Clean up any residual resources from this DataDefinition</p>
+             </div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small"></dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="count-0">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="DataDefinition.html#count-0" t="n" class="documentableName ">count</a>: <span data-unresolved-link="" t="t">Future</span>[<span data-unresolved-link="" t="t">Int</span>]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Evaluate the number of elements in this DataDefinition</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Evaluate the number of elements in this DataDefinition</p>
+             </div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>the number of k-v pairs</p>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="filter-fffffe61">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="DataDefinition.html#filter-fffffe61" t="n" class="documentableName ">filter</a>(<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">p</span>: ((<span t="t">K</span>, <span t="t">V</span>)) <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">Boolean</span>): <a href="DataDefinition.html" t="t">DataDefinition</a>[<span t="t">K</span>, <span t="t">V</span>]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Method to filter this DataDefinition according to a predicate which takes a k-v tuple.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Method to filter this DataDefinition according to a predicate which takes a k-v tuple.</p>
+             </div>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">p</dt>
+              <dd class="body-medium">
+               <p>the predicate which will yield a Boolean for a given k-v tuple.</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>a new DataDefinition containing only those k-v pairs which satisfy the predicate p.</p>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="groupBy-f52">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="DataDefinition.html#groupBy-f52" t="n" class="documentableName ">groupBy</a>[<span t="k"></span><span data-unresolved-link="" t="t">L</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">f</span>: <span t="t">V</span> <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">L</span>): <a href="DataDefinition.html" t="t">DataDefinition</a>[<span data-unresolved-link="" t="t">L</span>, <span data-unresolved-link="" t="t">Iterable</span>[<span t="t">V</span>]]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Method to group values by a new key type generated from the values, ignoring the current keys.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Method to group values by a new key type generated from the values, ignoring the current keys.</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">L</dt>
+              <dd class="body-medium">
+               <p>the new key type, whose values are derived from the values of this DataDefinition</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>a DataDefinition based on L and Iterable[V]</p>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="join-fffff9a7">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="DataDefinition.html#join-fffff9a7" t="n" class="documentableName ">join</a>[<span t="k"></span><span data-unresolved-link="" t="t">L</span><span t="k"> &gt;: </span><span t="t">K</span>, <span t="k"></span><span data-unresolved-link="" t="t">W</span>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">other</span>: <a href="DataDefinition.html" t="t">DataDefinition</a>[<span data-unresolved-link="" t="t">L</span>, <span data-unresolved-link="" t="t">W</span>])(<span t="k">using </span><span t="k"></span><span data-unresolved-link="" t="n">evidence$1</span>: <a href="../core/Monoid.html" t="t">Monoid</a>[<span data-unresolved-link="" t="t">W</span>], <span t="k"></span><span data-unresolved-link="" t="n">timeout</span>: <span data-unresolved-link="" t="t">Timeout</span>): <a href="DataDefinition.html" t="t">DataDefinition</a>[<span data-unresolved-link="" t="t">L</span>, (<span t="t">V</span>, <span data-unresolved-link="" t="t">W</span>)]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Join method to perform inner join.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Join method to perform inner join.</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">L</dt>
+              <dd class="body-medium">
+               <p>key type of other and also of the result</p>
+              </dd>
+              <dt class="body-small">W</dt>
+              <dd class="body-medium">
+               <p>value type of other</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">other</dt>
+              <dd class="body-medium">
+               <p>the DataDefinition with which to join this</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>the inner join of this and other</p>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="map-9bd">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="DataDefinition.html#map-9bd" t="n" class="documentableName ">map</a>[<span t="k"></span><span data-unresolved-link="" t="t">L</span>, <span t="k"></span><span data-unresolved-link="" t="t">W</span> : <a href="../core/Monoid.html" t="t">Monoid</a>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">f</span>: ((<span t="t">K</span>, <span t="t">V</span>)) <span t="k">=&gt;</span> (<span data-unresolved-link="" t="t">L</span>, <span data-unresolved-link="" t="t">W</span>)): <a href="DataDefinition.html" t="t">DataDefinition</a>[<span data-unresolved-link="" t="t">L</span>, <span data-unresolved-link="" t="t">W</span>]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Method to form a new DataDefinition where the resulting values derive from applying the function f to the original values</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Method to form a new DataDefinition where the resulting values derive from applying the function f to the original values</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">L</dt>
+              <dd class="body-medium">
+               <p>the underlying type of the keys of the resulting map</p>
+              </dd>
+              <dt class="body-small">W</dt>
+              <dd class="body-medium">
+               <p>the underlying type of the values of the resulting map</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">f</dt>
+              <dd class="body-medium">
+               <p>the function to transform key-value pairs</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>a new DataDefinition</p>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="documentableElement" id="reduce-fffffc35">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="DataDefinition.html#reduce-fffffc35" t="n" class="documentableName ">reduce</a>[<span t="k"></span><span data-unresolved-link="" t="t">W</span> : <a href="../core/Zero.html" t="t">Zero</a>](<span t="k"></span><span t="k"></span><span data-unresolved-link="" t="n">wVWf</span>: (<span data-unresolved-link="" t="t">W</span>, <span t="t">V</span>) <span t="k">=&gt;</span> <span data-unresolved-link="" t="t">W</span>): <span data-unresolved-link="" t="t">Future</span>[<span data-unresolved-link="" t="t">W</span>]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Method to evaluate this DataDefinition and reduce the dimensionality of the result by ignoring the keys and aggregating the values according to the function wv_w</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Method to evaluate this DataDefinition and reduce the dimensionality of the result by ignoring the keys and aggregating the values according to the function wv_w</p>
+             </div>
+             <h2 class="h200">Type parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">W</dt>
+              <dd class="body-medium">
+               <p>the underlying type of the result</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Value parameters</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">wVWf</dt>
+              <dd class="body-medium">
+               <p>the aggregation function</p>
+              </dd>
+             </dl>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>a W value, wrapped in Future.</p>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+      </section>
+      <section id="Inherited-methods">
+       <div class="documentableList expand">
+        <div class="documentableList-expander">
+         <button class="icon-button show-content expand"></button>
+         <h4 class="groupHeader h200">Inherited methods</h4>
+        </div>
+        <div class="documentableElement" id="toString-665" data-f-keywords="override" data-f-inherited="Function0">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"><span t="k">override </span></span><span class="kind"><span t="k">def </span></span><a href="DataDefinition.html#toString-665" t="n" class="documentableName ">toString</a>(<span t="k"></span>): <span data-unresolved-link="" t="t">String</span>
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Returns a string representation of the object.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Returns a string representation of the object.</p>
+              <p>The default representation is platform dependent.</p>
+             </div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>a string representation of the object.</p>
+              </dd>
+              <dt class="body-small">Definition Classes</dt>
+              <dd class="body-medium">
+               <div>
+                <span data-unresolved-link="">Function0</span> -&gt; <span data-unresolved-link="">Any</span>
+               </div>
+              </dd>
+              <dt class="body-small">Inherited from:</dt>
+              <dd class="body-medium">
+               <span data-unresolved-link="">Function0</span>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+      </section>
+      <section id="Inherited-and-Abstract-methods">
+       <div class="documentableList expand">
+        <div class="documentableList-expander">
+         <button class="icon-button show-content expand"></button>
+         <h4 class="groupHeader h200">Inherited and Abstract methods</h4>
+        </div>
+        <div class="documentableElement" id="apply-993" data-f-inherited="Function0">
+         <div class="documentableElement-expander">
+          <button class="icon-button ar show-content"></button>
+          <div class="header monospace mono-medium">
+           <div class="signature">
+            <span class="modifiers"></span><span class="kind"><span t="k">def </span></span><a href="DataDefinition.html#apply-993" t="n" class="documentableName ">apply</a>(<span t="k"></span>): <span data-unresolved-link="" t="t">Future</span>[<span data-unresolved-link="" t="t">Map</span>[<span t="t">K</span>, <span t="t">V</span>]]
+           </div>
+          </div>
+         </div>
+         <div class="docs">
+          <span class="modifiers"></span>
+          <div>
+           <div class="originInfo"></div>
+           <div class="memberDocumentation">
+            <div class="documentableBrief doc">
+             <p>Applies the body of this function to the arguments.</p>
+            </div>
+            <div class="cover">
+             <div class="doc">
+              <p>Applies the body of this function to the arguments.</p>
+             </div>
+             <h2 class="h200">Attributes</h2>
+             <dl class="attributes attributes-small">
+              <dt class="body-small">Returns</dt>
+              <dd class="body-medium">
+               <p>the result of function application.</p>
+              </dd>
+              <dt class="body-small">Inherited from:</dt>
+              <dd class="body-medium">
+               <span data-unresolved-link="">Function0</span>
+              </dd>
+             </dl>
+            </div>
+           </div>
+          </div>
+         </div>
+        </div>
+       </div>
+      </section>
+     </div>
+    </section>
+   </div>
+  </div>
+ </div>
+</section></div><div id="toc" class="body-small"><div id="toc-container"><span class="toc-title h200">In this article</span><nav class="toc-nav"><ul class="toc-list"><li><a href="#attributes">Type parameters</a></li><li><a href="#members-list">Members list</a><ul><li><a href="#Value-members">Value members</a><ul><li><a href="#Abstract-methods">Abstract methods</a></li><li><a href="#Inherited-methods">Inherited methods</a></li><li><a href="#Inherited-and-Abstract-methods">Inherited and Abstract methods</a></li></ul></li></ul></li></ul></nav></div></div></div><div id="footer" class="body-small mobile-footer"><div class="left-container">Generated with</div><div class="right-container"><div class="text"></div></div><div class="text-mobile"></div></div></div></div></body></html>
