@@ -35,8 +35,6 @@ Test / unmanagedSourceDirectories += baseDirectory.value / "src/it/scala"
 Test / unmanagedResourceDirectories += baseDirectory.value / "src/it/resources"
 Test / parallelExecution := false
 
-// JUnit-style reports, collected by CircleCI
-ThisBuild / Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-u", "target/test-reports")
 
 lazy val root: Project = project.in(file("."))
 	.enablePlugins(ScalaUnidocPlugin, GhpagesPlugin)
