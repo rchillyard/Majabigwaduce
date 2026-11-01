@@ -53,7 +53,7 @@ trait Matrix[X]:
    * @return a Matrix which is the product of this and m
    */
   def product[Y: Numeric, Z: Product : Monoid : Numeric](ys: Seq[Y])(implicit ev: Monoid[X], atMost: Duration, cutoff: Dimensions, context: DDContext): Matrix[Z] =
-    build(forRows(productSpecial(_, ys))(summon[Monoid[Z]], ev, atMost, cutoff, context))
+    build(forRows(productSpecial(_, ys))(using summon[Monoid[Z]], ev, atMost, cutoff, context))
 
   /**
    * The rows of this Matrix
@@ -191,7 +191,7 @@ case class Matrix2[T: Numeric](rows: Seq[Seq[T]]) extends BaseMatrix[Seq[T]]:
       def zero: Seq[Z] = Nil
 
     if c == other.r
-    then Matrix2(forRows(ts => for us <- other.cols yield productSpecial(ts, us))(summon[Monoid[Seq[Z]]], ev, atMost, cutoff, context))
+    then Matrix2(forRows(ts => for us <- other.cols yield productSpecial(ts, us))(using summon[Monoid[Seq[Z]]], ev, atMost, cutoff, context))
     else throw IncompatibleDimensionsException(c, other.rows.length)
 
   private def cols: Seq[Seq[T]] = rows.transpose

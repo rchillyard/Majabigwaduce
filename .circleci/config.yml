@@ -1,4 +1,4 @@
-# Scala CircleCI 2.1 configuration file
+# CircleCI configuration for Majabigwaduce (the standard Phasmid template, for a multi-module build)
 #
 # Check https://circleci.com/docs/configuration-reference/ for more details
 #
@@ -10,7 +10,7 @@ jobs:
       # cimg/openjdk ships Maven and Gradle but not sbt, so sbt is installed below
       - image: cimg/openjdk:21.0
 
-    working_directory: ~/Majabigwaduce
+    working_directory: ~/repo
 
     environment:
       # Customize the JVM maximum heap limit
@@ -34,7 +34,9 @@ jobs:
             # fallback to using the latest cache if no exact match is found
             - v3-dependencies-
 
-      - run: cat /dev/null | sbt Test/compile cluster/Test/compile
+      - run:
+          name: Compile
+          command: cat /dev/null | sbt Test/compile cluster/Test/compile
 
       - save_cache:
           paths:
@@ -43,11 +45,30 @@ jobs:
             - ~/.cache/coursier
           key: v3-dependencies-{{ checksum "build.sbt" }}-{{ checksum "project/build.properties" }}-{{ checksum "project/plugins.sbt" }}
 
-      # run tests!
-      - run: cat /dev/null | sbt "testOnly -- -l org.scalatest.tags.Slow"
+      - run:
+          name: Test (excluding Slow)
+          command: cat /dev/null | sbt "testOnly -- -l org.scalatest.tags.Slow"
 
-      # clustering tests (several nodes in one JVM, on 127.0.0.1)
-      - run: cat /dev/null | sbt cluster/test
+      # Clustering tests (several nodes in one JVM, on 127.0.0.1)
+      - run:
+          name: Cluster test
+          command: cat /dev/null | sbt cluster/test
+
+      # Generate the unified Scaladoc (catches doc warnings, and it is what GitHub Pages publishes)
+      - run:
+          name: Doc
+          command: cat /dev/null | sbt unidoc
+
+      # Collect test results from all modules
+      - run:
+          name: Aggregate test results
+          command: |
+            mkdir -p target/test-reports
+            find . -path '*/target/test-reports/*' -name '*.xml' -exec cp {} target/test-reports/ \;
+          when: always
+
+      - store_test_results:
+          path: target/test-reports
 
 workflows:
   build:
