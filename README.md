@@ -1,12 +1,12 @@
 [![Sonatype Central](https://maven-badges.sml.io/sonatype-central/com.phasmidsoftware/majabigwaduce_3/badge.svg?color=blue)](https://central.sonatype.com/artifact/com.phasmidsoftware/majabigwaduce_3)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/1d777e04503246a991b88b9da4aea9ff)](https://app.codacy.com/manual/scalaprof/Majabigwaduce?utm_source=github.com&utm_medium=referral&utm_content=rchillyard/Majabigwaduce&utm_campaign=Badge_Grade_Dashboard)
+[![API Docs](https://img.shields.io/badge/api-docs-blue)](https://rchillyard.github.io/Majabigwaduce/latest/api/)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/1d777e04503246a991b88b9da4aea9ff)](https://app.codacy.com/gh/rchillyard/Majabigwaduce/dashboard)
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/rchillyard/Majabigwaduce/tree/master.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/rchillyard/Majabigwaduce/tree/master)
-![GitHub Top Languages](https://img.shields.io/github/languages/top/rchillyard/Majabigwaduce)
-![GitHub](https://img.shields.io/github/license/rchillyard/Majabigwaduce)
-![GitHub last commit](https://img.shields.io/github/last-commit/rchillyard/Majabigwaduce/master)
-![GitHub issues](https://img.shields.io/github/issues-raw/rchillyard/Majabigwaduce)
-![GitHub issues by-label](https://img.shields.io/github/issues/rchillyard/Majabigwaduce/bug)
-
+[![GitHub Top Languages](https://img.shields.io/github/languages/top/rchillyard/Majabigwaduce)](https://github.com/rchillyard/Majabigwaduce)
+[![GitHub](https://img.shields.io/github/license/rchillyard/Majabigwaduce)](https://github.com/rchillyard/Majabigwaduce/blob/master/LICENSE)
+[![GitHub last commit](https://img.shields.io/github/last-commit/rchillyard/Majabigwaduce/master)](https://github.com/rchillyard/Majabigwaduce/commits/master)
+[![GitHub issues](https://img.shields.io/github/issues-raw/rchillyard/Majabigwaduce)](https://github.com/rchillyard/Majabigwaduce/issues)
+[![GitHub issues by-label](https://img.shields.io/github/issues/rchillyard/Majabigwaduce/bug)](https://github.com/rchillyard/Majabigwaduce/issues?q=is%3Aissue+is%3Aopen+label%3Abug)
 
 Majabigwaduce
 =============
@@ -30,8 +30,7 @@ see [Penobscot Expedition](https://en.wikipedia.org/wiki/Penobscot_Expedition)
 API
 ---
 
-Full Scaladoc for every version published to Maven Central is generated automatically by
-[javadoc.io](https://javadoc.io/doc/com.phasmidsoftware/majabigwaduce_3).
+Full Scaladoc is at <https://rchillyard.github.io/Majabigwaduce/latest/api/>.
 
 Getting Started
 ----------------
