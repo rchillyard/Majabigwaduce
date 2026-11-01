@@ -4,7 +4,7 @@ name := "Majabigwaduce"
 
 ThisBuild / version := "2.1.0"
 
-ThisBuild / scalaVersion := "3.3.9" // LTS version
+ThisBuild / scalaVersion := "3.9.0" // the current LTS
 
 val flogVersion = "1.0.15"
 val pekkoGroup = "org.apache.pekko"
@@ -15,7 +15,7 @@ val tagSoupVersion = "1.2.1"
 val scalaMockVersion = "7.5.5" // 7.6.x requires Scala 3.9
 val logBackVersion = "1.5.38"
 val scalaXMLVersion = "2.5.0"
-Compile / doc / scalacOptions ++= Seq("-deprecation")
+ThisBuild / scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked", "-Wunused:all")
 
 libraryDependencies ++= Seq(
 	"com.phasmidsoftware" %% "flog" % flogVersion,
@@ -35,7 +35,18 @@ Test / unmanagedSourceDirectories += baseDirectory.value / "src/it/scala"
 Test / unmanagedResourceDirectories += baseDirectory.value / "src/it/resources"
 Test / parallelExecution := false
 
-lazy val root = project.in(file("."))
+// JUnit-style reports, collected by CircleCI
+ThisBuild / Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-u", "target/test-reports")
+
+lazy val root: Project = project.in(file("."))
+	.enablePlugins(ScalaUnidocPlugin, GhpagesPlugin)
+	.settings(
+		// The unified Scaladoc (core and cluster) is published to https://rchillyard.github.io/Majabigwaduce/latest/api/ by `sbt ghpagesPushSite`
+		ScalaUnidoc / unidoc / unidocProjectFilter := inProjects(root, cluster),
+		ScalaUnidoc / siteSubdirName := "latest/api",
+		addMappingsToSiteDir(ScalaUnidoc / packageDoc / mappings, ScalaUnidoc / siteSubdirName),
+		git.remoteRepo := "git@github.com:rchillyard/Majabigwaduce.git"
+	)
 
 lazy val benchmarks = project.in(file("benchmarks"))
 	.dependsOn(root)
