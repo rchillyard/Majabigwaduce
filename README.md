@@ -614,3 +614,5 @@ Revision History
   `DataDefinition`'s factory methods and `Matrix`'s `product` methods now take a `DDContext` (by default
   `DDContext.default`), so existing source compiles unchanged, but code compiled against 2.0.x must be
   recompiled.
+* 2.2.0 Built with Scala 3.9.0 (the current LTS), so it needs Scala 3.9 or later (for Scala 3.3, use 2.1.0).
+  Uses Flog 1.1.0; sbt 1.12.13; Scaladoc on GitHub Pages.

@@ -2,11 +2,11 @@ ThisBuild / organization := "com.phasmidsoftware"
 
 name := "Majabigwaduce"
 
-ThisBuild / version := "2.1.0"
+ThisBuild / version := "2.2.0"
 
 ThisBuild / scalaVersion := "3.9.0" // the current LTS
 
-val flogVersion = "1.0.15"
+val flogVersion = "1.1.0"
 val pekkoGroup = "org.apache.pekko"
 val pekkoVersion = "1.7.1"
 val scalaTestVersion = "3.2.20"
