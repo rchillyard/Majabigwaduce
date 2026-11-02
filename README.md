@@ -42,6 +42,7 @@ libraryDependencies += "com.phasmidsoftware" %% "majabigwaduce" % "<version>"
 ```
 
 (see the Sonatype Central badge at the top of this page for the current version number).
+Majabigwaduce 2.2.0 and later need Scala 3.9 or later; for Scala 3.3 to 3.8, use 2.1.0.
 To run jobs on a Pekko cluster (from 2.1.0: see "Clustering" below), add the cluster module too:
 
 ```scala
