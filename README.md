@@ -2,10 +2,10 @@
 [![API Docs](https://img.shields.io/badge/api-docs-blue)](https://rchillyard.github.io/Majabigwaduce/latest/api/)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/1d777e04503246a991b88b9da4aea9ff)](https://app.codacy.com/gh/rchillyard/Majabigwaduce/dashboard)
 [![Codacy Coverage](https://app.codacy.com/project/badge/Coverage/1d777e04503246a991b88b9da4aea9ff)](https://app.codacy.com/gh/rchillyard/Majabigwaduce/dashboard)
-[![CircleCI](https://dl.circleci.com/status-badge/img/gh/rchillyard/Majabigwaduce/tree/master.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/rchillyard/Majabigwaduce/tree/master)
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/rchillyard/Majabigwaduce/tree/main.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/rchillyard/Majabigwaduce/tree/main)
 [![GitHub Top Languages](https://img.shields.io/github/languages/top/rchillyard/Majabigwaduce)](https://github.com/rchillyard/Majabigwaduce)
-[![GitHub](https://img.shields.io/github/license/rchillyard/Majabigwaduce)](https://github.com/rchillyard/Majabigwaduce/blob/master/LICENSE)
-[![GitHub last commit](https://img.shields.io/github/last-commit/rchillyard/Majabigwaduce/master)](https://github.com/rchillyard/Majabigwaduce/commits/master)
+[![GitHub](https://img.shields.io/github/license/rchillyard/Majabigwaduce)](https://github.com/rchillyard/Majabigwaduce/blob/main/LICENSE)
+[![GitHub last commit](https://img.shields.io/github/last-commit/rchillyard/Majabigwaduce/main)](https://github.com/rchillyard/Majabigwaduce/commits/main)
 [![GitHub issues](https://img.shields.io/github/issues-raw/rchillyard/Majabigwaduce)](https://github.com/rchillyard/Majabigwaduce/issues)
 [![GitHub issues by-label](https://img.shields.io/github/issues/rchillyard/Majabigwaduce/bug)](https://github.com/rchillyard/Majabigwaduce/issues?q=is%3Aissue+is%3Aopen+label%3Abug)
 
