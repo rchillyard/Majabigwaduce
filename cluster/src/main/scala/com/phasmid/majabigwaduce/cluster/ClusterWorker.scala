@@ -47,7 +47,7 @@ object ClusterWorker:
     logger.debug(s"worker registered at ${context.self.path}")
     Behaviors.receiveMessage {
       case s: SpawnReducers[?, ?, ?] =>
-        context.spawnAnonymous(s.jobBehavior)
+        context.spawnAnonymous(s.jobBehavior): Unit
         Behaviors.same
     }
   }

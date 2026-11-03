@@ -301,9 +301,6 @@ class DataDefinitionSpec extends flatspec.AnyFlatSpec with should.Matchers with 
     // when
     val mf: Future[Map[Int, String]] = target()
     // then
-    import scala.concurrent.duration.*
-    given timeout: Timeout = Timeout(2.seconds)
-
     whenReady(mf) { m => m.toSeq.size shouldBe 2 }
     target.clean()
   }
@@ -548,7 +545,7 @@ class DataDefinitionSpec extends flatspec.AnyFlatSpec with should.Matchers with 
     try
       val result = block
       (result, appender.list.asScala.map(_.getFormattedMessage).toSeq)
-    finally logbackLogger.detachAppender(appender)
+    finally logbackLogger.detachAppender(appender): Unit
 
   behavior of "reducer count"
 

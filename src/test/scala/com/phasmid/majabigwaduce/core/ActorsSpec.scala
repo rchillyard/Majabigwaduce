@@ -7,6 +7,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.classic.{Level, Logger => LogbackLogger}
 import ch.qos.logback.core.read.ListAppender
 import com.typesafe.config.{Config, ConfigFactory}
+import org.scalatest.Assertion
 import org.scalatest.matchers.should
 import org.scalatest.time.SpanSugar.convertIntToGrainOfTime
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -46,13 +47,13 @@ class ActorsSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike with sho
     // NOTE: Actors.logException now logs via a plain SLF4J logger (not through the actor system's
     // own logging adapter), so we capture it with a Logback ListAppender rather than
     // Pekko's LoggingTestKit (which only observes log events published via the actor system).
-    def withCapturedLogs(test: ListAppender[ILoggingEvent] => Unit): Unit =
+    def withCapturedLogs(test: ListAppender[ILoggingEvent] => Assertion): Assertion =
       val logbackLogger = LoggerFactory.getLogger(classOf[Actors]).asInstanceOf[LogbackLogger]
       val appender = new ListAppender[ILoggingEvent]()
       appender.start()
       logbackLogger.addAppender(appender)
       try test(appender)
-      finally logbackLogger.detachAppender(appender)
+      finally logbackLogger.detachAppender(appender): Unit
 
     "log at error level, with the full exception, when exceptionStack is true" in withCapturedLogs { appender =>
       val actors = Actors(system, ConfigFactory.parseString("exceptionStack = true"))

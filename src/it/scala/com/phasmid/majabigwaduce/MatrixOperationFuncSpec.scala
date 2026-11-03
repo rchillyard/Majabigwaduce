@@ -16,7 +16,7 @@ import org.scalatest.matchers.should
 import org.scalatest.time.{Seconds, Span}
 
 import scala.concurrent.duration.*
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Using
 
 class MatrixOperationFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with Futures with ScalaFutures with Inside {

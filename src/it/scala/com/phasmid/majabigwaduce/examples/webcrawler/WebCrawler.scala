@@ -12,6 +12,7 @@ import com.typesafe.config.{Config, ConfigFactory}
 import org.slf4j.{Logger, LoggerFactory}
 
 import java.net.{URI, URL}
+import scala.annotation.nowarn
 import scala.concurrent.*
 import scala.concurrent.duration.*
 import scala.io.Source
@@ -35,12 +36,12 @@ case class WebCrawler(depth: Int)(implicit system: ActorSystem[Nothing], config:
 
   private val logger: Logger = LoggerFactory.getLogger(classOf[WebCrawler])
 
-  trait StringsZero$ extends Zero[Strings]:
+  trait StringsZero extends Zero[Strings]:
     def zero: Strings = Nil: Strings
 
   val actors: Actors = Actors(summon[ActorSystem[Nothing]], summon[Config])
 
-  implicit object StringsZero$ extends StringsZero$
+  implicit object stringsZero extends StringsZero
 
   val g: (Strings, URI) => Strings = (ws, u) => appendContent(ws, u) match
     case Success(w) => w
@@ -92,7 +93,7 @@ case class WebCrawler(depth: Int)(implicit system: ActorSystem[Nothing], config:
   // Probably, we should get three URIs: the host, the directory and the URI for the string w
   private def getHostAndURI(w: String): Try[(URI, URI)] =
     def getHostURI(u: URI): URI =
-      new URL(u.getScheme + "://" + u.getHost).toURI
+      URI(u.getScheme + "://" + u.getHost).toURL.toURI
 
     Try {
       val u = new URI(w)
@@ -104,6 +105,8 @@ case class WebCrawler(depth: Int)(implicit system: ActorSystem[Nothing], config:
 
   // We are passing the wrong URL into getLinks: the value of u is the server, not the current directory.
   private def getLinkStrings(u: URI, gs: Strings): (URI, Strings) =
+    // URL resolves a relative link more leniently than URI.resolve does, so this keeps the deprecated constructor.
+    @nowarn("cat=deprecation")
     def normalizeURL(w: URI, w2: String) = new URL(w.toURL, w2).toString
 
     def getLinks(u: URI, g: String): Strings = for

@@ -14,6 +14,7 @@ import com.phasmidsoftware.flog.{Flog, Loggable}
 import com.typesafe.config.{Config, ConfigFactory, ConfigValueFactory}
 import org.slf4j.{Logger, LoggerFactory}
 
+import scala.annotation.nowarn
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.{Await, ExecutionContext, Future}
 
@@ -148,7 +149,7 @@ case class EagerDD[K, V](kVs: Seq[(K, V)])(implicit ec: ExecutionContext) extend
    *
    * @return this wrapped in Future
    */
-  def evaluate: Future[DataDefinition[K, V] with HasEvaluatedMap[K, V]] = Future(this)
+  def evaluate: Future[DataDefinition[K, V] & HasEvaluatedMap[K, V]] = Future(this)
 
   /**
    * Clean up any residual resources from this DataDefinition.
@@ -217,8 +218,8 @@ case class LazyDD[K, V, L, W: Monoid]
 
   given kVloggable: Loggable[(K, V)] = (t: (K, V)) => s"${t._1} -> ${t._2}"
 
-  s"created LazyDD with number of partitions" !? partitions
-  s"... and with kVs" !? kVs
+  s"created LazyDD with number of partitions" !? partitions: Unit
+  s"... and with kVs" !? kVs: Unit
 
   /**
    * Method to form a new DataDefinition where the resulting values derive from applying the function f to the original values
@@ -273,9 +274,9 @@ case class LazyDD[K, V, L, W: Monoid]
    *
    * @return an EagerDD[L,W] wrapped in Future
    */
-  def evaluate: Future[DataDefinition[L, W] with HasEvaluatedMap[L, W]] =
+  def evaluate: Future[DataDefinition[L, W] & HasEvaluatedMap[L, W]] =
     if partitions < 2
-    then Future(EagerDD(applyFunction))(scala.concurrent.ExecutionContext.Implicits.global)
+    then Future(EagerDD(applyFunction))(using scala.concurrent.ExecutionContext.Implicits.global)
     else
       // NOTE: sizes the reducer pool to this LazyDD's own partitions value, rather than the
       // ignored, JVM-wide DDContext config default -- Config is immutable, so this only affects
@@ -345,7 +346,7 @@ abstract class BaseDD[K, V](using ec: ExecutionContext) extends DataDefinition[K
    *
    * @return an HasEvaluatedMap (in practice, this will be an EagerDD) wrapped in Future
    */
-  def evaluate: Future[DataDefinition[K, V] with HasEvaluatedMap[K, V]]
+  def evaluate: Future[DataDefinition[K, V] & HasEvaluatedMap[K, V]]
 
   /**
    * Method to evaluate this DataDefinition and reduce the dimensionality of the result by ignoring the keys
@@ -430,8 +431,6 @@ object DDContext:
     val config = ConfigFactory.load().getConfig("majabigwaduce.DataDefinition")
     val timeout = FiniteDuration(config.getDuration("timeout").getSeconds, TimeUnit.SECONDS)
     val system: ActorSystem[Nothing] = ActorSystem(Behaviors.empty, config.getString("actorSystem"))
-
-    given ec: ExecutionContext = system.executionContext
     apply(config, system, timeout)
 
   /**
@@ -531,6 +530,7 @@ object DataDefinition:
    * @return A sequence of tuples where each tuple contains a unit value as the first element
    *         and an element from the input sequence as the second element.
    */
+  @nowarn("msg=unused implicit parameter") // V must be a Monoid, although expandTuples only pairs each value with ()
   def expandTuples[V: Monoid](vs: Seq[V]): Seq[(Unit, V)] =
     LazyList.continually(()).zip(vs)
 

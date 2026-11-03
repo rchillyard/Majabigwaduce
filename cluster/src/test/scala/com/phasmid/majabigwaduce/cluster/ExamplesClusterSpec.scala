@@ -40,11 +40,11 @@ class ExamplesClusterSpec extends AnyWordSpec with should.Matchers with ScalaFut
     appender.start()
     workerLog.addAppender(appender)
     systems = TestCluster.start(2)
-    ClusterWorker.start(systems(1))
+    ClusterWorker.start(systems(1)): Unit
 
   override def afterAll(): Unit =
     TestCluster.stop(systems)
-    workerLog.detachAppender(appender)
+    workerLog.detachAppender(appender): Unit
 
   /** Runs `body`, then checks that the worker spawned reducers for a Master on the master node. */
   private def onWorker[T](body: => T): T =

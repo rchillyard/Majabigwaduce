@@ -53,7 +53,7 @@ object ClusterDemo:
   println("worker started: press RETURN to stop it")
   StdIn.readLine()
   system.terminate()
-  Await.ready(system.whenTerminated, 30.seconds)
+  Await.ready(system.whenTerminated, 30.seconds): Unit
 
 /**
  * Runs CountWords on a master node, whose reducers run on the worker node(s), then leaves the cluster.
@@ -77,4 +77,4 @@ object ClusterDemo:
     case Success(n) => println(s"Word count = $n")
     case Failure(x) => println(s"Failure: ${x.getMessage}")
   system.terminate()
-  Await.ready(system.whenTerminated, 30.seconds)
+  Await.ready(system.whenTerminated, 30.seconds): Unit

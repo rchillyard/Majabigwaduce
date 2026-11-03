@@ -15,7 +15,19 @@ val tagSoupVersion = "1.2.1"
 val scalaMockVersion = "7.5.5" // 7.6.x requires Scala 3.9
 val logBackVersion = "1.5.38"
 val scalaXMLVersion = "2.5.0"
-ThisBuild / scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked", "-Wunused:all")
+
+// The compiler options that all the Phasmid libraries share.
+ThisBuild / scalacOptions ++= Seq(
+  "-encoding", "UTF-8",
+  "-deprecation",
+  "-feature",
+  "-unchecked",
+  "-Wunused:all",
+  "-Wvalue-discard",
+  "-Wnonunit-statement"
+)
+// Tests may use a value as a statement (for example, in a matcher), so each project's tests skip -Wnonunit-statement.
+lazy val testScalacOptions = Test / scalacOptions ~= (_.filterNot(_ == "-Wnonunit-statement"))
 
 libraryDependencies ++= Seq(
 	"com.phasmidsoftware" %% "flog" % flogVersion,
@@ -39,6 +51,7 @@ Test / parallelExecution := false
 lazy val root: Project = project.in(file("."))
 	.enablePlugins(ScalaUnidocPlugin, GhpagesPlugin)
 	.settings(
+		testScalacOptions,
 		// The unified Scaladoc (core and cluster) is published to https://rchillyard.github.io/Majabigwaduce/latest/api/ by `sbt ghpagesPushSite`
 		ScalaUnidoc / unidoc / unidocProjectFilter := inProjects(root, cluster),
 		ScalaUnidoc / siteSubdirName := "latest/api",
@@ -50,6 +63,7 @@ lazy val benchmarks = project.in(file("benchmarks"))
 	.dependsOn(root)
 	.enablePlugins(JmhPlugin)
 	.settings(
+		testScalacOptions,
 		name := "majabigwaduce-benchmarks",
 		publish / skip := true,
 		libraryDependencies += "ch.qos.logback" % "logback-classic" % logBackVersion % "runtime"
@@ -60,6 +74,7 @@ lazy val benchmarks = project.in(file("benchmarks"))
 lazy val cluster = project.in(file("cluster"))
 	.dependsOn(root % "compile->compile;test->test")
 	.settings(
+		testScalacOptions,
 		name := "majabigwaduce-cluster",
 		libraryDependencies ++= Seq(
 			pekkoGroup %% "pekko-cluster-typed" % pekkoVersion,

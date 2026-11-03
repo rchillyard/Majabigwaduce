@@ -8,7 +8,7 @@ import org.scalatest.matchers.should
 import org.scalatest.wordspec.AnyWordSpecLike
 
 import scala.concurrent.duration.FiniteDuration
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success, Try}
 
 class MasterSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike with should.Matchers with ScalaFutures {
@@ -18,8 +18,6 @@ class MasterSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike with sho
       val _5seconds = FiniteDuration(5L, scala.concurrent.duration.SECONDS)
 
       given timeout: Timeout = Timeout(_5seconds)
-
-      given executionContext: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
 
       given config: Config = ConfigFactory.load.getConfig("majabigwaduce.Matrix")
 

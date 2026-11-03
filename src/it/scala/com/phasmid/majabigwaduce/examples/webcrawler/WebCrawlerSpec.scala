@@ -14,7 +14,7 @@ import org.scalatest.matchers.should
 import org.scalatest.time.{Seconds, Span}
 import org.scalatest.{Inside, flatspec}
 
-import java.net.{HttpURLConnection, URL}
+import java.net.{HttpURLConnection, URI}
 import scala.concurrent.ExecutionContext
 import scala.util.Try
 
@@ -63,7 +63,7 @@ class WebCrawlerSpec extends flatspec.AnyFlatSpec with should.Matchers with Futu
 object WebCrawlerSpec:
   private def isReachable(url: String): Boolean =
     Try {
-      val connection = new URL(url).openConnection().asInstanceOf[HttpURLConnection]
+      val connection = URI(url).toURL.openConnection().asInstanceOf[HttpURLConnection]
       connection.setConnectTimeout(5000)
       connection.setReadTimeout(5000)
       connection.setRequestMethod("GET")
