@@ -26,7 +26,7 @@ class TwoNodeSpec extends AnyWordSpec with should.Matchers with ScalaFutures wit
 
   override def beforeAll(): Unit =
     systems = TestCluster.start(2)
-    ClusterWorker.start(workerNode)
+    ClusterWorker.start(workerNode): Unit
 
   override def afterAll(): Unit = TestCluster.stop(systems)
 

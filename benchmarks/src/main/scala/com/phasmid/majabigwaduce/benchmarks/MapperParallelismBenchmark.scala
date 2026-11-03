@@ -12,8 +12,9 @@ import com.typesafe.config.{Config, ConfigFactory, ConfigValueFactory}
 import org.openjdk.jmh.annotations.*
 
 import java.util.concurrent.TimeUnit
+import scala.compiletime.uninitialized
 import scala.concurrent.duration.*
-import scala.concurrent.{Await, ExecutionContext}
+import scala.concurrent.Await
 import scala.util.Try
 
 /**
@@ -44,23 +45,21 @@ class MapperParallelismBenchmark {
 
   // Number of synthetic (key, value) pairs in the batch.
   @Param(Array("400"))
-  var items: Int = _
+  var items: Int = uninitialized
 
   // Number of mapper actors Master spins up to parallelize the map phase.
   @Param(Array("1", "4"))
-  var mappers: Int = _
+  var mappers: Int = uninitialized
 
-  private var system: ActorSystem[Nothing] = _
-  private var ec: ExecutionContext = _
-  private var kvs: Seq[(Int, Int)] = _
-  private var config: Config = _
+  private var system: ActorSystem[Nothing] = uninitialized
+  private var kvs: Seq[(Int, Int)] = uninitialized
+  private var config: Config = uninitialized
 
   private given timeout: Timeout = Timeout(30.seconds)
 
   @Setup(Level.Trial)
   def setup(): Unit = {
     system = ActorSystem(Behaviors.empty, "MapperParallelismBenchmark")
-    ec = system.executionContext
     kvs = (0 until items).map(i => i -> i)
     val baseConfig = ConfigFactory.load().getConfig("majabigwaduce")
     config = baseConfig.withValue("mappers", ConfigValueFactory.fromAnyRef(mappers))
@@ -69,7 +68,7 @@ class MapperParallelismBenchmark {
   @TearDown(Level.Trial)
   def teardown(): Unit = {
     system.terminate()
-    Await.ready(system.whenTerminated, 30.seconds)
+    Await.ready(system.whenTerminated, 30.seconds): Unit
   }
 
   // A deliberately expensive per-element computation -- a fixed-iteration hash-mixing loop --
@@ -87,7 +86,6 @@ class MapperParallelismBenchmark {
   @Benchmark
   def mapHeavyWorkload(): Map[Int, Int] = {
     given actors: Actors = Actors(system, config)
-    given ExecutionContext = ec
 
     val stage = MapReducePipe[Int, Int, Int, Int, Int](expensiveHash, (_, w) => w, 1)
     try Await.result(stage(kvs), timeout.duration)

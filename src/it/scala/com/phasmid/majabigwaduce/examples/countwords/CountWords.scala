@@ -8,11 +8,11 @@ import org.apache.pekko.actor.typed.ActorSystem
 import org.apache.pekko.actor.typed.scaladsl.Behaviors
 import org.apache.pekko.util.Timeout
 import com.phasmid.majabigwaduce.core.*
-import com.phasmidsoftware.flog.{Loggable, Loggables}
 import com.typesafe.config.{Config, ConfigFactory}
 import org.slf4j.{Logger, LoggerFactory}
 
 import java.net.URI
+import scala.annotation.unused
 import scala.concurrent.*
 import scala.util.*
 
@@ -53,7 +53,7 @@ type ResourceFunction = String => Resource
  * @param timeout      An implicit `Timeout` for specifying operation timeout durations.
  * @param ec           An implicit `ExecutionContext` for managing asynchronous computations.
  */
-case class CountWords(resourceFunc: ResourceFunction)(using system: ActorSystem[Nothing], logger: Logger, config: Config, timeout: Timeout, ec: ExecutionContext) extends (Seq[String] => Future[Int]) with AutoCloseable {
+case class CountWords(resourceFunc: ResourceFunction)(using system: ActorSystem[Nothing], @unused logger: Logger, config: Config, timeout: Timeout, ec: ExecutionContext) extends (Seq[String] => Future[Int]) with AutoCloseable {
 
   import CountWords.{*, given}
 

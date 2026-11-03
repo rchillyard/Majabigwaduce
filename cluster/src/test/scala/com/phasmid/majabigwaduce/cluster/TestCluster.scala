@@ -10,7 +10,6 @@ import org.apache.pekko.cluster.typed.Cluster
 import java.net.ServerSocket
 import scala.concurrent.duration.*
 import scala.concurrent.{Await, Future, Promise}
-import scala.util.Success
 
 /**
  * Helpers for tests which run several cluster nodes (ActorSystems) in one JVM, joined over

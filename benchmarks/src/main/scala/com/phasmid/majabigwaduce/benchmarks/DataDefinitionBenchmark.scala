@@ -8,6 +8,7 @@ import com.phasmid.majabigwaduce.dd.DataDefinition
 import org.openjdk.jmh.annotations.*
 
 import java.util.concurrent.TimeUnit
+import scala.compiletime.uninitialized
 import scala.concurrent.Await
 import scala.concurrent.duration.*
 import scala.util.Random
@@ -47,15 +48,15 @@ class DataDefinitionBenchmark {
   // Number of synthetic (key, value) pairs in the pipeline's input -- also the key cardinality,
   // since every key (0 until size) is unique.
   @Param(Array("100", "1000", "10000"))
-  var size: Int = _
+  var size: Int = uninitialized
 
   // Number of reducer actors Master spins up on the actor path. 1 forces the sequential
   // in-thread path (DataDefinition treats partitions < 2 as "no actors"); values >= 2 route
   // through MapReducePipe with that many reducers.
   @Param(Array("1", "4", "16", "64"))
-  var reducers: Int = _
+  var reducers: Int = uninitialized
 
-  private var pipeline: DataDefinition[Int, Int] = _
+  private var pipeline: DataDefinition[Int, Int] = uninitialized
 
   @Setup(Level.Trial)
   def setup(): Unit = {

@@ -36,18 +36,18 @@ class CountWordsSpec extends flatspec.AnyFlatSpec with should.Matchers with Futu
     val uDef = new URI(wDef)
     val hc = mock[HttpClient]
     val rBBC = mock[Resource]
-    (rBBC.getServer _).expects().returning(uBBC)
-    (rBBC.getContent _).expects().returning(CountWordsSpec.bbcText)
+    (() => rBBC.getServer()).expects().returning(uBBC)
+    (() => rBBC.getContent()).expects().returning(CountWordsSpec.bbcText)
     val rCNN = mock[Resource]
-    (rCNN.getServer _).expects().returning(uCNN)
-    (rCNN.getContent _).expects().returning(CountWordsSpec.cnnText)
+    (() => rCNN.getServer()).expects().returning(uCNN)
+    (() => rCNN.getContent()).expects().returning(CountWordsSpec.cnnText)
     val rDef = mock[Resource]
-    (rDef.getServer _).expects().returning(uDef)
-    (rDef.getContent _).expects().returning(CountWordsSpec.defaultText)
-    hc.getResource _ expects wBBC returning rBBC
-    hc.getResource _ expects wCNN returning rCNN
-    hc.getResource _ expects wDef returning rDef
-    val nf = CountWords.countWords(hc, Array(wBBC, wCNN, wDef))
+    (() => rDef.getServer()).expects().returning(uDef)
+    (() => rDef.getContent()).expects().returning(CountWordsSpec.defaultText)
+    (hc.getResource) expects wBBC returning rBBC
+    (hc.getResource) expects wCNN returning rCNN
+    (hc.getResource) expects wDef returning rDef
+    val nf = CountWords.countWords(hc, Seq(wBBC, wCNN, wDef))
     whenReady(nf, timeout(Span(6, Seconds)))(i => assert(i == 556))
   }
 }

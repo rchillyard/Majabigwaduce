@@ -19,13 +19,13 @@ import org.slf4j.{Logger, LoggerFactory}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-import java.net.URL
+import java.net.{URI, URL}
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 import scala.util._
 
 case class MockURL(w: String) {
-  def url: URL = new URL(w)
+  def url: URL = URI(w).toURL
 
   def content: String = MapReduceFuncSpec.getMockContent(url)
 
@@ -46,7 +46,7 @@ class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with F
   // previously this was never terminated at all.
   override def afterAll(): Unit =
     system.terminate()
-    Await.ready(system.whenTerminated, 5.seconds)
+    Await.ready(system.whenTerminated, 5.seconds): Unit
 
   private val config = ConfigFactory.load().getConfig("majabigwaduce")
   val spec0 = "WC"
@@ -61,7 +61,7 @@ class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with F
 
     def mapper(w: String): (URL, String) = MockURL(w).asTuple
 
-    val behavior = Master_First_Fold(config, FP.lift(mapper _), reducer _, init _)
+    val behavior = Master_First_Fold(config, FP.lift(mapper), reducer, init)
     //noinspection SpellCheckingInspection
     val master = system.systemActorOf(behavior, s"""mstr-$spec1""")
     val futureResponse = master.ask[Try[Response[URL, Seq[String]]]](replyTo =>
@@ -83,7 +83,7 @@ class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with F
 
     def mapper(w: String, gs: Seq[String]): (String, Int) = (w, (for (g <- gs) yield g.split("""\s+""").length) reduce (_ + _))
 
-    val behavior = Master(config, FP.lift(mapper _), adder _)
+    val behavior = Master(config, FP.lift(mapper), adder)
     val master = system.systemActorOf(behavior, s"""master-$spec2""")
     val part1result = Map[String, Seq[String]]("https://www.bbc.com/" -> Seq(MapReduceFuncSpec.bbcText),
       "https://www.cnn.com/" -> Seq(MapReduceFuncSpec.cnnText),
@@ -108,9 +108,9 @@ class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with F
 
     def mapper2(w: URL, gs: Seq[String]): (URL, Int) = (w, (for (g <- gs) yield g.split("""\s+""").length) reduce (_ + _))
 
-    val behavior1 = Master_First_Fold(config, FP.lift(mapper1 _), reducer _, init _)
+    val behavior1 = Master_First_Fold(config, FP.lift(mapper1), reducer, init)
     val master1 = system.systemActorOf(behavior1, s"WC-1-master")
-    val behavior2 = Master(config, FP.lift(mapper2 _), adder _)
+    val behavior2 = Master(config, FP.lift(mapper2), adder)
     val master2 = system.systemActorOf(behavior2, s"WC-2-master")
     val wsUrf = master1.ask[Try[Response[URL, Seq[String]]]](replyTo =>
       ComputeSeq(Seq("https://www.bbc.com/", "https://www.cnn.com/", "https://default/").map(() -> _), replyTo)).flatMap(Future.fromTry)
@@ -118,9 +118,9 @@ class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with F
     whenReady(iUrf, timeout(Span(6, Seconds))) {
       iUr =>
         assert(iUr.size == 3)
-        assert(iUr.right.get(new URL("https://www.bbc.com/")) match { case Some(94) => true; case _ => false })
-        assert(iUr.right.get(new URL("https://www.cnn.com/")) match { case Some(135) => true; case _ => false })
-        assert(iUr.right.get(new URL("https://default/")) match { case Some(327) => true; case _ => false })
+        assert(iUr.right.get(URI("https://www.bbc.com/").toURL) match { case Some(94) => true; case _ => false })
+        assert(iUr.right.get(URI("https://www.cnn.com/").toURL) match { case Some(135) => true; case _ => false })
+        assert(iUr.right.get(URI("https://default/").toURL) match { case Some(327) => true; case _ => false })
         assert(iUr.right.values.sum == 556)
     }
     master1 ! CloseMaster()
@@ -150,11 +150,11 @@ class MapReduceFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with F
 
     def mapper(w: String, us: Seq[URL]): (String, Int) = (w, us.length)
 
-    val behavior = Master(config, FP.lift(mapper _), adder _)
+    val behavior = Master(config, FP.lift(mapper), adder)
     val master = system.systemActorOf(behavior, s"TF2-master")
-    val bbc = new URL("https://www.bbc.com/")
-    val cnn = new URL("https://www.cnn.com/")
-    val other = new URL("https://default/")
+    val bbc = URI("https://www.bbc.com/").toURL
+    val cnn = URI("https://www.cnn.com/").toURL
+    val other = URI("https://default/").toURL
     val occurrences = Map("the" -> Seq(bbc, cnn, other), "Syria" -> Seq(bbc, cnn))
     val iSrf = master.ask[Try[Response[String, Int]]](replyTo => ComputeMap(occurrences, replyTo)).flatMap(Future.fromTry)
     whenReady(iSrf, timeout(Span(6, Seconds)))(iSr =>

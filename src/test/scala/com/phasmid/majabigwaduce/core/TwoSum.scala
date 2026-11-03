@@ -6,10 +6,12 @@ import scala.annotation.tailrec
  * This doesn't really belong here of course. It's a solution to LeetCode problem 1.
  * This is not a particularly good solution, probably because there are few elements in any of the input arrays.
  */
-object TwoSum extends App {
-  println(twoSum(Array(2, 11, 7, 15), 9).toList)
-  println(twoSum(Array(3, 2, 4, 7, 10), 6).toList)
-  println(twoSum(Array(3, 3, 1), 6).toList)
+object TwoSum {
+  def main(args: Array[String]): Unit = {
+    println(twoSum(Array(2, 11, 7, 15), 9).toList)
+    println(twoSum(Array(3, 2, 4, 7, 10), 6).toList)
+    println(twoSum(Array(3, 3, 1), 6).toList)
+  }
 
   case class Element(value: Int, index: Int)
 

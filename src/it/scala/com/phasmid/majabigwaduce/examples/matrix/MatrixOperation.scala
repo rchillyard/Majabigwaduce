@@ -12,6 +12,7 @@ import com.phasmid.majabigwaduce.matrix.{IncompatibleLengthsException, Matrix2}
 import com.typesafe.config.{Config, ConfigFactory}
 import org.slf4j.{Logger, LoggerFactory}
 
+import scala.annotation.unused
 import scala.concurrent.duration.*
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.language.postfixOps
@@ -32,7 +33,7 @@ import scala.util.{Failure, Random, Try, Using}
  * @param ec      (implicit) the execution context.
  * @tparam X the underlying type of the matrices (requires evidence of Numeric[X]).
  */
-case class MatrixOperation[X: Numeric](keyFunc: Int => Int)(using system: ActorSystem[Nothing], logger: Logger, config: Config, timeout: Timeout, ec: ExecutionContext) extends ((Seq[Seq[X]], Seq[X]) => Future[Seq[X]]):
+case class MatrixOperation[X: Numeric](keyFunc: Int => Int)(using system: ActorSystem[Nothing], @unused logger: Logger, config: Config, timeout: Timeout, ec: ExecutionContext) extends ((Seq[Seq[X]], Seq[X]) => Future[Seq[X]]):
 
   self =>
 
@@ -43,7 +44,7 @@ case class MatrixOperation[X: Numeric](keyFunc: Int => Int)(using system: ActorS
 
   override def apply(xss: Seq[XS], ys: XS): Future[XS] =
     val actors: Actors = Actors(summon[ActorSystem[Nothing]], summon[Config])
-    implicit object zeroVector$$ extends Zero.VectorZero[X]
+    implicit object zeroVector extends Zero.VectorZero[X]
     val s1 = MapReduceFirstFold[Row, Int, Element, Vector](
       { case (i, xs) => FP.sequence(keyFunc(i) -> FP.sequence(i -> MatrixOperation.dot(xs, ys))) },
       { case (v, (i, x)) => v + (i -> x) }

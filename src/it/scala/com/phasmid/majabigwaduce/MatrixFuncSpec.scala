@@ -51,7 +51,7 @@ class MatrixFuncSpec extends flatspec.AnyFlatSpec with should.Matchers with Futu
     productByIdentity(2000)
   }
 
-  private def productByIdentity(N: Int)(implicit atMost: Duration): Unit = Try {
+  private def productByIdentity(N: Int)(implicit atMost: Duration): Assertion = Try {
     val r = Random
     val size = N
     val array = for (_ <- 1 to size) yield for (_ <- 1 to size) yield r.nextDouble()

@@ -12,6 +12,7 @@ import com.typesafe.config.{ConfigFactory, ConfigValueFactory}
 import org.openjdk.jmh.annotations.*
 
 import java.util.concurrent.TimeUnit
+import scala.compiletime.uninitialized
 import scala.concurrent.duration.*
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.Random
@@ -37,39 +38,39 @@ class WordCountBenchmark {
 
   // Number of synthetic documents to word-count in each benchmark invocation.
   @Param(Array("10", "100", "1000"))
-  var documents: Int = _
+  var documents: Int = uninitialized
 
   // Default parallelism knob: keyCardinality and reducers each fall back to this value
   // unless explicitly overridden (see the -1 sentinel below).
   @Param(Array("4"))
-  var executors: Int = _
+  var executors: Int = uninitialized
 
   // Number of distinct grouping keys ("servers") the documents are folded under in stage 1.
   // -1 means: use `executors`. Override independently with e.g. -p keyCardinality=8.
   @Param(Array("-1"))
-  var keyCardinality: Int = _
+  var keyCardinality: Int = uninitialized
 
   // Number of reducer actors Master spins up to parallelize the reduce stage.
   // -1 means: use `executors`. Override independently with e.g. -p reducers=8.
   @Param(Array("-1"))
-  var reducers: Int = _
+  var reducers: Int = uninitialized
 
   // true: build the Actors/pipeline once (in @Setup) and reuse it across every @Benchmark
   // invocation in the trial -- the fixed behavior. false: build a fresh Actors/pipeline on
   // every single invocation and close it at the end (the pre-2.0.1 behavior), kept as an
   // explicit, labeled "cold" comparison point. See benchmarks/README.md.
   @Param(Array("true", "false"))
-  var reuseInstance: Boolean = _
+  var reuseInstance: Boolean = uninitialized
 
-  private var system: ActorSystem[Nothing] = _
-  private var docIds: Strings = _
-  private var ec: ExecutionContext = _
-  private var config: com.typesafe.config.Config = _
-  private var resolvedKeyCardinality: Int = _
+  private var system: ActorSystem[Nothing] = uninitialized
+  private var docIds: Strings = uninitialized
+  private var ec: ExecutionContext = uninitialized
+  private var config: com.typesafe.config.Config = uninitialized
+  private var resolvedKeyCardinality: Int = uninitialized
 
   // Populated in @Setup only when reuseInstance == true; closed in @TearDown.
-  private var reusableMr: Strings => Future[Int] = _
-  private var reusableClose: () => Unit = _
+  private var reusableMr: Strings => Future[Int] = uninitialized
+  private var reusableClose: () => Unit = uninitialized
 
   private val timeout: Timeout = Timeout(30.seconds)
 
@@ -114,7 +115,7 @@ class WordCountBenchmark {
   def teardown(): Unit = {
     if reuseInstance then reusableClose()
     system.terminate()
-    Await.ready(system.whenTerminated, 30.seconds)
+    Await.ready(system.whenTerminated, 30.seconds): Unit
   }
 
   private def serverFor(docId: String): String = s"server-${Math.abs(docId.hashCode) % resolvedKeyCardinality}"

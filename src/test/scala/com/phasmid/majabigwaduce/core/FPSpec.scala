@@ -4,7 +4,8 @@ import com.phasmid.majabigwaduce.core.FP.*
 import org.scalatest.*
 import org.scalatest.concurrent.{Futures, ScalaFutures}
 
-import java.net.URL
+import java.net.{URI, URL}
+import scala.annotation.unused
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
@@ -67,20 +68,20 @@ class FPSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers with Fut
   }
 
   "lift(Future[Try[T]])" should "succeed for https://www.google.com" in {
-    val uyf = Future(Try(new URL("https://www.google.com")))
+    val uyf = Future(Try(URI("https://www.google.com").toURL))
     val uf = flatten(uyf)
     whenReady(uf) { u => u should matchPattern { case _: URL => } }
   }
 
   "lift(Try[Future[T]])" should "succeed for https://www.google.com" in {
-    val ufy: Try[Future[URL]] = Try(Future(new URL("https://www.google.com")))
+    val ufy: Try[Future[URL]] = Try(Future(URI("https://www.google.com").toURL))
     val uf: Future[URL] = flatten(ufy)
     whenReady(uf) { u => u should matchPattern { case _: URL => } }
   }
 
   "sequence(Seq[Future[T]])" should "succeed for https://www.google.com, etc." in {
     val ws = List("https://www.google.com", "https://www.microsoft.com")
-    val ufs: Seq[Future[URL]] = for {w <- ws; uf = Future(new URL(w))} yield uf
+    val ufs: Seq[Future[URL]] = for {w <- ws; uf = Future(URI(w).toURL)} yield uf
     val usf: Future[Seq[URL]] = Future.sequence(ufs)
     whenReady(usf) { us => Assertions.assert(us.length == 2) }
   }
@@ -88,7 +89,7 @@ class FPSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers with Fut
   behavior of "sequence(Seq[Try[T]])"
   it should "succeed for https://www.google.com, etc." in {
     val ws = List("https://www.google.com", "https://www.microsoft.com")
-    val uys = for {w <- ws; url = Try(new URL(w))} yield url
+    val uys = for {w <- ws; url = Try(URI(w).toURL)} yield url
     sequence(uys) match {
       case Success(us) => Assertions.assert(us.length == 2)
       case _ => Failed
@@ -96,14 +97,14 @@ class FPSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers with Fut
   }
   it should "fail for www.google.com, etc." in {
     val ws = List("www.google.com", "https://www.microsoft.com")
-    val uys = for {w <- ws; uy = Try(new URL(w))} yield uy
+    val uys = for {w <- ws; uy = Try(URI(w).toURL)} yield uy
     sequence(uys) match {
       case Failure(_) => Succeeded
       case _ => Failed
     }
   }
   it should "succeed for empty list" in {
-    val uys = for {w <- List[String](); uy = Try(new URL(w))} yield uy
+    val uys = for {w <- List[String](); uy = Try(URI(w).toURL)} yield uy
     sequence(uys) match {
       case Success(us) => Assertions.assert(us.isEmpty)
       case _ => Failed
@@ -298,7 +299,7 @@ class TryUsingSpec extends flatspec.AnyFlatSpec with matchers.should.Matchers {
     val x = MapReduceException("upstream failure")
     var constructed = false
 
-    def resource: Resource = { constructed = true; new Resource(1) }
+    @unused def resource: Resource = { constructed = true; new Resource(1) }
 
     val result = TryUsing(Failure(x): Try[Resource])(r => Success(r.get))
     result shouldBe Failure(x)

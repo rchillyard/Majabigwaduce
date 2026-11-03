@@ -10,6 +10,7 @@ import com.phasmid.majabigwaduce.matrix.*
 import org.openjdk.jmh.annotations.*
 
 import java.util.concurrent.TimeUnit
+import scala.compiletime.uninitialized
 import scala.concurrent.duration.*
 import scala.util.Random
 
@@ -43,12 +44,12 @@ class MatrixBenchmark {
 
   // Dimension N of the two NxN matrices being multiplied.
   @Param(Array("5", "20", "50"))
-  var size: Int = _
+  var size: Int = uninitialized
 
   // true: force the actor-based (DataDefinition/MapReduce) path regardless of size.
   // false: force the sequential in-thread path regardless of size.
   @Param(Array("true", "false"))
-  var forceActors: Boolean = _
+  var forceActors: Boolean = uninitialized
 
   private given atMost: Duration = 30.seconds
 
@@ -62,8 +63,8 @@ class MatrixBenchmark {
     def zero: Seq[Int] = Nil
   }
 
-  private var a: Matrix2[Int] = _
-  private var b: Matrix2[Int] = _
+  private var a: Matrix2[Int] = uninitialized
+  private var b: Matrix2[Int] = uninitialized
 
   @Setup(Level.Trial)
   def setup(): Unit = {

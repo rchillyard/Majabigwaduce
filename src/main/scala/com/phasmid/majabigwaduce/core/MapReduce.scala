@@ -33,7 +33,7 @@ trait MapReduce[T, K1, V1] extends ASync[Seq[T], Map[K1, V1]] with AutoCloseable
    * @return a new MapReduceComposed object
    */
   def :&[K2, V2](f: ASync[Seq[(K1, V1)], Map[K2, V2]]): MapReduce[T, K2, V2] =
-    MapReduceComposed(self, f)(self.ec)
+    MapReduceComposed(self, f)(using self.ec)
 
   /**
    * Alternative formulation for compose method (:&)
@@ -65,7 +65,7 @@ trait MapReduce[T, K1, V1] extends ASync[Seq[T], Map[K1, V1]] with AutoCloseable
    * @return an Async function of Seq[T]=>Future[S] type S.
    */
   def |[S](r: RF[K1, V1, S])(implicit executionContext: ExecutionContext): ASync[Seq[T], S] =
-    :|(r)(executionContext)
+    :|(r)(using executionContext)
 
   /**
    * @return a suitable execution context
@@ -163,7 +163,7 @@ object MapReducePipe:
    * @return a `MapReducePipe` instance configured with the lifted mapper and reducer functions for the specified stage
    */
   def create[K0, V0, K1, W, V1 >: W](f: (K0, V0) => (K1, W), g: (V1, W) => V1, n: Int)(implicit actors: Actors, timeout: Timeout): MapReducePipe[K0, V0, K1, W, V1] =
-    apply(FP.lift(f), g, n)(actors, timeout)
+    apply(FP.lift(f), g, n)(using actors, timeout)
 
   //noinspection SpellCheckingInspection
   private val sMrpMaster: String = "mrf-mstr"
