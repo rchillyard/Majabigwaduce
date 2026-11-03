@@ -1,6 +1,7 @@
 [![Sonatype Central](https://maven-badges.sml.io/sonatype-central/com.phasmidsoftware/majabigwaduce_3/badge.svg?color=blue)](https://central.sonatype.com/artifact/com.phasmidsoftware/majabigwaduce_3)
 [![API Docs](https://img.shields.io/badge/api-docs-blue)](https://rchillyard.github.io/Majabigwaduce/latest/api/)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/1d777e04503246a991b88b9da4aea9ff)](https://app.codacy.com/gh/rchillyard/Majabigwaduce/dashboard)
+[![Codacy Coverage](https://app.codacy.com/project/badge/Coverage/1d777e04503246a991b88b9da4aea9ff)](https://app.codacy.com/gh/rchillyard/Majabigwaduce/dashboard)
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/rchillyard/Majabigwaduce/tree/master.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/rchillyard/Majabigwaduce/tree/master)
 [![GitHub Top Languages](https://img.shields.io/github/languages/top/rchillyard/Majabigwaduce)](https://github.com/rchillyard/Majabigwaduce)
 [![GitHub](https://img.shields.io/github/license/rchillyard/Majabigwaduce)](https://github.com/rchillyard/Majabigwaduce/blob/master/LICENSE)
