@@ -103,7 +103,6 @@ case class EagerDD[K, V](kVs: Seq[(K, V)])(implicit ec: ExecutionContext) extend
 
   /**
    * Method to form a new DataDefinition where the resulting values derive from applying the function f to the original values
-   * TESTME
    *
    *
    * @param f the function to transform key-value pairs
@@ -160,7 +159,7 @@ case class EagerDD[K, V](kVs: Seq[(K, V)])(implicit ec: ExecutionContext) extend
   /**
    * Method to group values by a new key type generated from the values, ignoring the current keys.
    *
-   * CONSIDER simplifying the value passed to EagerDD
+   * CONSIDER simplifying the value passed to EagerDD. See Issue #51.
    *
    * @tparam L the new key type, whose values are derived from the values of this DataDefinition
    * @return a DataDefinition based on L and Iterable[V]
@@ -188,7 +187,7 @@ object EagerDD:
 /**
  * Case Class which implements DataDefinition[K, W] and which is based on a Map[K,V] and a function V => W.
  *
- * CONSIDER a property cutoff to determine whether it's appropriate to invoke the map-reduce machinery on kVs.
+ * CONSIDER a property cutoff to determine whether it's appropriate to invoke the map-reduce machinery on kVs. See Issue #56.
  *
  * @param kVs        the map of key-value pairs which serve as the input to this LazyDD
  * @param f          a function which will transform the key-value pairs
@@ -266,7 +265,7 @@ case class LazyDD[K, V, L, W: Monoid]
    */
   def groupBy[M](f: W => M): DataDefinition[M, Iterable[W]] =
     implicit object IterableMonoidW extends IterableMonoid[W]
-    // CONSIDER simplify this
+    // CONSIDER simplify this. See Issue #51.
     DataDefinition(applyFunction.toMap.values.groupBy(f).toSeq)
 
   /**
@@ -412,7 +411,7 @@ case class DDContext(config: Config, system: ActorSystem[Nothing], timeout: Time
    */
   def ec: ExecutionContext = system.executionContext
 
-  // TESTME
+  // TESTME. See Issue #52.
   override def toString: String = s"DDContext: system=${system.name}, timeout=$timeout"
 
 object DDContext:

@@ -68,7 +68,7 @@ object Mapper:
       {
         case DoMap(kvs, replyTo) =>
           logger.debug(s"Mapper received $kvs") // NOTE: this only logs the number of elements, not their values.
-          // CONSIDER using a form of groupBy to perform this operation
+          // CONSIDER using a form of groupBy to perform this operation. See Issue #55.
           // NOTE: f is documented to always return a Try, but a misbehaving f (e.g. one that throws
           // during argument unboxing due to an erasure-related ClassCastException) must not be allowed
           // to crash this actor -- Try(...).flatten catches that case too.
@@ -106,6 +106,6 @@ object KeyValuePairs:
   def sequence[K, V](vs: Seq[V]): KeyValuePairs[K, V] =
     KeyValuePairs((vs zip LazyList.continually(null.asInstanceOf[K])).map(_.swap))
 
-  // CONSIDER eliminating this
+  // CONSIDER eliminating this. See Issue #55.
   def map[K, V](vKm: Map[K, V]): KeyValuePairs[K, V] =
     KeyValuePairs(vKm.toSeq)

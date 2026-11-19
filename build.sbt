@@ -2,7 +2,7 @@ ThisBuild / organization := "com.phasmidsoftware"
 
 name := "Majabigwaduce"
 
-ThisBuild / version := "2.2.0"
+ThisBuild / version := "2.3.0"
 
 ThisBuild / scalaVersion := "3.9.0" // the current LTS
 

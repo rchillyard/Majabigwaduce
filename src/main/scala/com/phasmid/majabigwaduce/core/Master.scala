@@ -126,7 +126,7 @@ object Master:
        * The main map-reduce method.
        * This takes a KeyValuePairs object and returns a map of K2 and either a Throwable or a V2, all wrapped in Future.
        *
-       * CONSIDER why are we using Either[Throwable, V2] instead of Try[V2]?
+       * CONSIDER why are we using Either[Throwable, V2] instead of Try[V2]? See Issue #54.
        */
       def doMapReduce(i: KeyValuePairs[K1, V1]): Future[Map[K2, Either[Throwable, V2]]] = for
         workers <- workersF
@@ -187,16 +187,6 @@ object Master:
       }
     val exceptions: Seq[Throwable] = responses.flatMap(_.exceptions)
     MapperResponse(merged, exceptions)
-
-  /**
-   * Returns the zero value of the specified type `V`. The generic zero value is
-   * obtained by casting the integer 0 to the provided type `V`.
-   * TESTME
-   *
-   * @tparam V the type for which the zero value is desired
-   * @return the zero value of type `V`
-   */
-  def zero[V](): V = 0.asInstanceOf[V]
 
   /**
    * method isForgiving which looks up the value of the forgiving property of the configuration.

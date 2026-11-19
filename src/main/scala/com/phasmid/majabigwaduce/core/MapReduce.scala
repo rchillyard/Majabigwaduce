@@ -181,13 +181,12 @@ object MapReducePipe:
  * @param actors  an instance of Actors.
  * @param timeout the value of timeout to be used.
  *
- *                CONSIDER why is config parameter set not implicit?
+ *                CONSIDER why is config parameter set not implicit? See Issue #53.
  */
 //noinspection SpellCheckingInspection
 case class MapReduceFirstFold[V0, K1, W, V1: Zero](f: V0 => Try[(K1, W)], g: (V1, W) => V1)(actors: Actors, timeout: Timeout) extends MapReduce_LoggingBase[V0, Unit, V0, K1, V1](actors)(timeout):
   // The following constructor allows for a f which needs to be lifted to T=>Try[R]
-  // CONSIDER implementing an apply method in MapReduce for this signature
-  //  def this(fy: V0 => (K1, W), g: (V1, W) => V1)(actors: Actors, timeout: Timeout) = this(MapReduce.lift(fy), g)(actors, timeout)
+  // CONSIDER implementing an apply method in MapReduce for this signature. See Issue #53.
   def createBehavior: Behavior[MasterCommand[Unit, V0, K1, V1]] =
     // NOTE the zero function must capture only the Zero, not `this` (which holds the ActorSystem),
     // so that it can be sent with its reducer to another node of a cluster.
