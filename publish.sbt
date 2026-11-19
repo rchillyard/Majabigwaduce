@@ -35,7 +35,11 @@ ThisBuild / developers := List(
 // Optional
 
 // Publishing settings
-ThisBuild / versionScheme := Some("early-semver")
+// PVP: the first two numbers form the major version, so a patch release must stay binary
+// compatible while a minor release may break, on purpose and with a release note. Under the
+// previous "early-semver" setting, sbt and Coursier treated x.(y+1) as compatible with x.y and
+// would evict silently, which is how a removed method becomes a downstream NoSuchMethodError.
+ThisBuild / versionScheme := Some("pvp")
 ThisBuild / publishConfiguration := publishConfiguration.value.withOverwrite(true)
 ThisBuild / publishLocalConfiguration := publishLocalConfiguration.value.withOverwrite(true)
 

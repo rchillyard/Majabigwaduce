@@ -92,7 +92,7 @@ trait Matrix[X]:
    * If X is a Seq[Seq[T], then productSpecial yields a sequence of dot products.
    *
    * NOTE: this method is an instance method (defined in Matrix trait).
-   * CONSIDER defining the two forms of this method in Matrix1 and Matrix2 companion objects.
+   * CONSIDER defining the two forms of this method in Matrix1 and Matrix2 companion objects. See Issue #50.
    *
    * @param x  the X value
    * @param ys the Seq[Y] value
@@ -140,7 +140,7 @@ abstract class BaseMatrix[X] extends Matrix[X]:
       // Using map-reduce, apply the function g to each element of dd.
       val z: Map[Int, Z] = Await.result(dd.map(tupleLift(g)).apply(), atMost)
       Matrix.logger.info("forRows.3")
-      // CONSIDER doing this more efficiently?
+      // CONSIDER doing this more efficiently? See Issue #50.
       for i <- 1 to size.rows yield z(i - 1)
 
 /**
@@ -228,7 +228,7 @@ case class Matrix2[T: Numeric](rows: Seq[Seq[T]]) extends BaseMatrix[Seq[T]]:
     else throw IncompatibleDimensionsException(ts.length, ys.length)
 
   private val r = rows.length
-  private val c = rows.headOption.map(_.length).getOrElse(0) // CONSIDER checking other rows too
+  private val c = rows.headOption.map(_.length).getOrElse(0) // CONSIDER checking other rows too. See Issue #49.
 
 /**
  * Type-class trait which knows how to multiply an X and a Y to yield a Z
@@ -294,7 +294,7 @@ case class Dimensions(xs: Seq[Int]) extends Ordered[Dimensions]:
 object Matrix:
   /**
    * The Kronecker Delta function.
-   * CONSIDER is this a performance bottleneck?
+   * CONSIDER is this a performance bottleneck? See Issue #50.
    *
    * @return 1 if i==j otherwise 0
    */

@@ -10,7 +10,7 @@ import scala.concurrent.duration.{DurationInt, FiniteDuration}
 /**
  * Case class to deal with the construction and configuration of actors.
  *
- * CONSIDER eliminating this class and calling spawn/systemActorOf directly. See Issue #13.
+ * CONSIDER eliminating this class and calling spawn/systemActorOf directly. See Issue #57.
  *
  * @param system the actor system.
  * @param config the configuration for this set of actors.
@@ -29,18 +29,16 @@ case class Actors(system: ActorSystem[?], config: Config) extends AutoCloseable:
    */
   def createActor[U](spawn: (Behavior[U], String) => ActorRef[U], maybeName: Option[String], behavior: Behavior[U]): ActorRef[U] =
     val actorName = maybeName.getOrElse("Nemo")
-    // CONSIDER eliminating this suffix now that we create actors hierarchically (i.e. we create them from context, except the master).
+    // CONSIDER eliminating this suffix now that we create actors hierarchically (i.e. we create them from context, except the master). See Issue #57.
     val actorId = s"$actorName-$suffix"
     Actors.logger.debug(s"createActor: $actorId")
     spawn(behavior, actorId)
 
-  // TEST
   def logException(m: => String, x: Throwable = null): Unit =
     if exceptionStack
     then Actors.logger.error(m, x)
     else Actors.logger.warn(s"$m: ${Option(x).fold("")(_.getLocalizedMessage)}")
 
-  // TEST
   private lazy val exceptionStack = config.getBoolean("exceptionStack")
 
   def close(): Unit = {}
