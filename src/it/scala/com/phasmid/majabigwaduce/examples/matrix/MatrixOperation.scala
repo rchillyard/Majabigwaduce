@@ -23,7 +23,7 @@ import scala.util.{Failure, Random, Try, Using}
  * It requires an key-mapping function whose purpose is to partition the work (for parallelization) according to row and/or column numbers.
  * It also requires an actor system, a logger, configuration, etc. (these are implicit parameters).
  *
- * CONSIDER moving the main features of this code into the main Scala code.
+ * CONSIDER moving the main features of this code into the main Scala code. (#61)
  *
  * @param keyFunc the key-mapping function.
  * @param system  (implicit) the actor system.
@@ -52,11 +52,11 @@ case class MatrixOperation[X: Numeric](keyFunc: Int => Int)(using system: ActorS
     val r = Reduce[Int, Vector, Vector] { case (s, t) => s ++ t }
     val mr = s1 | r
     val z = (xss zipWithIndex) map (_ swap)
-    // CONSIDER doing this as another stage of map-reduce (or part of r stage).
+    // CONSIDER doing this as another stage of map-reduce (or part of r stage). (#62)
     FP.flatten(for q <- mr(z) yield mapVectorToXS(q, xss.length))
 
   def product(xss: Seq[XS], yss: Seq[XS]): Future[Seq[XS]] =
-    // CONSIDER doing just one transpose: that of xss
+    // CONSIDER doing just one transpose: that of xss (#62)
     val q: Seq[Future[XS]] = for ys <- Matrix2(yss).transpose yield apply(xss, ys)
     Future.sequence(q) map (Matrix2(_).transpose)
 

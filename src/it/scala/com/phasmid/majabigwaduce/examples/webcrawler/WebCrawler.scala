@@ -26,7 +26,7 @@ import scala.util.{Failure, Success, Try, Using}
  * Stage 2 takes the map of URI->Seq[String] resulting from stage 1 and combines the lists of links.
  * Stage 3 then combines these altogether.
  *
- * TODO this web crawler is a depth-first algorithm -- change it to breadth-first
+ * TODO this web crawler is a depth-first algorithm -- change it to breadth-first (#63)
  *
  * This pipeline of stages 1 through 3 is then executed recursively to a given depth. The final output is the list of URLs which have been visited.
  *
@@ -137,7 +137,7 @@ case class WebCrawler(depth: Int)(implicit system: ActorSystem[Nothing], config:
  *     into appropriate Timeout objects. Relies on regex pattern matching for format validation.
  */
 object WebCrawler:
-  // TODO try to combine this with the same method in MapReduceActor
+  // TODO try to combine this with the same method in MapReduceActor (#64)
   def getTimeout(t: String): Timeout =
     val durationR = """(\d+)\s*(\w+)""".r
     t match
