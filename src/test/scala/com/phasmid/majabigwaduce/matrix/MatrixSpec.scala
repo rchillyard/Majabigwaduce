@@ -14,7 +14,7 @@ import scala.concurrent.duration.Duration
 
 class MatrixSpec extends flatspec.AnyFlatSpec with should.Matchers with Futures with Inside {
 
-  // TODO why does this not get satisfied from Matrix1 and Matrix2 objects?
+  // TODO why does this not get satisfied from Matrix1 and Matrix2 objects? (#66)
   given atMost: Duration = duration.FiniteDuration(1, "second")
 
   trait IntProduct extends Product[Int] {
